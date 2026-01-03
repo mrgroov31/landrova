@@ -1,0 +1,88 @@
+{
+  "status": "info",
+  "message": "Sample request payload for tenant onboarding",
+  "data": {
+    "request": {
+      "name": "Rajesh Kumar",
+      "phone": "+91 9876543210",
+      "email": "rajesh.kumar@example.com",
+      "roomNumber": "101",
+      "moveInDate": "2024-01-15",
+      "monthlyRent": 15000,
+      "type": "tenant",
+      "aadharNumber": "1234 5678 9012",
+      "emergencyContact": "+91 9876543211",
+      "occupation": "Software Engineer",
+      "invitationToken": "abc123def456ghi789jkl012mno345pqr678",
+      "documents": {
+        "profileImage": {
+          "base64": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQ...",
+          "fileName": "profile.jpg",
+          "mimeType": "image/jpeg",
+          "size": 245678
+        },
+        "aadharFrontImage": {
+          "base64": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQ...",
+          "fileName": "aadhar_front.jpg",
+          "mimeType": "image/jpeg",
+          "size": 512345
+        },
+        "aadharBackImage": {
+          "base64": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQ...",
+          "fileName": "aadhar_back.jpg",
+          "mimeType": "image/jpeg",
+          "size": 498765
+        },
+        "panCardImage": {
+          "base64": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQ...",
+          "fileName": "pan_card.jpg",
+          "mimeType": "image/jpeg",
+          "size": 387654
+        },
+        "addressProofImage": {
+          "base64": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQ...",
+          "fileName": "address_proof.jpg",
+          "mimeType": "image/jpeg",
+          "size": 423456
+        }
+      }
+    },
+    "alternativeRequest": {
+      "name": "Priya Sharma",
+      "phone": "+91 9876543211",
+      "email": "priya.sharma@example.com",
+      "roomNumber": "102",
+      "moveInDate": "2024-02-01",
+      "monthlyRent": 12000,
+      "type": "paying_guest",
+      "aadharNumber": "2345 6789 0123",
+      "emergencyContact": "+91 9876543212",
+      "occupation": "Student",
+      "invitationToken": "xyz789abc123def456ghi789jkl012mno345",
+      "documents": {
+        "profileImage": {
+          "filePath": "/storage/temp/profile_priya.jpg",
+          "fileName": "profile.jpg",
+          "mimeType": "image/jpeg"
+        },
+        "aadharFrontImage": {
+          "filePath": "/storage/temp/aadhar_front_priya.jpg",
+          "fileName": "aadhar_front.jpg",
+          "mimeType": "image/jpeg"
+        },
+        "aadharBackImage": {
+          "filePath": "/storage/temp/aadhar_back_priya.jpg",
+          "fileName": "aadhar_back.jpg",
+          "mimeType": "image/jpeg"
+        },
+        "panCardImage": null,
+        "addressProofImage": {
+          "filePath": "/storage/temp/address_proof_priya.jpg",
+          "fileName": "address_proof.jpg",
+          "mimeType": "image/jpeg"
+        }
+      }
+    }
+  }
+}
+

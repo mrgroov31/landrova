@@ -1,0 +1,138 @@
+{
+  "status": "success",
+  "message": "Buildings fetched successfully",
+  "data": {
+    "buildings": [
+      {
+        "id": "1",
+        "name": "Sunshine Apartments",
+        "address": "123 Main Street",
+        "city": "Bangalore",
+        "state": "Karnataka",
+        "pincode": "560001",
+        "totalFloors": 3,
+        "totalRooms": 6,
+        "buildingType": "standalone",
+        "propertyType": "rented",
+        "image": null,
+        "description": "A beautiful standalone building with modern amenities",
+        "createdAt": "2023-10-16T00:00:00Z",
+        "isActive": true,
+        "owner": {
+          "name": "Rajesh Kumar",
+          "email": "rajesh.kumar@example.com",
+          "phone": "+91 9876543210",
+          "image": null
+        },
+        "facilities": [
+          {
+            "name": "WiFi",
+            "isPaid": false
+          },
+          {
+            "name": "Parking",
+            "isPaid": false
+          },
+          {
+            "name": "Gym",
+            "isPaid": true
+          },
+          {
+            "name": "Laundry",
+            "isPaid": true
+          }
+        ]
+      },
+      {
+        "id": "2",
+        "name": "Green Valley PG",
+        "address": "456 Park Avenue",
+        "city": "Bangalore",
+        "state": "Karnataka",
+        "pincode": "560002",
+        "totalFloors": 2,
+        "totalRooms": 8,
+        "buildingType": "standalone",
+        "propertyType": "pg",
+        "image": null,
+        "description": "A cozy PG accommodation with all basic facilities",
+        "createdAt": "2024-04-16T00:00:00Z",
+        "isActive": true,
+        "owner": {
+          "name": "Priya Sharma",
+          "email": "priya.sharma@example.com",
+          "phone": "+91 9876543211",
+          "image": null
+        },
+        "facilities": [
+          {
+            "name": "WiFi",
+            "isPaid": false
+          },
+          {
+            "name": "Meals",
+            "isPaid": true
+          },
+          {
+            "name": "Laundry",
+            "isPaid": false
+          },
+          {
+            "name": "Security",
+            "isPaid": false
+          }
+        ]
+      },
+      {
+        "id": "3",
+        "name": "Elite Complex",
+        "address": "789 Business District",
+        "city": "Bangalore",
+        "state": "Karnataka",
+        "pincode": "560003",
+        "totalFloors": 5,
+        "totalRooms": 20,
+        "buildingType": "complex",
+        "propertyType": "leased",
+        "image": null,
+        "description": "Premium commercial complex with state-of-the-art facilities",
+        "createdAt": "2024-01-10T00:00:00Z",
+        "isActive": true,
+        "owner": {
+          "name": "Amit Patel",
+          "email": "amit.patel@example.com",
+          "phone": "+91 9876543212",
+          "image": null
+        },
+        "facilities": [
+          {
+            "name": "WiFi",
+            "isPaid": false
+          },
+          {
+            "name": "Parking",
+            "isPaid": false
+          },
+          {
+            "name": "Elevator",
+            "isPaid": false
+          },
+          {
+            "name": "Gym",
+            "isPaid": true
+          },
+          {
+            "name": "Swimming Pool",
+            "isPaid": true
+          },
+          {
+            "name": "Conference Room",
+            "isPaid": true
+          }
+        ]
+      }
+    ],
+    "total": 3
+  }
+}
+

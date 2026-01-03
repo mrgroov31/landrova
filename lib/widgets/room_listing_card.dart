@@ -1,0 +1,401 @@
+import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import '../models/room.dart';
+import '../utils/responsive.dart';
+
+class RoomListingCard extends StatelessWidget {
+  final Room room;
+  final String? tenantName;
+  final VoidCallback? onTap;
+
+  const RoomListingCard({
+    super.key,
+    required this.room,
+    this.tenantName,
+    this.onTap,
+  });
+
+  Color getStatusColor() {
+    switch (room.status) {
+      case 'occupied':
+        return Colors.green;
+      case 'vacant':
+        return Colors.blue;
+      case 'maintenance':
+        return Colors.orange;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  String getStatusText() {
+    switch (room.status) {
+      case 'occupied':
+        return 'Occupied';
+      case 'vacant':
+        return 'Available';
+      case 'maintenance':
+        return 'Maintenance';
+      default:
+        return room.status;
+    }
+  }
+
+  String _getRoomImageUrl() {
+    // Use Picsum Photos for placeholder images (more reliable than Unsplash)
+    // Generate image ID based on room number for variety
+    final roomHash = room.number.hashCode;
+    final imageId = (roomHash.abs() % 1000) + 1;
+    return 'https://picsum.photos/seed/room${imageId}/800/600';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isMobile = Responsive.isMobile(context);
+    final theme = Theme.of(context);
+    
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: isMobile ? 420 : 480, // Fixed height for carousel
+        margin: EdgeInsets.only(bottom: isMobile ? 16 : 20),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.15),
+              blurRadius: 15,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(20),
+          child: Stack(
+            children: [
+              // Background Image
+              Positioned.fill(
+                child: CachedNetworkImage(
+                  imageUrl: _getRoomImageUrl(),
+                  fit: BoxFit.cover,
+                  placeholder: (context, url) => Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          getStatusColor().withOpacity(0.3),
+                          getStatusColor().withOpacity(0.1),
+                        ],
+                      ),
+                    ),
+                    child: Center(
+                      child: CircularProgressIndicator(
+                        color: getStatusColor(),
+                      ),
+                    ),
+                  ),
+                  errorWidget: (context, url, error) => Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          getStatusColor().withOpacity(0.3),
+                          getStatusColor().withOpacity(0.1),
+                        ],
+                      ),
+                    ),
+                    child: Center(
+                      child: Icon(
+                        room.type == 'tenant' ? Icons.home : Icons.hotel,
+                        size: 80,
+                        color: getStatusColor().withOpacity(0.5),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              // Gradient Overlay for text readability
+              Positioned.fill(
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.transparent,
+                        Colors.black.withOpacity(0.3),
+                        Colors.black.withOpacity(0.7),
+                      ],
+                      stops: const [0.0, 0.5, 1.0],
+                    ),
+                  ),
+                ),
+              ),
+              // Content on top of image
+              Positioned.fill(
+                child: Padding(
+                  padding: EdgeInsets.all(isMobile ? 16 : 20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                    // Top section - Status badge
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: getStatusColor(),
+                            borderRadius: BorderRadius.circular(20),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.3),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Text(
+                            getStatusText(),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                        Icon(
+                          Icons.favorite_border,
+                          color: Colors.white,
+                          size: 24,
+                        ),
+                      ],
+                    ),
+                    // Bottom section - Room details
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Room ${room.number}',
+                          style: TextStyle(
+                            fontSize: isMobile ? 24 : 28,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                            shadows: [
+                              Shadow(
+                                color: Colors.black.withOpacity(0.5),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                        ),
+                        SizedBox(height: isMobile ? 8 : 12),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.star,
+                              color: Colors.amber,
+                              size: 18,
+                            ),
+                            SizedBox(width: 4),
+                            Text(
+                              '4.${(room.number.hashCode % 10)}',
+                              style: TextStyle(
+                                fontSize: isMobile ? 14 : 16,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                                shadows: [
+                                  Shadow(
+                                    color: Colors.black.withOpacity(0.5),
+                                    blurRadius: 6,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            SizedBox(width: 4),
+                            Text(
+                              '(${(room.number.hashCode % 50) + 10} reviews)',
+                              style: TextStyle(
+                                fontSize: isMobile ? 13 : 14,
+                                color: Colors.white.withOpacity(0.9),
+                                shadows: [
+                                  Shadow(
+                                    color: Colors.black.withOpacity(0.5),
+                                    blurRadius: 6,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: isMobile ? 8 : 12),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            _buildInfoChip(
+                              room.type == 'tenant' ? 'Tenant Room' : 'Paying Guest',
+                              Icons.person,
+                              isMobile,
+                            ),
+                            if (room.type == 'paying_guest')
+                              _buildInfoChip(
+                                '${room.currentOccupancy}/${room.capacity} beds',
+                                Icons.bed,
+                                isMobile,
+                              ),
+                          ],
+                        ),
+                        if (tenantName != null) ...[
+                          SizedBox(height: isMobile ? 8 : 12),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.person_outline,
+                                size: 16,
+                                color: Colors.white.withOpacity(0.9),
+                              ),
+                              SizedBox(width: 6),
+                              Text(
+                                'Occupied by $tenantName',
+                                style: TextStyle(
+                                  fontSize: isMobile ? 13 : 14,
+                                  color: Colors.white.withOpacity(0.9),
+                                  shadows: [
+                                    Shadow(
+                                      color: Colors.black.withOpacity(0.5),
+                                      blurRadius: 6,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                        SizedBox(height: isMobile ? 12 : 16),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  '₹${room.rent.toStringAsFixed(0)}',
+                                  style: TextStyle(
+                                    fontSize: isMobile ? 24 : 28,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                    shadows: [
+                                      Shadow(
+                                        color: Colors.black.withOpacity(0.5),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Text(
+                                  'per month',
+                                  style: TextStyle(
+                                    fontSize: isMobile ? 12 : 13,
+                                    color: Colors.white.withOpacity(0.9),
+                                    shadows: [
+                                      Shadow(
+                                        color: Colors.black.withOpacity(0.5),
+                                        blurRadius: 6,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: isMobile ? 16 : 20,
+                                vertical: isMobile ? 10 : 12,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.3),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: Text(
+                                'View Details',
+                                style: TextStyle(
+                                  color: theme.colorScheme.primary,
+                                  fontSize: isMobile ? 13 : 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+      ),
+    );
+  }
+
+  Widget _buildInfoChip(String label, IconData icon, bool isMobile) {
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: isMobile ? 8 : 10,
+        vertical: isMobile ? 4 : 6,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.25),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.3),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            size: 14,
+            color: Colors.white,
+          ),
+          SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: isMobile ? 11 : 12,
+              color: Colors.white,
+              fontWeight: FontWeight.w500,
+              shadows: [
+                Shadow(
+                  color: Colors.black.withOpacity(0.5),
+                  blurRadius: 4,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+

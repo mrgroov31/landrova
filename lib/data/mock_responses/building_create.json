@@ -1,0 +1,39 @@
+{
+  "status": "success",
+  "message": "Building created successfully",
+  "data": {
+    "building": {
+      "id": "4",
+      "name": "New Building",
+      "address": "123 New Street",
+      "city": "Bangalore",
+      "state": "Karnataka",
+      "pincode": "560001",
+      "totalFloors": 2,
+      "totalRooms": 4,
+      "buildingType": "standalone",
+      "propertyType": "rented",
+      "image": null,
+      "description": "Newly constructed building with modern amenities",
+      "createdAt": "2024-10-16T12:00:00Z",
+      "isActive": true,
+      "owner": {
+        "name": "Owner Name",
+        "email": "owner@example.com",
+        "phone": "+91 9876543210",
+        "image": null
+      },
+      "facilities": [
+        {
+          "name": "WiFi",
+          "isPaid": false
+        },
+        {
+          "name": "Parking",
+          "isPaid": false
+        }
+      ]
+    }
+  }
+}
+

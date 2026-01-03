@@ -1,0 +1,19 @@
+{
+  "name": "Rajesh Kumar",
+  "phone": "+91 9876543210",
+  "email": "rajesh.kumar@example.com",
+  "roomNumber": "101",
+  "moveInDate": "2024-01-15",
+  "monthlyRent": 15000,
+  "type": "tenant",
+  "aadharNumber": "1234 5678 9012",
+  "emergencyContact": "+91 9876543211",
+  "occupation": "Software Engineer",
+  "invitationToken": "abc123def456ghi789jkl012mno345pqr678",
+  "profileImage": "/path/to/profile.jpg",
+  "aadharFrontImage": "/path/to/aadhar_front.jpg",
+  "aadharBackImage": "/path/to/aadhar_back.jpg",
+  "panCardImage": "/path/to/pan_card.jpg",
+  "addressProofImage": "/path/to/address_proof.jpg"
+}
+

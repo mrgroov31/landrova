@@ -1,0 +1,77 @@
+{
+  "status": "success",
+  "message": "Complaints fetched successfully",
+  "data": {
+    "complaints": [
+      {
+        "id": "1",
+        "title": "Water Leakage",
+        "description": "Water leaking from bathroom ceiling, needs immediate attention",
+        "roomNumber": "101",
+        "tenantId": "1",
+        "tenantName": "Rajesh Kumar",
+        "status": "pending",
+        "priority": "high",
+        "category": "plumbing",
+        "createdAt": "2024-10-15T10:30:00Z",
+        "updatedAt": "2024-10-15T10:30:00Z",
+        "resolvedAt": null,
+        "assignedTo": null,
+        "images": []
+      },
+      {
+        "id": "2",
+        "title": "AC Not Working",
+        "description": "Air conditioner not cooling properly, making strange noises",
+        "roomNumber": "201",
+        "tenantId": "3",
+        "tenantName": "Amit Patel",
+        "status": "in_progress",
+        "priority": "urgent",
+        "category": "electrical",
+        "createdAt": "2024-10-12T14:20:00Z",
+        "updatedAt": "2024-10-15T09:15:00Z",
+        "resolvedAt": null,
+        "assignedTo": "Maintenance Team",
+        "images": []
+      },
+      {
+        "id": "3",
+        "title": "Door Lock Issue",
+        "description": "Main door lock is jammed, unable to open properly",
+        "roomNumber": "102",
+        "tenantId": "2",
+        "tenantName": "Priya Sharma",
+        "status": "resolved",
+        "priority": "medium",
+        "category": "maintenance",
+        "createdAt": "2024-10-05T08:00:00Z",
+        "updatedAt": "2024-10-07T16:30:00Z",
+        "resolvedAt": "2024-10-07T16:30:00Z",
+        "assignedTo": "Locksmith",
+        "images": []
+      },
+      {
+        "id": "4",
+        "title": "Wi-Fi Connection Problem",
+        "description": "Internet connection is very slow and keeps disconnecting",
+        "roomNumber": "202",
+        "tenantId": "4",
+        "tenantName": "Sneha Reddy",
+        "status": "pending",
+        "priority": "low",
+        "category": "internet",
+        "createdAt": "2024-10-16T11:00:00Z",
+        "updatedAt": "2024-10-16T11:00:00Z",
+        "resolvedAt": null,
+        "assignedTo": null,
+        "images": []
+      }
+    ],
+    "total": 4,
+    "pending": 2,
+    "in_progress": 1,
+    "resolved": 1
+  }
+}
+

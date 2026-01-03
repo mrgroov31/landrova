@@ -1,0 +1,81 @@
+{
+  "status": "success",
+  "message": "Payments fetched successfully",
+  "data": {
+    "payments": [
+      {
+        "id": "1",
+        "tenantId": "1",
+        "tenantName": "Rajesh Kumar",
+        "roomNumber": "101",
+        "amount": 15000,
+        "dueDate": "2024-10-01",
+        "paidDate": "2024-10-02",
+        "status": "paid",
+        "paymentMethod": "online",
+        "transactionId": "TXN123456789",
+        "month": "October",
+        "year": 2024,
+        "lateFee": 0,
+        "notes": "Payment received on time"
+      },
+      {
+        "id": "2",
+        "tenantId": "2",
+        "tenantName": "Priya Sharma",
+        "roomNumber": "102",
+        "amount": 12000,
+        "dueDate": "2024-10-01",
+        "paidDate": "2024-10-01",
+        "status": "paid",
+        "paymentMethod": "cash",
+        "transactionId": null,
+        "month": "October",
+        "year": 2024,
+        "lateFee": 0,
+        "notes": "Cash payment"
+      },
+      {
+        "id": "3",
+        "tenantId": "3",
+        "tenantName": "Amit Patel",
+        "roomNumber": "201",
+        "amount": 18000,
+        "dueDate": "2024-10-01",
+        "paidDate": null,
+        "status": "overdue",
+        "paymentMethod": null,
+        "transactionId": null,
+        "month": "October",
+        "year": 2024,
+        "lateFee": 500,
+        "notes": "Payment overdue by 15 days"
+      },
+      {
+        "id": "4",
+        "tenantId": "4",
+        "tenantName": "Sneha Reddy",
+        "roomNumber": "202",
+        "amount": 14000,
+        "dueDate": "2024-10-01",
+        "paidDate": null,
+        "status": "pending",
+        "paymentMethod": null,
+        "transactionId": null,
+        "month": "October",
+        "year": 2024,
+        "lateFee": 0,
+        "notes": "Payment pending"
+      }
+    ],
+    "total": 4,
+    "paid": 2,
+    "pending": 1,
+    "overdue": 1,
+    "totalAmount": 59000,
+    "paidAmount": 27000,
+    "pendingAmount": 14000,
+    "overdueAmount": 18000
+  }
+}
+

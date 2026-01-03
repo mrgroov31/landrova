@@ -1,0 +1,29 @@
+{
+  "status": "success",
+  "message": "Tenant onboarding data structure",
+  "data": {
+    "tenant": {
+      "id": "tenant_001",
+      "name": "Rajesh Kumar",
+      "phone": "+91 9876543210",
+      "email": "rajesh.kumar@example.com",
+      "roomNumber": "101",
+      "moveInDate": "2024-01-15T00:00:00Z",
+      "monthlyRent": 15000,
+      "type": "tenant",
+      "isActive": true,
+      "aadharNumber": "1234 5678 9012",
+      "emergencyContact": "+91 9876543211",
+      "occupation": "Software Engineer",
+      "profileImage": "/storage/tenants/tenant_001/profile.jpg",
+      "aadharFrontImage": "/storage/tenants/tenant_001/aadhar_front.jpg",
+      "aadharBackImage": "/storage/tenants/tenant_001/aadhar_back.jpg",
+      "panCardImage": "/storage/tenants/tenant_001/pan_card.jpg",
+      "addressProofImage": "/storage/tenants/tenant_001/address_proof.jpg",
+      "invitationToken": "abc123def456ghi789jkl012mno345pqr678",
+      "createdAt": "2024-01-10T10:30:00Z",
+      "updatedAt": "2024-01-15T08:00:00Z"
+    }
+  }
+}
+

@@ -1,0 +1,27 @@
+{
+  "status": "success",
+  "message": "Invitation link generated successfully",
+  "data": {
+    "invitation": {
+      "token": "abc123def456ghi789jkl012mno345pqr678",
+      "roomNumber": "101",
+      "roomDetails": {
+        "number": "101",
+        "type": "tenant",
+        "rent": 15000,
+        "status": "vacant",
+        "buildingId": "1",
+        "buildingName": "Green Valley Apartments"
+      },
+      "link": "ownhouse://tenant/register?token=abc123def456ghi789jkl012mno345pqr678&room=101",
+      "shortLink": "https://ownhouse.app/invite/abc123",
+      "expiresAt": "2024-12-31T23:59:59Z",
+      "createdAt": "2024-01-10T10:30:00Z",
+      "createdBy": "owner_001",
+      "status": "pending",
+      "tenantName": null
+    },
+    "qrCode": "https://example.com/qr-codes/invitation_abc123.png"
+  }
+}
+

@@ -1,0 +1,51 @@
+{
+  "status": "success",
+  "message": "Dashboard data fetched successfully",
+  "data": {
+    "summary": {
+      "totalRooms": 6,
+      "occupiedRooms": 4,
+      "vacantRooms": 1,
+      "maintenanceRooms": 1,
+      "totalTenants": 4,
+      "activeTenants": 4,
+      "totalRevenue": 45000,
+      "pendingRevenue": 32000,
+      "pendingComplaints": 2,
+      "overduePayments": 1
+    },
+    "recentActivity": [
+      {
+        "type": "payment",
+        "message": "Rajesh Kumar paid ₹15,000 for Room 101",
+        "timestamp": "2024-10-16T10:30:00Z"
+      },
+      {
+        "type": "complaint",
+        "message": "New complaint from Room 202 - Wi-Fi Connection Problem",
+        "timestamp": "2024-10-16T11:00:00Z"
+      },
+      {
+        "type": "tenant",
+        "message": "Sneha Reddy moved into Room 202",
+        "timestamp": "2024-10-15T14:20:00Z"
+      }
+    ],
+    "monthlyRevenue": [45000, 52000, 48000, 55000, 60000, 58000],
+    "upcomingPayments": [
+      {
+        "tenantName": "Amit Patel",
+        "roomNumber": "201",
+        "amount": 18000,
+        "dueDate": "2024-11-01"
+      },
+      {
+        "tenantName": "Sneha Reddy",
+        "roomNumber": "202",
+        "amount": 14000,
+        "dueDate": "2024-11-01"
+      }
+    ]
+  }
+}
+

@@ -1,0 +1,53 @@
+{
+  "description": "This shows the structure for multipart/form-data request",
+  "note": "In multipart requests, images are sent as files, not base64",
+  "formFields": {
+    "name": "Rajesh Kumar",
+    "phone": "+91 9876543210",
+    "email": "rajesh.kumar@example.com",
+    "roomNumber": "101",
+    "moveInDate": "2024-01-15",
+    "monthlyRent": "15000",
+    "type": "tenant",
+    "aadharNumber": "1234 5678 9012",
+    "emergencyContact": "+91 9876543211",
+    "occupation": "Software Engineer",
+    "invitationToken": "abc123def456ghi789jkl012mno345pqr678"
+  },
+  "files": [
+    {
+      "fieldName": "profileImage",
+      "fileName": "profile.jpg",
+      "contentType": "image/jpeg",
+      "filePath": "/local/path/to/profile.jpg"
+    },
+    {
+      "fieldName": "aadharFrontImage",
+      "fileName": "aadhar_front.jpg",
+      "contentType": "image/jpeg",
+      "filePath": "/local/path/to/aadhar_front.jpg"
+    },
+    {
+      "fieldName": "aadharBackImage",
+      "fileName": "aadhar_back.jpg",
+      "contentType": "image/jpeg",
+      "filePath": "/local/path/to/aadhar_back.jpg"
+    },
+    {
+      "fieldName": "panCardImage",
+      "fileName": "pan_card.jpg",
+      "contentType": "image/jpeg",
+      "filePath": "/local/path/to/pan_card.jpg",
+      "required": false
+    },
+    {
+      "fieldName": "addressProofImage",
+      "fileName": "address_proof.jpg",
+      "contentType": "image/jpeg",
+      "filePath": "/local/path/to/address_proof.jpg",
+      "required": false
+    }
+  ],
+  "exampleCurl": "curl -X POST https://api.example.com/tenants/register \\\n  -F 'name=Rajesh Kumar' \\\n  -F 'phone=+91 9876543210' \\\n  -F 'email=rajesh.kumar@example.com' \\\n  -F 'roomNumber=101' \\\n  -F 'moveInDate=2024-01-15' \\\n  -F 'monthlyRent=15000' \\\n  -F 'type=tenant' \\\n  -F 'aadharNumber=1234 5678 9012' \\\n  -F 'emergencyContact=+91 9876543211' \\\n  -F 'occupation=Software Engineer' \\\n  -F 'invitationToken=abc123def456ghi789jkl012mno345pqr678' \\\n  -F 'profileImage=@/path/to/profile.jpg' \\\n  -F 'aadharFrontImage=@/path/to/aadhar_front.jpg' \\\n  -F 'aadharBackImage=@/path/to/aadhar_back.jpg' \\\n  -F 'panCardImage=@/path/to/pan_card.jpg' \\\n  -F 'addressProofImage=@/path/to/address_proof.jpg'"
+}
+

@@ -1,0 +1,61 @@
+{
+  "status": "success",
+  "message": "Tenant registered successfully",
+  "data": {
+    "tenant": {
+      "id": "tenant_002",
+      "name": "Priya Sharma",
+      "phone": "+91 9876543211",
+      "email": "priya.sharma@example.com",
+      "roomNumber": "102",
+      "moveInDate": "2024-02-01T00:00:00Z",
+      "monthlyRent": 12000,
+      "type": "paying_guest",
+      "isActive": true,
+      "aadharNumber": "2345 6789 0123",
+      "emergencyContact": "+91 9876543212",
+      "occupation": "Student",
+      "profileImage": "https://example.com/storage/tenants/tenant_002/profile.jpg",
+      "aadharFrontImage": "https://example.com/storage/tenants/tenant_002/aadhar_front.jpg",
+      "aadharBackImage": "https://example.com/storage/tenants/tenant_002/aadhar_back.jpg",
+      "panCardImage": null,
+      "addressProofImage": "https://example.com/storage/tenants/tenant_002/address_proof.jpg",
+      "invitationToken": "xyz789abc123def456ghi789jkl012mno345",
+      "createdAt": "2024-01-25T14:20:00Z",
+      "updatedAt": "2024-02-01T09:15:00Z"
+    },
+    "documents": {
+      "profileImage": {
+        "uploaded": true,
+        "url": "https://example.com/storage/tenants/tenant_002/profile.jpg",
+        "size": 245678,
+        "mimeType": "image/jpeg"
+      },
+      "aadharFront": {
+        "uploaded": true,
+        "url": "https://example.com/storage/tenants/tenant_002/aadhar_front.jpg",
+        "size": 512345,
+        "mimeType": "image/jpeg"
+      },
+      "aadharBack": {
+        "uploaded": true,
+        "url": "https://example.com/storage/tenants/tenant_002/aadhar_back.jpg",
+        "size": 498765,
+        "mimeType": "image/jpeg"
+      },
+      "panCard": {
+        "uploaded": false,
+        "url": null,
+        "size": null,
+        "mimeType": null
+      },
+      "addressProof": {
+        "uploaded": true,
+        "url": "https://example.com/storage/tenants/tenant_002/address_proof.jpg",
+        "size": 387654,
+        "mimeType": "image/jpeg"
+      }
+    }
+  }
+}
+
