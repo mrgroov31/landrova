@@ -1,0 +1,31 @@
+{
+  "success": true,
+  "message": "Room created successfully",
+  "data": {
+    "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "buildingId": "6268a5da-3db0-4c3c-aafd-c0040b73db10",
+    "number": "101",
+    "type": "rented",
+    "status": "vacant",
+    "rent": 15000,
+    "capacity": 2,
+    "currentOccupancy": 0,
+    "floor": 1,
+    "area": "200 sq ft",
+    "description": "Spacious room with attached bathroom and balcony",
+    "amenities": [
+      "WiFi",
+      "AC",
+      "TV",
+      "Attached Bathroom",
+      "Balcony"
+    ],
+    "images": [
+      "https://picsum.photos/seed/room101-1/800/600",
+      "https://picsum.photos/seed/room101-2/800/600"
+    ],
+    "createdAt": "2026-01-03T12:30:00.000Z",
+    "updatedAt": "2026-01-03T12:30:00.000Z"
+  }
+}
+

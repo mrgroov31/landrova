@@ -10,8 +10,9 @@ import 'package:intl/intl.dart';
 
 class TenantsScreen extends StatefulWidget {
   final String? heroTag;
+  final String? selectedBuildingId;
   
-  const TenantsScreen({super.key, this.heroTag});
+  const TenantsScreen({super.key, this.heroTag, this.selectedBuildingId});
 
   @override
   State<TenantsScreen> createState() => _TenantsScreenState();
@@ -36,7 +37,19 @@ class _TenantsScreenState extends State<TenantsScreen> {
       });
       
       // Load from TenantService (which merges API and Hive data)
-      final loadedTenants = await TenantService.getAllTenants();
+      var loadedTenants = await TenantService.getAllTenants();
+      
+      // Filter by building if selected
+      if (widget.selectedBuildingId != null && widget.selectedBuildingId!.isNotEmpty) {
+        // Get rooms for this building
+        final roomsResponse = await ApiService.fetchRooms();
+        final allRooms = ApiService.parseRooms(roomsResponse);
+        final buildingRooms = allRooms.where((r) => r.buildingId == widget.selectedBuildingId).toList();
+        final roomNumbers = buildingRooms.map((r) => r.number).toSet();
+        
+        // Filter tenants by room numbers
+        loadedTenants = loadedTenants.where((t) => roomNumbers.contains(t.roomNumber)).toList();
+      }
       
       setState(() {
         tenants = loadedTenants;

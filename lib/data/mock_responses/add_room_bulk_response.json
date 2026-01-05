@@ -1,0 +1,90 @@
+{
+  "success": true,
+  "message": "Rooms created successfully",
+  "data": {
+    "buildingId": "6268a5da-3db0-4c3c-aafd-c0040b73db10",
+    "createdCount": 3,
+    "rooms": [
+      {
+        "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+        "buildingId": "6268a5da-3db0-4c3c-aafd-c0040b73db10",
+        "number": "101",
+        "type": "rented",
+        "status": "vacant",
+        "rent": 15000,
+        "capacity": 2,
+        "currentOccupancy": 0,
+        "floor": 1,
+        "area": "200 sq ft",
+        "description": "Spacious room with attached bathroom and balcony",
+        "amenities": [
+          "WiFi",
+          "AC",
+          "TV",
+          "Attached Bathroom",
+          "Balcony"
+        ],
+        "images": [
+          "https://picsum.photos/seed/room101-1/800/600",
+          "https://picsum.photos/seed/room101-2/800/600"
+        ],
+        "createdAt": "2026-01-03T12:30:00.000Z",
+        "updatedAt": "2026-01-03T12:30:00.000Z"
+      },
+      {
+        "id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+        "buildingId": "6268a5da-3db0-4c3c-aafd-c0040b73db10",
+        "number": "102",
+        "type": "pg",
+        "status": "vacant",
+        "rent": 8000,
+        "capacity": 4,
+        "currentOccupancy": 0,
+        "floor": 1,
+        "area": "300 sq ft",
+        "description": "Shared room for paying guests with common facilities",
+        "amenities": [
+          "WiFi",
+          "Fan",
+          "Common Bathroom",
+          "Common Kitchen"
+        ],
+        "images": [
+          "https://picsum.photos/seed/room102-1/800/600"
+        ],
+        "createdAt": "2026-01-03T12:30:00.000Z",
+        "updatedAt": "2026-01-03T12:30:00.000Z"
+      },
+      {
+        "id": "c3d4e5f6-a7b8-9012-cdef-123456789012",
+        "buildingId": "6268a5da-3db0-4c3c-aafd-c0040b73db10",
+        "number": "201",
+        "type": "rented",
+        "status": "vacant",
+        "rent": 18000,
+        "capacity": 1,
+        "currentOccupancy": 0,
+        "floor": 2,
+        "area": "180 sq ft",
+        "description": "Premium single occupancy room with all modern amenities",
+        "amenities": [
+          "WiFi",
+          "AC",
+          "TV",
+          "Refrigerator",
+          "Attached Bathroom",
+          "Balcony",
+          "Wardrobe"
+        ],
+        "images": [
+          "https://picsum.photos/seed/room201-1/800/600",
+          "https://picsum.photos/seed/room201-2/800/600",
+          "https://picsum.photos/seed/room201-3/800/600"
+        ],
+        "createdAt": "2026-01-03T12:30:00.000Z",
+        "updatedAt": "2026-01-03T12:30:00.000Z"
+      }
+    ]
+  }
+}
+

@@ -25,10 +25,14 @@ import 'profile_screen.dart';
 import 'register_service_provider_screen.dart';
 import 'service_providers_list_screen.dart';
 import 'vacating_requests_screen.dart';
-import 'login_screen.dart';
+import 'unified_login_screen.dart';
+import 'add_room_screen.dart';
+import 'invite_tenant_screen.dart';
+import 'room_detail_screen.dart';
 import '../services/auth_service.dart';
 import '../constants/app_assets.dart';
 import '../utils/custom_page_route.dart';
+import '../models/building.dart';
 import 'package:intl/intl.dart';
 import 'dart:io';
 
@@ -52,6 +56,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   PageController? _complaintsPageController;
   int _roomsCurrentPage = 0;
   int _complaintsCurrentPage = 0;
+  List<Building> _buildings = [];
 
   @override
   void initState() {
@@ -93,9 +98,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
         isLoading = true;
       });
 
+      // Load buildings for selection
+      try {
+        final ownerId = AuthService.getOwnerId();
+        final buildingsResponse = await ApiService.fetchBuildingsByOwnerId(ownerId);
+        final buildings = ApiService.parseBuildings(buildingsResponse);
+        setState(() {
+          _buildings = buildings;
+        });
+      } catch (e) {
+        debugPrint('Error loading buildings: $e');
+      }
+
       // Load all data in parallel (except complaints which need to merge with Hive)
+      final ownerId = AuthService.getOwnerId();
       final results = await Future.wait([
-        ApiService.fetchRooms(),
+        ApiService.fetchRoomsByOwnerId(ownerId),
         ApiService.fetchTenants(),
         ApiService.fetchPayments(),
       ]);
@@ -105,6 +123,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
       setState(() {
         var allRooms = ApiService.parseRooms(results[0]);
+        debugPrint('📊 [Dashboard] Parsed ${allRooms.length} rooms from API');
         var allTenants = ApiService.parseTenants(results[1]);
         var allPayments = ApiService.parsePayments(results[2]);
         
@@ -150,15 +169,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   int getTotalRooms() => rooms.isEmpty ? 0 : rooms.length;
-  int getOccupiedRooms() => rooms.isEmpty ? 0 : rooms.where((r) => r.status == 'occupied').length;
-  int getVacantRooms() => rooms.isEmpty ? 0 : rooms.where((r) => r.status == 'vacant').length;
+  int getOccupiedRooms() => rooms.isEmpty ? 0 : rooms.where((r) => r.hasTenant || r.isOccupied || r.status == 'occupied').length;
+  int getVacantRooms() => rooms.isEmpty ? 0 : rooms.where((r) => !r.hasTenant && !r.isOccupied && r.status == 'vacant').length;
   
-  // Active Tenants = Total people living in occupied rooms (using currentOccupancy)
-  // This is more accurate than counting tenant records, especially for PG rooms
+  // Active Tenants = Count actual tenants from room data + fallback to occupancy
   int getTotalTenants() {
     if (rooms.isEmpty) return 0;
+    
+    // First, count rooms with actual tenant data
+    int tenantsFromRoomData = rooms
+        .where((r) => r.hasTenant)
+        .length;
+    
+    // If we have tenant data, use it; otherwise fallback to occupancy count
+    if (tenantsFromRoomData > 0) {
+      return tenantsFromRoomData;
+    }
+    
+    // Fallback: use currentOccupancy for occupied rooms
     return rooms
-        .where((r) => r.status == 'occupied')
+        .where((r) => r.isOccupied || r.status == 'occupied')
         .fold(0, (sum, room) => sum + room.currentOccupancy);
   }
   
@@ -349,7 +379,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ],
       ),
       body: SingleChildScrollView(
-        padding: EdgeInsets.all(isMobile ? 16 : 24),
+        padding: EdgeInsets.only(
+          left: isMobile ? 16 : 24,
+          right: isMobile ? 16 : 24,
+          top: isMobile ? 16 : 24,
+          bottom: isMobile ? 16 : 24, // Remove extra padding since no nav bar
+        ),
         child: Center(
           child: ConstrainedBox(
             constraints: BoxConstraints(
@@ -432,7 +467,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                 ),
               ),
-            ),
+          ),
     );
   }
 
@@ -570,7 +605,47 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 child: RoomListingCard(
                   room: room,
                   tenantName: tenant?.name,
-                  onTap: () {},
+                  buildingName: _buildings.isNotEmpty
+                      ? _buildings.firstWhere(
+                          (b) => b.id == room.buildingId,
+                          orElse: () => Building(
+                            id: room.buildingId,
+                            name: 'Building',
+                            address: '',
+                            totalFloors: 1,
+                            totalRooms: 1,
+                            buildingType: 'standalone',
+                            propertyType: 'rented',
+                            createdAt: DateTime.now(),
+                          ),
+                        ).name
+                      : null,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      CustomPageRoute(
+                        child: RoomDetailScreen(
+                          room: room,
+                          buildingName: _buildings.isNotEmpty
+                              ? _buildings.firstWhere(
+                                  (b) => b.id == room.buildingId,
+                                  orElse: () => Building(
+                                    id: room.buildingId,
+                                    name: 'Building',
+                                    address: '',
+                                    totalFloors: 1,
+                                    totalRooms: 1,
+                                    buildingType: 'standalone',
+                                    propertyType: 'rented',
+                                    createdAt: DateTime.now(),
+                                  ),
+                                ).name
+                              : null,
+                        ),
+                        transition: CustomPageTransition.containerTransform,
+                      ),
+                    );
+                  },
                 ),
               );
             },
@@ -780,12 +855,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
               color: Colors.blue,
               heroTag: 'add_tenant_button',
               onTap: () {
-                Navigator.push(
+                _showBuildingSelectionDialog(
                   context,
-                  CustomPageRoute(
-                    child: const TenantsScreen(heroTag: 'add_tenant_button'),
-                    transition: CustomPageTransition.transform,
-                  ),
+                  onBuildingSelected: (buildingId) {
+                    Navigator.push(
+                      context,
+                      CustomPageRoute(
+                        child: InviteTenantScreen(selectedBuildingId: buildingId),
+                        transition: CustomPageTransition.transform,
+                      ),
+                    ).then((result) {
+                      if (result == true) {
+                        loadDashboardData();
+                      }
+                    });
+                  },
                 );
               },
             ),
@@ -795,12 +879,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
               color: Colors.green,
               heroTag: 'add_room_button',
               onTap: () {
-                Navigator.push(
+                _showBuildingSelectionDialog(
                   context,
-                  CustomPageRoute(
-                    child: const RoomsScreen(heroTag: 'add_room_button'),
-                    transition: CustomPageTransition.transform,
-                  ),
+                  onBuildingSelected: (buildingId) {
+                    Navigator.push(
+                      context,
+                      CustomPageRoute(
+                        child: AddRoomScreen(buildingId: buildingId),
+                        transition: CustomPageTransition.transform,
+                      ),
+                    ).then((result) {
+                      if (result != null) {
+                        loadDashboardData();
+                      }
+                    });
+                  },
                 );
               },
             ),
@@ -1227,6 +1320,105 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  Future<void> _showBuildingSelectionDialog(
+    BuildContext context, {
+    required Function(String buildingId) onBuildingSelected,
+  }) async {
+    List<Building> buildings = _buildings;
+    
+    // Load buildings if not loaded
+    if (buildings.isEmpty) {
+      try {
+        final ownerId = AuthService.getOwnerId();
+        final buildingsResponse = await ApiService.fetchBuildingsByOwnerId(ownerId);
+        buildings = ApiService.parseBuildings(buildingsResponse);
+        setState(() {
+          _buildings = buildings;
+        });
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error loading buildings: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return;
+      }
+    }
+
+    if (buildings.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No buildings found. Please add a building first.'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+        // Navigate to add building screen
+        Navigator.push(
+          context,
+          CustomPageRoute(
+            child: const BuildingsScreen(),
+            transition: CustomPageTransition.transform,
+          ),
+        );
+      }
+      return;
+    }
+
+    // If only one building, use it directly without showing dialog
+    if (buildings.length == 1) {
+      onBuildingSelected(buildings.first.id);
+      return;
+    }
+
+    // Show dialog only for multiple buildings
+    if (!mounted) return;
+    
+    final selectedBuilding = await showDialog<Building>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Select Building'),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: buildings.length,
+            itemBuilder: (context, index) {
+              final building = buildings[index];
+              return ListTile(
+                leading: Icon(
+                  Icons.business,
+                  color: AppTheme.primaryColor,
+                ),
+                title: Text(
+                  building.name,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                subtitle: Text(building.address),
+                onTap: () {
+                  Navigator.pop(context, building);
+                },
+              );
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+        ],
+      ),
+    );
+
+    if (selectedBuilding != null) {
+      onBuildingSelected(selectedBuilding.id);
+    }
+  }
+
   void _showLogoutDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -1244,7 +1436,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               await AuthService.logout();
               if (context.mounted) {
                 Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (context) => LoginScreen()),
+                  MaterialPageRoute(builder: (context) => const UnifiedLoginScreen()),
                   (route) => false,
                 );
               }

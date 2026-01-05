@@ -5,6 +5,8 @@ import '../models/building.dart';
 import '../utils/responsive.dart';
 import '../theme/app_theme.dart';
 import '../utils/custom_page_route.dart';
+import '../services/api_service.dart';
+import '../services/auth_service.dart';
 import 'buildings_screen.dart';
 
 class AddBuildingScreen extends StatefulWidget {
@@ -68,60 +70,117 @@ class _AddBuildingScreenState extends State<AddBuildingScreen> {
       _isLoading = true;
     });
 
-    // Simulate API call delay
-    await Future.delayed(const Duration(seconds: 1));
+    try {
+      // Get current owner ID from centralized location
+      final currentUser = AuthService.currentUser;
+      if (currentUser == null || !currentUser.isOwner) {
+        throw Exception('User not logged in as owner');
+      }
 
-    // Create owner if details provided
-    BuildingOwner? owner;
-    if (_ownerNameController.text.trim().isNotEmpty ||
-        _ownerEmailController.text.trim().isNotEmpty ||
-        _ownerPhoneController.text.trim().isNotEmpty) {
-      owner = BuildingOwner(
-        name: _ownerNameController.text.trim(),
-        email: _ownerEmailController.text.trim(),
-        phone: _ownerPhoneController.text.trim(),
-        image: _ownerImage?.path,
-      );
-    }
+      final ownerId = AuthService.getOwnerId();
 
-    // Create new building
-    final newBuilding = Building(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      name: _nameController.text.trim(),
-      address: _addressController.text.trim(),
-      city: _cityController.text.trim().isEmpty ? null : _cityController.text.trim(),
-      state: _stateController.text.trim().isEmpty ? null : _stateController.text.trim(),
-      pincode: _pincodeController.text.trim().isEmpty ? null : _pincodeController.text.trim(),
-      totalFloors: int.tryParse(_totalFloorsController.text) ?? 1,
-      totalRooms: int.tryParse(_totalRoomsController.text) ?? 1,
-      buildingType: _buildingType,
-      propertyType: _propertyType, // Property type selected when creating
-      image: _buildingImage?.path, // Store image path (in production, upload and store URL)
-      description: _descriptionController.text.trim().isEmpty 
-          ? null 
-          : _descriptionController.text.trim(),
-      createdAt: DateTime.now(),
-      isActive: true,
-      owner: owner,
-      facilities: _facilities,
-    );
+      // Prepare amenities list from facilities
+      final amenities = _facilities.map((facility) => facility.name).toList();
 
-    setState(() {
-      _isLoading = false;
-    });
+      // Prepare facilities list for API
+      final facilities = _facilities.map((facility) => {
+        'name': facility.name,
+        'isPaid': facility.isPaid,
+      }).toList();
 
-    // Show success message
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('${newBuilding.name} created successfully!'),
-          backgroundColor: Colors.green,
-          duration: const Duration(seconds: 2),
-        ),
+      // Prepare building data for API
+      final buildingData = {
+        'name': _nameController.text.trim(),
+        'address': _addressController.text.trim(),
+        'city': _cityController.text.trim().isEmpty ? null : _cityController.text.trim(),
+        'state': _stateController.text.trim().isEmpty ? null : _stateController.text.trim(),
+        'pincode': _pincodeController.text.trim().isEmpty ? null : _pincodeController.text.trim(),
+        'totalFloors': int.tryParse(_totalFloorsController.text) ?? 1,
+        'totalRooms': int.tryParse(_totalRoomsController.text) ?? 1,
+        'buildingType': _buildingType,
+        'propertyType': _propertyType,
+        'description': _descriptionController.text.trim().isEmpty 
+            ? null 
+            : _descriptionController.text.trim(),
+        'amenities': amenities,
+        'facilities': facilities,
+      };
+
+      // Remove null values from building data
+      buildingData.removeWhere((key, value) => value == null);
+
+      // Call API to create building
+      final response = await ApiService.createBuildingsBulk(
+        ownerId: ownerId,
+        buildings: [buildingData],
       );
 
-      // Navigate back to buildings screen
-      Navigator.pop(context, newBuilding);
+      setState(() {
+        _isLoading = false;
+      });
+
+      // Show success message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${_nameController.text.trim()} created successfully!'),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+
+        // Create building object for local use (if needed)
+        BuildingOwner? owner;
+        if (_ownerNameController.text.trim().isNotEmpty ||
+            _ownerEmailController.text.trim().isNotEmpty ||
+            _ownerPhoneController.text.trim().isNotEmpty) {
+          owner = BuildingOwner(
+            name: _ownerNameController.text.trim(),
+            email: _ownerEmailController.text.trim(),
+            phone: _ownerPhoneController.text.trim(),
+            image: _ownerImage?.path,
+          );
+        }
+
+        final newBuilding = Building(
+          id: response['data']?['buildings']?[0]?['id']?.toString() ?? 
+               DateTime.now().millisecondsSinceEpoch.toString(),
+          name: _nameController.text.trim(),
+          address: _addressController.text.trim(),
+          city: _cityController.text.trim().isEmpty ? null : _cityController.text.trim(),
+          state: _stateController.text.trim().isEmpty ? null : _stateController.text.trim(),
+          pincode: _pincodeController.text.trim().isEmpty ? null : _pincodeController.text.trim(),
+          totalFloors: int.tryParse(_totalFloorsController.text) ?? 1,
+          totalRooms: int.tryParse(_totalRoomsController.text) ?? 1,
+          buildingType: _buildingType,
+          propertyType: _propertyType,
+          image: _buildingImage?.path,
+          description: _descriptionController.text.trim().isEmpty 
+              ? null 
+              : _descriptionController.text.trim(),
+          createdAt: DateTime.now(),
+          isActive: true,
+          owner: owner,
+          facilities: _facilities,
+        );
+
+        // Navigate back to buildings screen
+        Navigator.pop(context, newBuilding);
+      }
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error creating building: ${e.toString()}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
     }
   }
 

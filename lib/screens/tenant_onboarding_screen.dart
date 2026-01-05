@@ -4,6 +4,8 @@ import 'dart:io';
 import '../models/tenant.dart';
 import '../services/tenant_service.dart';
 import '../services/invitation_service.dart';
+import '../services/api_service.dart';
+import '../services/auth_service.dart';
 import '../utils/responsive.dart';
 import '../theme/app_theme.dart';
 import 'package:intl/intl.dart';
@@ -11,11 +13,15 @@ import 'package:intl/intl.dart';
 class TenantOnboardingScreen extends StatefulWidget {
   final String? invitationToken;
   final String? roomNumber;
+  final String? buildingId;
+  final String? roomId;
 
   const TenantOnboardingScreen({
     super.key,
     this.invitationToken,
     this.roomNumber,
+    this.buildingId,
+    this.roomId,
   });
 
   @override
@@ -33,6 +39,8 @@ class _TenantOnboardingScreenState extends State<TenantOnboardingScreen> {
   final _emailController = TextEditingController();
   final _aadharController = TextEditingController();
   final _emergencyContactController = TextEditingController();
+  final _emergencyContactNameController = TextEditingController();
+  final _emergencyContactRelationController = TextEditingController();
   final _occupationController = TextEditingController();
   final _roomNumberController = TextEditingController();
   final _rentController = TextEditingController();
@@ -53,8 +61,43 @@ class _TenantOnboardingScreenState extends State<TenantOnboardingScreen> {
   @override
   void initState() {
     super.initState();
+    
+    debugPrint('');
+    debugPrint('🎯 ===== TENANT ONBOARDING SCREEN INIT =====');
+    debugPrint('🎯 [INIT] Invitation Token: ${widget.invitationToken}');
+    debugPrint('🎯 [INIT] Room Number: ${widget.roomNumber}');
+    debugPrint('🎯 [INIT] Building ID: ${widget.buildingId}');
+    debugPrint('🎯 [INIT] Room ID: ${widget.roomId}');
+    debugPrint('🎯 ===== TENANT ONBOARDING SCREEN INIT END =====');
+    debugPrint('');
+    
     if (widget.roomNumber != null) {
       _roomNumberController.text = widget.roomNumber!;
+    }
+    
+    // If room ID is provided, load room details to populate form
+    if (widget.roomId != null && widget.roomId!.isNotEmpty) {
+      _loadRoomDetails();
+    }
+  }
+  
+  Future<void> _loadRoomDetails() async {
+    try {
+      final ownerId = AuthService.getOwnerId();
+      final room = await ApiService.getRoomById(
+        ownerId: ownerId,
+        roomId: widget.roomId!,
+      );
+      
+      if (room != null && mounted) {
+        setState(() {
+          _roomNumberController.text = room.number;
+          _rentController.text = room.rent.toStringAsFixed(0);
+        });
+        debugPrint('✅ [ONBOARDING] Pre-filled room details from room ID');
+      }
+    } catch (e) {
+      debugPrint('❌ [ONBOARDING] Error loading room details: $e');
     }
   }
 
@@ -65,6 +108,8 @@ class _TenantOnboardingScreenState extends State<TenantOnboardingScreen> {
     _emailController.dispose();
     _aadharController.dispose();
     _emergencyContactController.dispose();
+    _emergencyContactNameController.dispose();
+    _emergencyContactRelationController.dispose();
     _occupationController.dispose();
     _roomNumberController.dispose();
     _rentController.dispose();
@@ -182,23 +227,135 @@ class _TenantOnboardingScreenState extends State<TenantOnboardingScreen> {
       return;
     }
 
+    // Validate emergency contact details
+    if (_emergencyContactNameController.text.trim().isEmpty ||
+        _emergencyContactController.text.trim().isEmpty ||
+        _emergencyContactRelationController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please fill all emergency contact details'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     setState(() {
       _isLoading = true;
     });
 
     try {
-      final tenantId = DateTime.now().millisecondsSinceEpoch.toString();
+      debugPrint('');
+      debugPrint('🎯 ===== TENANT ONBOARDING SUBMISSION START =====');
+      debugPrint('🎯 [ONBOARDING] Starting tenant registration process...');
+      debugPrint('🎯 [ONBOARDING] Tenant Name: ${_nameController.text.trim()}');
+      debugPrint('🎯 [ONBOARDING] Room Number: ${_roomNumberController.text.trim()}');
+      debugPrint('🎯 [ONBOARDING] Building ID: ${widget.buildingId ?? 'Not provided'}');
+      debugPrint('🎯 [ONBOARDING] Invitation Token: ${widget.invitationToken ?? 'Not provided'}');
+      debugPrint('');
+
+      // Show progress message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Row(
+              children: [
+                SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                ),
+                SizedBox(width: 12),
+                Text('Creating your account...'),
+              ],
+            ),
+            backgroundColor: Colors.blue,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+
+      // Get owner ID
+      final ownerId = AuthService.getOwnerId();
+      debugPrint('🎯 [ONBOARDING] Owner ID: $ownerId');
       
-      // In a real app, you would upload images to a server and get URLs
-      // For now, we'll store the file paths
+      // Get room ID - use direct room ID if available, otherwise lookup
+      String? roomId = widget.roomId;
+      
+      if (roomId != null && roomId.isNotEmpty) {
+        debugPrint('✅ [ONBOARDING] Using room ID from invitation: $roomId');
+      } else {
+        debugPrint('🎯 [ONBOARDING] Room ID not provided, looking up room ID...');
+        roomId = await ApiService.getRoomIdByNumber(
+          ownerId: ownerId,
+          roomNumber: _roomNumberController.text.trim(),
+          buildingId: widget.buildingId,
+        );
+
+        if (roomId == null) {
+          debugPrint('❌ [ONBOARDING] FAILED: Room ID not found!');
+          throw Exception('Room not found. Please check the room number.');
+        }
+        
+        debugPrint('✅ [ONBOARDING] Room ID found via lookup: $roomId');
+      }
+
+      // Calculate lease end date (1 year from move-in date)
+      final moveInDate = _moveInDate ?? DateTime.now();
+      final leaseEndDate = DateTime(moveInDate.year + 1, moveInDate.month, moveInDate.day);
+      
+      // Format dates for API
+      final moveInDateStr = DateFormat('yyyy-MM-dd').format(moveInDate);
+      final leaseEndDateStr = DateFormat('yyyy-MM-dd').format(leaseEndDate);
+      
+      // Calculate deposit (typically 2 months rent)
+      final monthlyRent = double.tryParse(_rentController.text) ?? 0.0;
+      final depositPaid = monthlyRent * 2;
+
+      debugPrint('🎯 [ONBOARDING] Calculated values:');
+      debugPrint('🎯 [ONBOARDING] - Move-in Date: $moveInDateStr');
+      debugPrint('🎯 [ONBOARDING] - Lease End Date: $leaseEndDateStr');
+      debugPrint('🎯 [ONBOARDING] - Monthly Rent: ₹$monthlyRent');
+      debugPrint('🎯 [ONBOARDING] - Deposit: ₹$depositPaid');
+      debugPrint('');
+
+      debugPrint('🎯 [ONBOARDING] Calling API to create tenant...');
+      // Call API to create tenant
+      final response = await ApiService.createTenant(
+        roomId: roomId,
+        name: _nameController.text.trim(),
+        email: _emailController.text.trim(),
+        phone: _phoneController.text.trim(),
+        emergencyContactName: _emergencyContactNameController.text.trim(),
+        emergencyContactPhone: _emergencyContactController.text.trim(),
+        emergencyContactRelation: _emergencyContactRelationController.text.trim(),
+        idProofType: 'aadhar',
+        idProofNumber: _aadharController.text.trim(),
+        moveInDate: moveInDateStr,
+        leaseEndDate: leaseEndDateStr,
+        depositPaid: depositPaid,
+        occupation: _occupationController.text.trim().isEmpty ? null : _occupationController.text.trim(),
+        invitationToken: widget.invitationToken,
+      );
+
+      debugPrint('✅ [ONBOARDING] API call successful!');
+      debugPrint('✅ [ONBOARDING] API Response: $response');
+
+      // Also save to local storage for offline access
+      final tenantId = response['data']?['id']?.toString() ?? 
+                      DateTime.now().millisecondsSinceEpoch.toString();
+      
+      debugPrint('🎯 [ONBOARDING] Saving to local storage...');
+      debugPrint('🎯 [ONBOARDING] Local Tenant ID: $tenantId');
+      
       final tenant = Tenant(
         id: tenantId,
         name: _nameController.text.trim(),
         phone: _phoneController.text.trim(),
         email: _emailController.text.trim(),
         roomNumber: _roomNumberController.text.trim(),
-        moveInDate: _moveInDate ?? DateTime.now(),
-        monthlyRent: double.tryParse(_rentController.text) ?? 0.0,
+        moveInDate: moveInDate,
+        monthlyRent: monthlyRent,
         type: _tenantType,
         isActive: true,
         aadharNumber: _aadharController.text.trim(),
@@ -213,13 +370,22 @@ class _TenantOnboardingScreenState extends State<TenantOnboardingScreen> {
       );
 
       await TenantService.addTenant(tenant);
+      debugPrint('✅ [ONBOARDING] Saved to local storage successfully!');
 
       if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        
+        debugPrint('✅ [ONBOARDING] SUCCESS: Registration completed!');
+        debugPrint('🎯 ===== TENANT ONBOARDING SUBMISSION END =====');
+        debugPrint('');
+        
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Registration completed successfully!'),
+          SnackBar(
+            content: Text('Welcome ${_nameController.text.trim()}! Registration completed successfully.'),
             backgroundColor: Colors.green,
-            duration: Duration(seconds: 3),
+            duration: const Duration(seconds: 4),
           ),
         );
         
@@ -227,16 +393,33 @@ class _TenantOnboardingScreenState extends State<TenantOnboardingScreen> {
         Navigator.of(context).popUntil((route) => route.isFirst);
       }
     } catch (e) {
+      debugPrint('❌ [ONBOARDING] FAILED: Registration failed!');
+      debugPrint('❌ [ONBOARDING] Error: $e');
+      debugPrint('❌ [ONBOARDING] Error Type: ${e.runtimeType}');
+      debugPrint('🎯 ===== TENANT ONBOARDING SUBMISSION END =====');
+      debugPrint('');
+      
       if (mounted) {
         setState(() {
           _isLoading = false;
         });
+        
+        String errorMessage = 'Registration failed. Please try again.';
+        if (e.toString().contains('Room not found')) {
+          errorMessage = 'Room not found. Please check the room number.';
+        } else if (e.toString().contains('network') || e.toString().contains('connection')) {
+          errorMessage = 'Network error. Please check your internet connection.';
+        }
+        
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error submitting form: $e'),
+            content: Text(errorMessage),
             backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
           ),
         );
+        
+        debugPrint('❌ [ONBOARDING] Showed error message to user: $errorMessage');
       }
     }
   }
@@ -327,7 +510,7 @@ class _TenantOnboardingScreenState extends State<TenantOnboardingScreen> {
                         if (_validateCurrentStep()) {
                           _pageController.nextPage(
                             duration: const Duration(milliseconds: 300),
-                            curve: Curves.easeInOut,
+                            curve: Curves.bounceInOut,
                           );
                           setState(() {
                             _currentStep++;
@@ -386,7 +569,10 @@ class _TenantOnboardingScreenState extends State<TenantOnboardingScreen> {
       case 1:
         if (_phoneController.text.trim().isEmpty ||
             _emailController.text.trim().isEmpty ||
-            _aadharController.text.trim().isEmpty) {
+            _aadharController.text.trim().isEmpty ||
+            _emergencyContactNameController.text.trim().isEmpty ||
+            _emergencyContactController.text.trim().isEmpty ||
+            _emergencyContactRelationController.text.trim().isEmpty) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Please fill all required fields'),
@@ -754,11 +940,32 @@ class _TenantOnboardingScreenState extends State<TenantOnboardingScreen> {
           
           SizedBox(height: isMobile ? 16 : 20),
           
-          // Emergency Contact
+          // Emergency Contact Name
+          TextFormField(
+            controller: _emergencyContactNameController,
+            decoration: InputDecoration(
+              labelText: 'Emergency Contact Name *',
+              hintText: 'e.g., John Smith',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              prefixIcon: const Icon(Icons.person_outline),
+            ),
+            validator: (value) {
+              if (value == null || value.trim().isEmpty) {
+                return 'Please enter emergency contact name';
+              }
+              return null;
+            },
+          ),
+          
+          SizedBox(height: isMobile ? 16 : 20),
+          
+          // Emergency Contact Phone
           TextFormField(
             controller: _emergencyContactController,
             decoration: InputDecoration(
-              labelText: 'Emergency Contact (Optional)',
+              labelText: 'Emergency Contact Phone *',
               hintText: '+91 9876543210',
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -766,6 +973,33 @@ class _TenantOnboardingScreenState extends State<TenantOnboardingScreen> {
               prefixIcon: const Icon(Icons.emergency),
             ),
             keyboardType: TextInputType.phone,
+            validator: (value) {
+              if (value == null || value.trim().isEmpty) {
+                return 'Please enter emergency contact phone';
+              }
+              return null;
+            },
+          ),
+          
+          SizedBox(height: isMobile ? 16 : 20),
+          
+          // Emergency Contact Relation
+          TextFormField(
+            controller: _emergencyContactRelationController,
+            decoration: InputDecoration(
+              labelText: 'Relation *',
+              hintText: 'e.g., Father, Mother, Spouse, Friend',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              prefixIcon: const Icon(Icons.family_restroom),
+            ),
+            validator: (value) {
+              if (value == null || value.trim().isEmpty) {
+                return 'Please enter relation';
+              }
+              return null;
+            },
           ),
         ],
       ),

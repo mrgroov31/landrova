@@ -98,5 +98,18 @@ class TenantService {
       return null;
     }
   }
+
+  // Get tenant by room number
+  static Future<Tenant?> getTenantByRoomNumber(String roomNumber) async {
+    await _initialize();
+    if (_box == null) return null;
+    try {
+      return _box!.values.firstWhere(
+        (tenant) => tenant.roomNumber == roomNumber,
+      );
+    } catch (e) {
+      return null;
+    }
+  }
 }
 

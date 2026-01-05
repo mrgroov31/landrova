@@ -1,9 +1,13 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:http/http.dart' as http;
 import '../models/room.dart';
 import '../models/tenant.dart';
 import '../models/complaint.dart';
 import '../models/payment.dart';
+import '../models/building.dart';
+import 'dart:developer';
 
 class ApiService {
   // Simulate API calls by loading JSON files
@@ -32,10 +36,103 @@ class ApiService {
     return json.decode(response);
   }
 
+  // Fetch rooms by owner ID
+  static Future<Map<String, dynamic>> fetchRoomsByOwnerId(String ownerId) async {
+    try {
+      final url = Uri.parse('https://www.leranothrive.com/api/owners/$ownerId/rooms');
+      
+      debugPrint('🏠 [API] Fetching rooms for ownerId: $ownerId');
+      debugPrint('🌐 [API] URL: $url');
+      debugPrint('📤 [API] Method: GET');
+      debugPrint('📤 [API] Headers: {accept: */*}');
+      
+      final response = await http.get(
+        url,
+        headers: {
+          'accept': '*/*',
+        },
+      );
+
+      debugPrint('📥 [API] Response Status Code: ${response.statusCode}');
+      debugPrint('📥 [API] Response Headers: ${response.headers}');
+      log('📥 [API] Response Body: 1 ${response.body}');
+
+      if (response.statusCode == 200) {
+        final decodedResponse = json.decode(response.body);
+        debugPrint('✅ [API] Successfully fetched rooms');
+        print('📊 [API] Number of rooms: ${decodedResponse['data']?.length ?? 0}');
+        return decodedResponse;
+      } else {
+        debugPrint('❌ [API] Failed to fetch rooms: ${response.statusCode}');
+        debugPrint('❌ [API] Error Body: ${response.body}');
+        throw Exception('Failed to fetch rooms: ${response.statusCode} - ${response.body}');
+      }
+    } catch (e) {
+      debugPrint('💥 [API] Exception while fetching rooms: $e');
+      throw Exception('Error fetching rooms: $e');
+    }
+  }
+
   // Parse responses to models
   static List<Room> parseRooms(Map<String, dynamic> response) {
-    final List<dynamic> roomsData = response['data']['rooms'];
-    return roomsData.map((json) => Room.fromJson(json)).toList();
+    debugPrint('🔍 [PARSE] Parsing rooms from response: ${response.keys}');
+    
+    // Handle both old mock format and new API format
+    List<dynamic> roomsData = [];
+    
+    try {
+      if (response['data'] != null) {
+        debugPrint('🔍 [PARSE] Found data key in response');
+        
+        if (response['data'] is List) {
+          // New API format: { "success": true, "data": [...] }
+          roomsData = response['data'] as List<dynamic>;
+          debugPrint('🔍 [PARSE] Data is a List, found ${roomsData.length} rooms');
+        } else if (response['data'] is Map) {
+          final dataMap = response['data'] as Map<String, dynamic>;
+          if (dataMap['rooms'] != null) {
+            // Old mock format: { "data": { "rooms": [...] } }
+            roomsData = dataMap['rooms'] as List<dynamic>;
+            debugPrint('🔍 [PARSE] Data is a Map with rooms key, found ${roomsData.length} rooms');
+          } else {
+            debugPrint('⚠️ [PARSE] Data is a Map but no rooms key found. Keys: ${dataMap.keys}');
+          }
+        } else {
+          debugPrint('⚠️ [PARSE] Data is neither List nor Map, type: ${response['data'].runtimeType}');
+        }
+      } else {
+        debugPrint('⚠️ [PARSE] No data key in response. Response keys: ${response.keys}');
+        // Try direct array format: [{...}, {...}]
+        if (response is List) {
+          roomsData = response as List<dynamic>;
+          debugPrint('🔍 [PARSE] Response is directly a List, found ${roomsData.length} rooms');
+        }
+      }
+      
+      debugPrint('✅ [PARSE] Total rooms to parse: ${roomsData.length}');
+      
+      // Parse each room with error handling
+      final List<Room> parsedRooms = [];
+      for (int i = 0; i < roomsData.length; i++) {
+        try {
+          final roomJson = roomsData[i] as Map<String, dynamic>;
+          final room = Room.fromJson(roomJson);
+          parsedRooms.add(room);
+          debugPrint('✅ [PARSE] Successfully parsed room ${i + 1}: ${room.number}');
+        } catch (e, stackTrace) {
+          debugPrint('❌ [PARSE] Error parsing room ${i + 1}: $e');
+          debugPrint('❌ [PARSE] Stack trace: $stackTrace');
+          debugPrint('❌ [PARSE] Room data: ${roomsData[i]}');
+        }
+      }
+      
+      debugPrint('✅ [PARSE] Successfully parsed ${parsedRooms.length} out of ${roomsData.length} rooms');
+      return parsedRooms;
+    } catch (e, stackTrace) {
+      debugPrint('💥 [PARSE] Fatal error parsing rooms: $e');
+      debugPrint('💥 [PARSE] Stack trace: $stackTrace');
+      return [];
+    }
   }
 
   static List<Tenant> parseTenants(Map<String, dynamic> response) {
@@ -51,6 +148,423 @@ class ApiService {
   static List<Payment> parsePayments(Map<String, dynamic> response) {
     final List<dynamic> paymentsData = response['data']['payments'];
     return paymentsData.map((json) => Payment.fromJson(json)).toList();
+  }
+
+  // Fetch buildings by owner ID
+  static Future<Map<String, dynamic>> fetchBuildingsByOwnerId(String ownerId) async {
+    try {
+      final url = Uri.parse('https://www.leranothrive.com/api/buildings?ownerId=$ownerId');
+      
+      debugPrint('🏢 [API] Fetching buildings for ownerId: $ownerId');
+      debugPrint('🌐 [API] URL: $url');
+      debugPrint('📤 [API] Method: GET');
+      debugPrint('📤 [API] Headers: {accept: */*}');
+      
+      final response = await http.get(
+        url,
+        headers: {
+          'accept': '*/*',
+        },
+      );
+
+      debugPrint('📥 [API] Response Status Code: ${response.statusCode}');
+      debugPrint('📥 [API] Response Headers: ${response.headers}');
+      log('📥 [API] Response Body: 2${response.body}');
+      if (response.statusCode == 200) {
+        final decodedResponse = json.decode(response.body);
+        debugPrint('✅ [API] Successfully fetched buildings');
+        debugPrint('📊 [API] Number of buildings: ${decodedResponse['data']?.length ?? 0}');
+        return decodedResponse;
+      } else {
+        debugPrint('❌ [API] Failed to fetch buildings: ${response.statusCode}');
+        debugPrint('❌ [API] Error Body: ${response.body}');
+        throw Exception('Failed to fetch buildings: ${response.statusCode} - ${response.body}');
+      }
+    } catch (e) {
+      debugPrint('💥 [API] Exception while fetching buildings: $e');
+      throw Exception('Error fetching buildings: $e');
+    }
+  }
+
+  // Parse buildings from API response
+  static List<Building> parseBuildings(Map<String, dynamic> response) {
+    debugPrint('🔍 [PARSE] Parsing buildings from response: ${response.keys}');
+    
+    try {
+      if (response['success'] == true && response['data'] != null) {
+        List<dynamic> buildingsData = [];
+        
+        if (response['data'] is List) {
+          // Direct array format: { "success": true, "data": [...] }
+          buildingsData = response['data'] as List<dynamic>;
+          debugPrint('🔍 [PARSE] Data is a List, found ${buildingsData.length} buildings');
+        } else if (response['data'] is Map) {
+          final dataMap = response['data'] as Map<String, dynamic>;
+          if (dataMap['buildings'] != null) {
+            // Nested format: { "success": true, "data": { "buildings": [...] } }
+            buildingsData = dataMap['buildings'] as List<dynamic>;
+            debugPrint('🔍 [PARSE] Data is a Map with buildings key, found ${buildingsData.length} buildings');
+          } else {
+            debugPrint('⚠️ [PARSE] Data is a Map but no buildings key found. Keys: ${dataMap.keys}');
+          }
+        }
+        
+        debugPrint('✅ [PARSE] Total buildings to parse: ${buildingsData.length}');
+        
+        // Parse each building with error handling
+        final List<Building> parsedBuildings = [];
+        for (int i = 0; i < buildingsData.length; i++) {
+          try {
+            final buildingJson = buildingsData[i] as Map<String, dynamic>;
+            final building = Building.fromJson(buildingJson);
+            parsedBuildings.add(building);
+            debugPrint('✅ [PARSE] Successfully parsed building ${i + 1}: ${building.name}');
+          } catch (e, stackTrace) {
+            debugPrint('❌ [PARSE] Error parsing building ${i + 1}: $e');
+            debugPrint('❌ [PARSE] Stack trace: $stackTrace');
+            debugPrint('❌ [PARSE] Building data: ${buildingsData[i]}');
+          }
+        }
+        
+        debugPrint('✅ [PARSE] Successfully parsed ${parsedBuildings.length} out of ${buildingsData.length} buildings');
+        return parsedBuildings;
+      }
+    } catch (e, stackTrace) {
+      debugPrint('💥 [PARSE] Fatal error parsing buildings: $e');
+      debugPrint('💥 [PARSE] Stack trace: $stackTrace');
+    }
+    
+    return [];
+  }
+
+  // Create buildings via bulk API
+  static Future<Map<String, dynamic>> createBuildingsBulk({
+    required String ownerId,
+    required List<Map<String, dynamic>> buildings,
+  }) async {
+    try {
+      final url = Uri.parse('https://www.leranothrive.com/api/buildings/bulk');
+      
+      final payload = {
+        'ownerId': ownerId,
+        'buildings': buildings,
+      };
+
+      debugPrint('🏗️ [API] Creating buildings for ownerId: $ownerId');
+      debugPrint('🌐 [API] URL: $url');
+      debugPrint('📤 [API] Method: POST');
+      debugPrint('📤 [API] Headers: {Content-Type: application/json}');
+      debugPrint('📤 [API] Request Payload: ${json.encode(payload)}');
+
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: json.encode(payload),
+      );
+
+      debugPrint('📥 [API] Response Status Code: ${response.statusCode}');
+      debugPrint('📥 [API] Response Headers: ${response.headers}');
+      log('📥 [API] Response Body: 3${response.body}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final decodedResponse = json.decode(response.body);
+        debugPrint('✅ [API] Successfully created buildings');
+        debugPrint('📊 [API] Created buildings count: ${buildings.length}');
+        return decodedResponse;
+      } else {
+        debugPrint('❌ [API] Failed to create buildings: ${response.statusCode}');
+        debugPrint('❌ [API] Error Body: ${response.body}');
+        throw Exception('Failed to create buildings: ${response.statusCode} - ${response.body}');
+      }
+    } catch (e) {
+      debugPrint('💥 [API] Exception while creating buildings: $e');
+      throw Exception('Error creating buildings: $e');
+    }
+  }
+
+  // Create rooms via bulk API
+  static Future<Map<String, dynamic>> createRoomsBulk({
+    required String buildingId,
+    required List<Map<String, dynamic>> rooms,
+  }) async {
+    try {
+      final url = Uri.parse('https://www.leranothrive.com/api/rooms/bulk');
+      
+      final payload = {
+        'buildingId': buildingId,
+        'rooms': rooms,
+      };
+
+      debugPrint('🏠 [API] Creating rooms for buildingId: $buildingId');
+      debugPrint('🌐 [API] URL: $url');
+      debugPrint('📤 [API] Method: POST');
+      debugPrint('📤 [API] Headers: {Content-Type: application/json}');
+      debugPrint('📤 [API] Request Payload: ${json.encode(payload)}');
+
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: json.encode(payload),
+      );
+
+      debugPrint('📥 [API] Response Status Code: ${response.statusCode}');
+      debugPrint('📥 [API] Response Headers: ${response.headers}');
+      log('📥 [API] Response Body: 3${response.body}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final decodedResponse = json.decode(response.body);
+        debugPrint('✅ [API] Successfully created rooms');
+        debugPrint('📊 [API] Created rooms count: ${rooms.length}');
+        return decodedResponse;
+      } else {
+        debugPrint('❌ [API] Failed to create rooms: ${response.statusCode}');
+        debugPrint('❌ [API] Error Body: ${response.body}');
+        throw Exception('Failed to create rooms: ${response.statusCode} - ${response.body}');
+      }
+    } catch (e) {
+      debugPrint('💥 [API] Exception while creating rooms: $e');
+      throw Exception('Error creating rooms: $e');
+    }
+  }
+
+  // Get room ID by room number and building ID
+  static Future<String?> getRoomIdByNumber({
+    required String ownerId,
+    required String roomNumber,
+    String? buildingId,
+  }) async {
+    try {
+      debugPrint('');
+      debugPrint('🔍 ===== ROOM ID LOOKUP START =====');
+      debugPrint('🔍 [API] Looking for room ID...');
+      debugPrint('🔍 [API] Owner ID: $ownerId');
+      debugPrint('🔍 [API] Room Number: $roomNumber');
+      debugPrint('🔍 [API] Building ID: ${buildingId ?? 'Not specified'}');
+      debugPrint('');
+
+      final response = await fetchRoomsByOwnerId(ownerId);
+      final rooms = parseRooms(response);
+      
+      debugPrint('🔍 [API] Found ${rooms.length} total rooms for owner');
+      
+      Room? targetRoom;
+      
+      // Always search by room number first
+      final matchingRooms = rooms.where(
+        (room) => room.number == roomNumber,
+      ).toList();
+      
+      debugPrint('🔍 [API] Found ${matchingRooms.length} rooms with number $roomNumber');
+      for (var room in matchingRooms) {
+        debugPrint('🔍 [API] - Room: ${room.id} | Number: ${room.number} | Building: ${room.buildingId}');
+      }
+      
+      if (matchingRooms.isNotEmpty) {
+        if (buildingId != null && buildingId.isNotEmpty) {
+          // If building ID is provided, try to find exact match
+          debugPrint('🔍 [API] Filtering by building ID: $buildingId');
+          final exactMatch = matchingRooms.where(
+            (room) => room.buildingId == buildingId,
+          ).toList();
+          
+          if (exactMatch.isNotEmpty) {
+            targetRoom = exactMatch.first;
+            debugPrint('🔍 [API] Found exact match with building ID');
+          } else {
+            // If no exact match, use first room with that number
+            targetRoom = matchingRooms.first;
+            debugPrint('🔍 [API] No exact building match, using first room with number $roomNumber');
+            debugPrint('⚠️ [API] WARNING: Building ID mismatch - expected: $buildingId, found: ${targetRoom.buildingId}');
+          }
+        } else {
+          // No building ID provided, use first match
+          targetRoom = matchingRooms.first;
+          debugPrint('🔍 [API] No building ID provided, using first room with number $roomNumber');
+        }
+      }
+      
+      if (targetRoom != null) {
+        debugPrint('✅ [API] SUCCESS: Found room!');
+        debugPrint('✅ [API] Room ID: ${targetRoom.id}');
+        debugPrint('✅ [API] Room Number: ${targetRoom.number}');
+        debugPrint('✅ [API] Building ID: ${targetRoom.buildingId}');
+        debugPrint('✅ [API] Room Status: ${targetRoom.status}');
+        debugPrint('🔍 ===== ROOM ID LOOKUP END =====');
+        debugPrint('');
+        return targetRoom.id;
+      } else {
+        debugPrint('❌ [API] FAILED: Room not found!');
+        debugPrint('❌ [API] Searched for room number: $roomNumber');
+        debugPrint('❌ [API] In building: ${buildingId ?? 'Any building'}');
+        debugPrint('❌ [API] Available rooms:');
+        for (var room in rooms.take(10)) { // Show first 10 rooms for debugging
+          debugPrint('❌ [API] - Room: ${room.number} | Building: ${room.buildingId} | Status: ${room.status}');
+        }
+        if (rooms.length > 10) {
+          debugPrint('❌ [API] ... and ${rooms.length - 10} more rooms');
+        }
+        debugPrint('🔍 ===== ROOM ID LOOKUP END =====');
+        debugPrint('');
+        return null;
+      }
+    } catch (e) {
+      debugPrint('💥 [API] EXCEPTION: Room ID lookup failed!');
+      debugPrint('💥 [API] Exception: $e');
+      debugPrint('💥 [API] Exception Type: ${e.runtimeType}');
+      debugPrint('🔍 ===== ROOM ID LOOKUP END =====');
+      debugPrint('');
+      return null;
+    }
+  }
+
+  // Get room details by room ID
+  static Future<Room?> getRoomById({
+    required String ownerId,
+    required String roomId,
+  }) async {
+    try {
+      debugPrint('');
+      debugPrint('🔍 ===== ROOM DETAILS LOOKUP START =====');
+      debugPrint('🔍 [API] Looking for room details...');
+      debugPrint('🔍 [API] Owner ID: $ownerId');
+      debugPrint('🔍 [API] Room ID: $roomId');
+      debugPrint('');
+
+      final response = await fetchRoomsByOwnerId(ownerId);
+      final rooms = parseRooms(response);
+      
+      debugPrint('🔍 [API] Found ${rooms.length} total rooms for owner');
+      
+      final targetRoom = rooms.firstWhere(
+        (room) => room.id == roomId,
+        orElse: () => throw Exception('Room not found'),
+      );
+      
+      debugPrint('✅ [API] SUCCESS: Found room details!');
+      debugPrint('✅ [API] Room ID: ${targetRoom.id}');
+      debugPrint('✅ [API] Room Number: ${targetRoom.number}');
+      debugPrint('✅ [API] Building ID: ${targetRoom.buildingId}');
+      debugPrint('✅ [API] Room Status: ${targetRoom.status}');
+      debugPrint('✅ [API] Room Rent: ₹${targetRoom.rent}');
+      debugPrint('🔍 ===== ROOM DETAILS LOOKUP END =====');
+      debugPrint('');
+      
+      return targetRoom;
+    } catch (e) {
+      debugPrint('❌ [API] FAILED: Room details not found!');
+      debugPrint('❌ [API] Room ID: $roomId');
+      debugPrint('❌ [API] Error: $e');
+      debugPrint('🔍 ===== ROOM DETAILS LOOKUP END =====');
+      debugPrint('');
+      return null;
+    }
+  }
+
+  // Create tenant via API
+  static Future<Map<String, dynamic>> createTenant({
+    required String roomId,
+    required String name,
+    required String email,
+    required String phone,
+    required String emergencyContactName,
+    required String emergencyContactPhone,
+    required String emergencyContactRelation,
+    required String idProofType,
+    required String idProofNumber,
+    required String moveInDate,
+    required String leaseEndDate,
+    required double depositPaid,
+    String? occupation,
+    String? invitationToken,
+  }) async {
+    try {
+      final url = Uri.parse('https://www.leranothrive.com/api/tenants');
+      
+      final payload = {
+        'roomId': roomId,
+        'name': name,
+        'phone': phone,
+        'email': email,
+        'moveInDate': moveInDate,
+        'type': 'tenant',
+        'isActive': true,
+        'aadharNumber': idProofNumber,
+        'emergencyContact': emergencyContactPhone,
+        'occupation': occupation ?? '',
+        'profileImage': null,
+        'aadharFrontImage': null,
+        'aadharBackImage': null,
+        'panCardImage': null,
+        'addressProofImage': null,
+        'invitationToken': invitationToken,
+      };
+
+      debugPrint('');
+      debugPrint('🚀 ===== TENANT CREATION API CALL START =====');
+      debugPrint('👤 [API] Creating tenant: $name');
+      debugPrint('🌐 [API] URL: $url');
+      debugPrint('📤 [API] Method: POST');
+      debugPrint('📤 [API] Headers: {Content-Type: application/json}');
+      debugPrint('📤 [API] Request Payload:');
+      debugPrint('📤 [API] ${json.encode(payload)}');
+      debugPrint('');
+      debugPrint('📋 [API] Payload Details:');
+      debugPrint('📋 [API] - Room ID: $roomId');
+      debugPrint('📋 [API] - Tenant Name: $name');
+      debugPrint('📋 [API] - Email: $email');
+      debugPrint('📋 [API] - Phone: $phone');
+      debugPrint('📋 [API] - Move In Date: $moveInDate');
+      debugPrint('📋 [API] - Type: tenant');
+      debugPrint('📋 [API] - Is Active: true');
+      debugPrint('📋 [API] - Aadhar Number: $idProofNumber');
+      debugPrint('📋 [API] - Emergency Contact: $emergencyContactPhone');
+      debugPrint('📋 [API] - Occupation: ${occupation ?? 'Not provided'}');
+      debugPrint('📋 [API] - Invitation Token: ${invitationToken ?? 'Not provided'}');
+      debugPrint('');
+
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: json.encode(payload),
+      );
+
+      debugPrint('📥 ===== TENANT CREATION API RESPONSE =====');
+      debugPrint('📥 [API] Response Status Code: ${response.statusCode}');
+      debugPrint('📥 [API] Response Headers: ${response.headers}');
+      debugPrint('📥 [API] Response Body:');
+      debugPrint('📥 [API] ${response.body}');
+      debugPrint('');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final decodedResponse = json.decode(response.body);
+        debugPrint('✅ [API] SUCCESS: Tenant created successfully!');
+        debugPrint('✅ [API] Tenant Name: $name');
+        debugPrint('✅ [API] Response Data: ${decodedResponse['data']}');
+        debugPrint('🚀 ===== TENANT CREATION API CALL END =====');
+        debugPrint('');
+        return decodedResponse;
+      } else {
+        debugPrint('❌ [API] FAILED: Tenant creation failed!');
+        debugPrint('❌ [API] Status Code: ${response.statusCode}');
+        debugPrint('❌ [API] Error Body: ${response.body}');
+        debugPrint('🚀 ===== TENANT CREATION API CALL END =====');
+        debugPrint('');
+        throw Exception('Failed to create tenant: ${response.statusCode} - ${response.body}');
+      }
+    } catch (e) {
+      debugPrint('💥 [API] EXCEPTION: Tenant creation failed with exception!');
+      debugPrint('💥 [API] Exception Details: $e');
+      debugPrint('💥 [API] Exception Type: ${e.runtimeType}');
+      debugPrint('🚀 ===== TENANT CREATION API CALL END =====');
+      debugPrint('');
+      throw Exception('Error creating tenant: $e');
+    }
   }
 }
 

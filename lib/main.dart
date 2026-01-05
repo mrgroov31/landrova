@@ -4,7 +4,7 @@ import 'package:app_links/app_links.dart';
 import 'package:responsive_framework/responsive_framework.dart';
 import 'theme/app_theme.dart';
 import 'screens/dashboard_screen.dart';
-import 'screens/login_screen.dart';
+import 'screens/unified_login_screen.dart';
 import 'screens/tenant_onboarding_screen.dart';
 import 'screens/tenant_dashboard_screen.dart';
 import 'screens/public_rooms_listing_screen.dart';
@@ -75,9 +75,24 @@ class _MyAppState extends State<MyApp> {
   }
 
   void _handleDeepLink(String link) {
+    debugPrint('');
+    debugPrint('🔗 ===== DEEP LINK HANDLING START =====');
+    debugPrint('🔗 [DEEPLINK] Received link: $link');
+    
     final params = InvitationService.parseInvitationLink(link);
+    debugPrint('🔗 [DEEPLINK] Parsed parameters: $params');
+    
     final token = params['token'];
     final roomNumber = params['room'];
+    final buildingId = params['buildingId'];
+    final roomId = params['roomId'];
+    
+    debugPrint('🔗 [DEEPLINK] Token: $token');
+    debugPrint('🔗 [DEEPLINK] Room Number: $roomNumber');
+    debugPrint('🔗 [DEEPLINK] Building ID: $buildingId');
+    debugPrint('🔗 [DEEPLINK] Room ID: $roomId');
+    debugPrint('🔗 ===== DEEP LINK HANDLING END =====');
+    debugPrint('');
 
     if (token != null && token.isNotEmpty) {
       // Navigate to tenant onboarding screen
@@ -87,6 +102,8 @@ class _MyAppState extends State<MyApp> {
             builder: (context) => TenantOnboardingScreen(
               invitationToken: token,
               roomNumber: roomNumber,
+              buildingId: buildingId,
+              roomId: roomId,
             ),
           ),
           (route) => false, // Remove all previous routes
@@ -105,8 +122,8 @@ class _MyAppState extends State<MyApp> {
         return const TenantDashboardScreen();
       }
     }
-    // Show public rooms listing screen if not logged in
-    return const PublicRoomsListingScreen();
+    // Show unified login screen if not logged in
+    return const UnifiedLoginScreen();
   }
 
   @override

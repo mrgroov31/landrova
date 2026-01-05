@@ -8,8 +8,12 @@ import '../services/api_service.dart';
 class AuthService {
   static const String _boxName = 'auth';
   static const String _userKey = 'current_user';
+  static const String _ownerIdKey = 'owner_id';
   static Box? _box;
   static AppUser? _currentUser;
+  
+  // Centralized Owner ID - can be updated from API response or stored locally
+  static const String defaultOwnerId = 'c1c09193-3804-4fd6-979e-b0c42ee14156';
 
   // Initialize Hive box
   static Future<void> _initialize() async {
@@ -33,6 +37,28 @@ class AuthService {
 
   // Check if user is logged in
   static bool get isLoggedIn => _currentUser != null;
+
+  // Get owner ID - centralized location
+  static String getOwnerId() {
+    // First, try to get from stored value
+    if (_box != null && _box!.isOpen) {
+      final storedOwnerId = _box!.get(_ownerIdKey);
+      if (storedOwnerId != null && storedOwnerId.toString().isNotEmpty) {
+        return storedOwnerId.toString();
+      }
+    }
+    
+    // Fallback to default owner ID
+    return defaultOwnerId;
+  }
+
+  // Set owner ID (can be called after login or API response)
+  static Future<void> setOwnerId(String ownerId) async {
+    await _initialize();
+    if (_box != null) {
+      await _box!.put(_ownerIdKey, ownerId);
+    }
+  }
 
   // Owner login
   static Future<AuthResult> loginOwner({
@@ -60,6 +86,8 @@ class AuthService {
         );
 
         await _saveUser(owner);
+        // Store the centralized owner ID after login
+        await setOwnerId(defaultOwnerId);
         return AuthResult.success(owner);
       } else {
         return AuthResult.failure('Invalid email or password. Use: owner@ownhouse.com / owner123');

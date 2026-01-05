@@ -7,7 +7,7 @@ import '../utils/custom_page_route.dart';
 import '../models/building.dart';
 import '../services/api_service.dart';
 import '../services/auth_service.dart';
-import 'login_screen.dart';
+import 'unified_login_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -238,7 +238,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       await AuthService.logout();
       if (mounted) {
         Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (context) => const LoginScreen()),
+          MaterialPageRoute(builder: (context) => const UnifiedLoginScreen()),
           (route) => false,
         );
       }

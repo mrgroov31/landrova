@@ -92,6 +92,22 @@ class Building {
   });
 
   factory Building.fromJson(Map<String, dynamic> json) {
+    // Handle createdAt - can be string or already DateTime
+    DateTime createdAt;
+    if (json['createdAt'] is String) {
+      createdAt = DateTime.parse(json['createdAt'].toString());
+    } else if (json['createdAt'] is DateTime) {
+      createdAt = json['createdAt'] as DateTime;
+    } else {
+      createdAt = DateTime.now();
+    }
+
+    // Handle propertyType - map 'owned' to 'rented' if needed
+    String propertyType = json['propertyType']?.toString() ?? 'rented';
+    if (propertyType == 'owned') {
+      propertyType = 'rented';
+    }
+
     return Building(
       id: json['id'].toString(),
       name: json['name'].toString(),
@@ -99,13 +115,13 @@ class Building {
       city: json['city']?.toString(),
       state: json['state']?.toString(),
       pincode: json['pincode']?.toString(),
-      totalFloors: json['totalFloors'] as int,
-      totalRooms: json['totalRooms'] as int,
+      totalFloors: (json['totalFloors'] as num?)?.toInt() ?? 1,
+      totalRooms: (json['totalRooms'] as num?)?.toInt() ?? 1,
       buildingType: json['buildingType']?.toString() ?? 'standalone',
-      propertyType: json['propertyType']?.toString() ?? 'rented', // Default to 'rented' if not specified
+      propertyType: propertyType,
       image: json['image']?.toString(),
       description: json['description']?.toString(),
-      createdAt: DateTime.parse(json['createdAt'].toString()),
+      createdAt: createdAt,
       isActive: json['isActive'] as bool? ?? true,
       owner: json['owner'] != null ? BuildingOwner.fromJson(json['owner'] as Map<String, dynamic>) : null,
       facilities: json['facilities'] != null

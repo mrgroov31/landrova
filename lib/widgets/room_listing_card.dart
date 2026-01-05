@@ -6,16 +6,21 @@ import '../utils/responsive.dart';
 class RoomListingCard extends StatelessWidget {
   final Room room;
   final String? tenantName;
+  final String? buildingName;
   final VoidCallback? onTap;
 
   const RoomListingCard({
     super.key,
     required this.room,
     this.tenantName,
+    this.buildingName,
     this.onTap,
   });
 
   Color getStatusColor() {
+    if (room.hasTenant || room.isOccupied) {
+      return Colors.green;
+    }
     switch (room.status) {
       case 'occupied':
         return Colors.green;
@@ -29,6 +34,9 @@ class RoomListingCard extends StatelessWidget {
   }
 
   String getStatusText() {
+    if (room.hasTenant || room.isOccupied) {
+      return 'Occupied';
+    }
     switch (room.status) {
       case 'occupied':
         return 'Occupied';
@@ -196,6 +204,37 @@ class RoomListingCard extends StatelessWidget {
                             ],
                           ),
                         ),
+                        if (buildingName != null) ...[
+                          SizedBox(height: isMobile ? 4 : 6),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.business,
+                                size: isMobile ? 14 : 16,
+                                color: Colors.white.withOpacity(0.9),
+                              ),
+                              SizedBox(width: 6),
+                              Flexible(
+                                child: Text(
+                                  buildingName!,
+                                  style: TextStyle(
+                                    fontSize: isMobile ? 13 : 14,
+                                    color: Colors.white.withOpacity(0.9),
+                                    fontWeight: FontWeight.w500,
+                                    shadows: [
+                                      Shadow(
+                                        color: Colors.black.withOpacity(0.5),
+                                        blurRadius: 6,
+                                      ),
+                                    ],
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                         SizedBox(height: isMobile ? 8 : 12),
                         Row(
                           children: [
@@ -253,7 +292,37 @@ class RoomListingCard extends StatelessWidget {
                               ),
                           ],
                         ),
-                        if (tenantName != null) ...[
+                        if (room.hasTenant) ...[
+                          SizedBox(height: isMobile ? 8 : 12),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.person_outline,
+                                size: 16,
+                                color: Colors.white.withOpacity(0.9),
+                              ),
+                              SizedBox(width: 6),
+                              Flexible(
+                                child: Text(
+                                  'Occupied by ${room.tenant!.name}',
+                                  style: TextStyle(
+                                    fontSize: isMobile ? 13 : 14,
+                                    color: Colors.white.withOpacity(0.9),
+                                    fontWeight: FontWeight.w500,
+                                    shadows: [
+                                      Shadow(
+                                        color: Colors.black.withOpacity(0.5),
+                                        blurRadius: 6,
+                                      ),
+                                    ],
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ] else if (tenantName != null) ...[
                           SizedBox(height: isMobile ? 8 : 12),
                           Row(
                             children: [
@@ -316,28 +385,31 @@ class RoomListingCard extends StatelessWidget {
                                 ),
                               ],
                             ),
-                            Container(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: isMobile ? 16 : 20,
-                                vertical: isMobile ? 10 : 12,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(12),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.3),
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 2),
+                            GestureDetector(
+                              onTap: onTap,
+                              child: Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: isMobile ? 16 : 20,
+                                  vertical: isMobile ? 10 : 12,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(12),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.3),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: Text(
+                                  'View Details',
+                                  style: TextStyle(
+                                    color: theme.colorScheme.primary,
+                                    fontSize: isMobile ? 13 : 14,
+                                    fontWeight: FontWeight.w600,
                                   ),
-                                ],
-                              ),
-                              child: Text(
-                                'View Details',
-                                style: TextStyle(
-                                  color: theme.colorScheme.primary,
-                                  fontSize: isMobile ? 13 : 14,
-                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
                             ),

@@ -5,7 +5,7 @@ import '../services/auth_service.dart';
 import '../widgets/room_listing_card.dart';
 import '../utils/responsive.dart';
 import '../theme/app_theme.dart';
-import 'login_screen.dart';
+import 'unified_login_screen.dart';
 import 'rooms_screen.dart';
 import 'dashboard_screen.dart';
 import 'tenant_dashboard_screen.dart';
@@ -21,7 +21,6 @@ class _PublicRoomsListingScreenState extends State<PublicRoomsListingScreen> {
   List<Room> rooms = [];
   bool isLoading = true;
   String? error;
-  String filter = 'all'; // all, vacant, occupied
 
   @override
   void initState() {
@@ -39,9 +38,9 @@ class _PublicRoomsListingScreenState extends State<PublicRoomsListingScreen> {
       final response = await ApiService.fetchRooms();
       final allRooms = ApiService.parseRooms(response);
       
-      // Filter to show only available/vacant rooms
+      // Filter to show ONLY available/vacant rooms
       final availableRooms = allRooms.where((room) => 
-        room.status == 'vacant' || room.currentOccupancy < room.capacity
+        room.status == 'vacant'
       ).toList();
 
       setState(() {
@@ -54,14 +53,6 @@ class _PublicRoomsListingScreenState extends State<PublicRoomsListingScreen> {
         isLoading = false;
       });
     }
-  }
-
-  List<Room> get filteredRooms {
-    if (filter == 'all') return rooms;
-    if (filter == 'vacant') {
-      return rooms.where((r) => r.status == 'vacant').toList();
-    }
-    return rooms.where((r) => r.status == 'occupied').toList();
   }
 
   Future<void> _handleViewRoom(Room room) async {
@@ -104,11 +95,11 @@ class _PublicRoomsListingScreenState extends State<PublicRoomsListingScreen> {
     );
 
     if (shouldLogin == true) {
-      // Navigate to login screen
+      // Navigate to unified login screen
       final result = await Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => const LoginScreen(),
+          builder: (context) => const UnifiedLoginScreen(),
         ),
       );
 
@@ -231,7 +222,7 @@ class _PublicRoomsListingScreenState extends State<PublicRoomsListingScreen> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const LoginScreen(),
+                        builder: (context) => const UnifiedLoginScreen(),
                       ),
                     );
                   },
@@ -260,30 +251,6 @@ class _PublicRoomsListingScreenState extends State<PublicRoomsListingScreen> {
             ],
           ),
 
-          // Filter Chips
-          SliverToBoxAdapter(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                border: Border(
-                  bottom: BorderSide(color: Colors.grey.shade200, width: 1),
-                ),
-              ),
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: [
-                    _buildFilterChip('All Rooms', 'all', isMobile),
-                    const SizedBox(width: 10),
-                    _buildFilterChip('Vacant', 'vacant', isMobile),
-                    const SizedBox(width: 10),
-                    _buildFilterChip('Available', 'occupied', isMobile),
-                  ],
-                ),
-              ),
-            ),
-          ),
 
           // Rooms List
           if (isLoading)
@@ -323,7 +290,7 @@ class _PublicRoomsListingScreenState extends State<PublicRoomsListingScreen> {
                 ),
               ),
             )
-          else if (filteredRooms.isEmpty)
+          else if (rooms.isEmpty)
             SliverFillRemaining(
               child: Center(
                 child: Column(
@@ -348,13 +315,13 @@ class _PublicRoomsListingScreenState extends State<PublicRoomsListingScreen> {
               sliver: SliverList(
                 delegate: SliverChildBuilderDelegate(
                   (context, index) {
-                    final room = filteredRooms[index];
+                    final room = rooms[index];
                     return Padding(
                       padding: EdgeInsets.only(bottom: isMobile ? 16 : 20),
                       child: _buildPublicRoomCard(room, isMobile),
                     );
                   },
-                  childCount: filteredRooms.length,
+                  childCount: rooms.length,
                 ),
               ),
             ),
@@ -363,63 +330,6 @@ class _PublicRoomsListingScreenState extends State<PublicRoomsListingScreen> {
     );
   }
 
-  Widget _buildFilterChip(String label, String value, bool isMobile) {
-    final isSelected = filter == value;
-    return Container(
-      decoration: BoxDecoration(
-        color: isSelected
-            ? AppTheme.primaryColor
-            : Colors.grey.shade100,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: isSelected
-              ? AppTheme.primaryColor
-              : Colors.grey.shade300,
-          width: 1,
-        ),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () {
-            setState(() {
-              filter = value;
-            });
-          },
-          borderRadius: BorderRadius.circular(20),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (isSelected)
-                  Icon(
-                    Icons.check_circle,
-                    size: 16,
-                    color: Colors.white,
-                  )
-                else
-                  Icon(
-                    Icons.circle_outlined,
-                    size: 16,
-                    color: Colors.grey.shade600,
-                  ),
-                const SizedBox(width: 6),
-                Text(
-                  label,
-                  style: TextStyle(
-                    color: isSelected ? Colors.white : Colors.grey.shade700,
-                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                    fontSize: isMobile ? 13 : 14,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 
   Widget _buildPublicRoomCard(Room room, bool isMobile) {
     return Card(

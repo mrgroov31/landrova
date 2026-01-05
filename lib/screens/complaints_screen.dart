@@ -12,8 +12,9 @@ import 'complaint_detail_screen.dart';
 
 class ComplaintsScreen extends StatefulWidget {
   final String? heroTag;
+  final String? selectedBuildingId;
   
-  const ComplaintsScreen({super.key, this.heroTag});
+  const ComplaintsScreen({super.key, this.heroTag, this.selectedBuildingId});
 
   @override
   State<ComplaintsScreen> createState() => _ComplaintsScreenState();
@@ -39,7 +40,19 @@ class _ComplaintsScreenState extends State<ComplaintsScreen> {
       });
       
       // Load from ComplaintService (which merges API and Hive data)
-      final loadedComplaints = await ComplaintService.getAllComplaints();
+      var loadedComplaints = await ComplaintService.getAllComplaints();
+      
+      // Filter by building if selected
+      if (widget.selectedBuildingId != null && widget.selectedBuildingId!.isNotEmpty) {
+        // Get rooms for this building
+        final roomsResponse = await ApiService.fetchRooms();
+        final allRooms = ApiService.parseRooms(roomsResponse);
+        final buildingRooms = allRooms.where((r) => r.buildingId == widget.selectedBuildingId).toList();
+        final roomNumbers = buildingRooms.map((r) => r.number).toSet();
+        
+        // Filter complaints by room numbers
+        loadedComplaints = loadedComplaints.where((c) => roomNumbers.contains(c.roomNumber)).toList();
+      }
       
       setState(() {
         complaints = loadedComplaints;

@@ -1,0 +1,70 @@
+{
+  "buildingId": "6268a5da-3db0-4c3c-aafd-c0040b73db10",
+  "rooms": [
+    {
+      "number": "101",
+      "type": "rented",
+      "status": "vacant",
+      "rent": 15000,
+      "capacity": 2,
+      "floor": 1,
+      "area": "200 sq ft",
+      "description": "Spacious room with attached bathroom and balcony",
+      "amenities": [
+        "WiFi",
+        "AC",
+        "TV",
+        "Attached Bathroom",
+        "Balcony"
+      ],
+      "images": [
+        "https://picsum.photos/seed/room101-1/800/600",
+        "https://picsum.photos/seed/room101-2/800/600"
+      ]
+    },
+    {
+      "number": "102",
+      "type": "pg",
+      "status": "vacant",
+      "rent": 8000,
+      "capacity": 4,
+      "floor": 1,
+      "area": "300 sq ft",
+      "description": "Shared room for paying guests with common facilities",
+      "amenities": [
+        "WiFi",
+        "Fan",
+        "Common Bathroom",
+        "Common Kitchen"
+      ],
+      "images": [
+        "https://picsum.photos/seed/room102-1/800/600"
+      ]
+    },
+    {
+      "number": "201",
+      "type": "rented",
+      "status": "vacant",
+      "rent": 18000,
+      "capacity": 1,
+      "floor": 2,
+      "area": "180 sq ft",
+      "description": "Premium single occupancy room with all modern amenities",
+      "amenities": [
+        "WiFi",
+        "AC",
+        "TV",
+        "Refrigerator",
+        "Attached Bathroom",
+        "Balcony",
+        "Wardrobe"
+      ],
+      "images": [
+        "https://picsum.photos/seed/room201-1/800/600",
+        "https://picsum.photos/seed/room201-2/800/600",
+        "https://picsum.photos/seed/room201-3/800/600"
+      ]
+    }
+  ]
+}
+

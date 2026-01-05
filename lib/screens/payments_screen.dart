@@ -7,8 +7,9 @@ import 'package:intl/intl.dart';
 
 class PaymentsScreen extends StatefulWidget {
   final String? heroTag;
+  final String? selectedBuildingId;
   
-  const PaymentsScreen({super.key, this.heroTag});
+  const PaymentsScreen({super.key, this.heroTag, this.selectedBuildingId});
 
   @override
   State<PaymentsScreen> createState() => _PaymentsScreenState();
@@ -34,7 +35,19 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
       });
       
       final response = await ApiService.fetchPayments();
-      final loadedPayments = ApiService.parsePayments(response);
+      var loadedPayments = ApiService.parsePayments(response);
+      
+      // Filter by building if selected
+      if (widget.selectedBuildingId != null && widget.selectedBuildingId!.isNotEmpty) {
+        // Get rooms for this building
+        final roomsResponse = await ApiService.fetchRooms();
+        final allRooms = ApiService.parseRooms(roomsResponse);
+        final buildingRooms = allRooms.where((r) => r.buildingId == widget.selectedBuildingId).toList();
+        final roomNumbers = buildingRooms.map((r) => r.number).toSet();
+        
+        // Filter payments by room numbers
+        loadedPayments = loadedPayments.where((p) => roomNumbers.contains(p.roomNumber)).toList();
+      }
       
       setState(() {
         payments = loadedPayments;

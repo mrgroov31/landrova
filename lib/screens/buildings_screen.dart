@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'dart:io';
 import '../models/building.dart';
 import '../services/api_service.dart';
+import '../services/auth_service.dart';
 import '../utils/responsive.dart';
 import '../theme/app_theme.dart';
 import '../utils/custom_page_route.dart';
 import 'dashboard_screen.dart';
 import 'add_building_screen.dart';
+import 'building_detail_screen.dart';
 
 class BuildingsScreen extends StatefulWidget {
   const BuildingsScreen({super.key});
@@ -33,51 +35,20 @@ class _BuildingsScreenState extends State<BuildingsScreen> {
         error = null;
       });
       
-      // For now, use mock data. Later replace with API call
-      final mockBuildings = [
-        Building(
-          id: '1',
-          name: 'Sunshine Apartments',
-          address: '123 Main Street',
-          city: 'Bangalore',
-          state: 'Karnataka',
-          pincode: '560001',
-          totalFloors: 3,
-          totalRooms: 6,
-          buildingType: 'standalone',
-          propertyType: 'rented', // Property type set when building is created
-          createdAt: DateTime.now().subtract(const Duration(days: 365)),
-        ),
-        Building(
-          id: '2',
-          name: 'Green Valley PG',
-          address: '456 Park Avenue',
-          city: 'Bangalore',
-          state: 'Karnataka',
-          pincode: '560002',
-          totalFloors: 2,
-          totalRooms: 8,
-          buildingType: 'standalone',
-          propertyType: 'pg', // Property type set when building is created
-          createdAt: DateTime.now().subtract(const Duration(days: 180)),
-        ),
-      ];
+      // Get owner ID from centralized location
+      final currentUser = AuthService.currentUser;
+      if (currentUser == null || !currentUser.isOwner) {
+        throw Exception('User not logged in as owner');
+      }
+
+      final ownerId = AuthService.getOwnerId();
+      
+      // Fetch buildings from API
+      final response = await ApiService.fetchBuildingsByOwnerId(ownerId);
+      final apiBuildings = ApiService.parseBuildings(response);
       
       setState(() {
-        // Preserve any newly added buildings that aren't in mock data
-        final mockIds = mockBuildings.map((b) => b.id).toSet();
-        final customBuildings = buildings.where((b) => !mockIds.contains(b.id)).toList();
-        
-        // Combine and remove duplicates based on ID
-        final allBuildings = [...mockBuildings, ...customBuildings];
-        final uniqueBuildings = <String, Building>{};
-        for (var building in allBuildings) {
-          if (!uniqueBuildings.containsKey(building.id)) {
-            uniqueBuildings[building.id] = building;
-          }
-        }
-        buildings = uniqueBuildings.values.toList();
-        
+        buildings = apiBuildings;
         isLoading = false;
       });
     } catch (e) {
@@ -89,13 +60,8 @@ class _BuildingsScreenState extends State<BuildingsScreen> {
   }
 
   void addBuilding(Building building) {
-    setState(() {
-      // Check if building already exists to prevent duplicates
-      final exists = buildings.any((b) => b.id == building.id);
-      if (!exists) {
-        buildings = [building, ...buildings];
-      }
-    });
+    // Reload buildings from API to get the latest data including the newly added building
+    loadBuildings();
   }
 
   @override
@@ -193,13 +159,11 @@ class _BuildingsScreenState extends State<BuildingsScreen> {
                             elevation: 2,
                             child: InkWell(
                               onTap: () {
-                                // Navigate to dashboard with selected building
-                                Navigator.pushReplacement(
+                                // Navigate to building detail screen
+                                Navigator.push(
                                   context,
                                   CustomPageRoute(
-                                    child: DashboardScreen(
-                                      selectedBuildingId: building.id,
-                                    ),
+                                    child: BuildingDetailScreen(building: building),
                                     transition: CustomPageTransition.transform,
                                   ),
                                 );
