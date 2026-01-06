@@ -385,10 +385,10 @@ class _TenantOnboardingScreenState extends State<TenantOnboardingScreen> {
           SnackBar(
             content: Text('Welcome ${_nameController.text.trim()}! Registration completed successfully.'),
             backgroundColor: Colors.green,
-            duration: const Duration(seconds: 4),
+            duration: const Duration(seconds: 2),
           ),
         );
-        
+      
         // Navigate back or to success screen
         Navigator.of(context).popUntil((route) => route.isFirst);
       }
@@ -415,7 +415,7 @@ class _TenantOnboardingScreenState extends State<TenantOnboardingScreen> {
           SnackBar(
             content: Text(errorMessage),
             backgroundColor: Colors.red,
-            duration: const Duration(seconds: 4),
+            duration: const Duration(seconds: 2),
           ),
         );
         
@@ -429,12 +429,12 @@ class _TenantOnboardingScreenState extends State<TenantOnboardingScreen> {
     final isMobile = Responsive.isMobile(context);
     
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppTheme.getBackgroundColor(context),
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: Colors.white,
+        backgroundColor: AppTheme.getSurfaceColor(context),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black87),
+          icon: Icon(Icons.arrow_back, color: AppTheme.getTextPrimaryColor(context)),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -449,7 +449,7 @@ class _TenantOnboardingScreenState extends State<TenantOnboardingScreen> {
           preferredSize: const Size.fromHeight(4),
           child: LinearProgressIndicator(
             value: (_currentStep + 1) / 3,
-            backgroundColor: Colors.grey.shade200,
+            backgroundColor: AppTheme.getTextSecondaryColor(context).withOpacity(0.2),
             valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
           ),
         ),
@@ -598,7 +598,7 @@ class _TenantOnboardingScreenState extends State<TenantOnboardingScreen> {
             style: TextStyle(
               fontSize: isMobile ? 20 : 24,
               fontWeight: FontWeight.bold,
-              color: Colors.grey.shade800,
+              color: AppTheme.getTextPrimaryColor(context),
             ),
           ),
           const SizedBox(height: 8),
@@ -606,7 +606,7 @@ class _TenantOnboardingScreenState extends State<TenantOnboardingScreen> {
             'Step 1 of 3',
             style: TextStyle(
               fontSize: isMobile ? 14 : 16,
-              color: Colors.grey.shade600,
+              color: AppTheme.getTextSecondaryColor(context),
             ),
           ),
           SizedBox(height: isMobile ? 24 : 32),
@@ -654,7 +654,7 @@ class _TenantOnboardingScreenState extends State<TenantOnboardingScreen> {
                 children: [
                   CircleAvatar(
                     radius: isMobile ? 60 : 80,
-                    backgroundColor: Colors.grey.shade200,
+                    backgroundColor: AppTheme.getTextSecondaryColor(context).withOpacity(0.2),
                     backgroundImage: _profileImage != null
                         ? FileImage(_profileImage!)
                         : null,
@@ -662,7 +662,7 @@ class _TenantOnboardingScreenState extends State<TenantOnboardingScreen> {
                         ? Icon(
                             Icons.person,
                             size: isMobile ? 60 : 80,
-                            color: Colors.grey.shade400,
+                            color: AppTheme.getTextSecondaryColor(context),
                           )
                         : null,
                   ),

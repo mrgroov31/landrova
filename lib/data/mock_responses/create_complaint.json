@@ -1,0 +1,70 @@
+{
+  "success": true,
+  "message": "Complaint created successfully",
+  "data": {
+    "complaint": {
+      "id": "comp_67890123-abcd-4567-efgh-ijklmnopqrst",
+      "title": "Water Leakage in Bathroom",
+      "description": "There is water leaking from the bathroom ceiling near the shower area. The leak started yesterday evening and is getting worse. Water is dripping onto the floor and creating a puddle.",
+      "complaintNumber": "CMP-2026-001234",
+      "status": "pending",
+      "priority": "high",
+      "category": "plumbing",
+      "room": {
+        "id": "61ade219-1523-4a7d-8fa7-81880b6bfd9a",
+        "number": "g1",
+        "type": "rented"
+      },
+      "building": {
+        "id": "0382d893-a1a0-4d50-83c2-ae9d40478eff",
+        "name": "guru apt",
+        "address": "bengaluru dt"
+      },
+      "tenant": {
+        "id": "83687a16-e083-487e-b0e0-3c973cef0083",
+        "name": "guru",
+        "email": "ggu@ghn.vnj",
+        "phone": "82858888888"
+      },
+      "owner": {
+        "id": "c1c09193-3804-4fd6-979e-b0c42ee14156",
+        "name": "Property Owner",
+        "email": "owner@example.com"
+      },
+      "images": [
+        {
+          "id": "img_001",
+          "url": "https://storage.example.com/complaints/comp_67890123/image1.jpg",
+          "thumbnail": "https://storage.example.com/complaints/comp_67890123/thumb_image1.jpg",
+          "uploadedAt": "2026-01-06T10:30:00.000Z"
+        },
+        {
+          "id": "img_002",
+          "url": "https://storage.example.com/complaints/comp_67890123/image2.jpg",
+          "thumbnail": "https://storage.example.com/complaints/comp_67890123/thumb_image2.jpg",
+          "uploadedAt": "2026-01-06T10:30:15.000Z"
+        }
+      ],
+      "contactPreference": "phone",
+      "urgentContact": true,
+      "assignedTo": null,
+      "estimatedResolution": "2026-01-08T18:00:00.000Z",
+      "createdAt": "2026-01-06T10:30:00.000Z",
+      "updatedAt": "2026-01-06T10:30:00.000Z",
+      "resolvedAt": null,
+      "timeline": [
+        {
+          "id": "timeline_001",
+          "action": "created",
+          "description": "Complaint created by tenant",
+          "performedBy": {
+            "id": "83687a16-e083-487e-b0e0-3c973cef0083",
+            "name": "guru",
+            "role": "tenant"
+          },
+          "timestamp": "2026-01-06T10:30:00.000Z"
+        }
+      ]
+    }
+  }
+}

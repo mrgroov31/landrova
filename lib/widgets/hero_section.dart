@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../utils/responsive.dart';
+import '../theme/app_theme.dart';
 
 class HeroSection extends StatelessWidget {
   final String greeting;
@@ -37,7 +38,7 @@ class HeroSection extends StatelessWidget {
             subtitle,
             style: theme.textTheme.bodyLarge?.copyWith(
               fontSize: isMobile ? 16 : 18,
-              color: Colors.grey.shade600,
+              color: AppTheme.getTextSecondaryColor(context),
             ),
           ),
           SizedBox(height: isMobile ? 16 : 24),
@@ -49,9 +50,9 @@ class HeroSection extends StatelessWidget {
                 vertical: isMobile ? 14 : 18,
               ),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppTheme.getCardColor(context),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.grey.shade200),
+                border: Border.all(color: AppTheme.getTextSecondaryColor(context).withOpacity(0.2)),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withOpacity(0.05),
@@ -64,7 +65,7 @@ class HeroSection extends StatelessWidget {
                 children: [
                   Icon(
                     Icons.search,
-                    color: Colors.grey.shade600,
+                    color: AppTheme.getTextSecondaryColor(context),
                     size: isMobile ? 20 : 24,
                   ),
                   SizedBox(width: isMobile ? 12 : 16),
@@ -76,7 +77,7 @@ class HeroSection extends StatelessWidget {
                           'Search rooms, tenants, or payments',
                           style: TextStyle(
                             fontSize: isMobile ? 14 : 16,
-                            color: Colors.grey.shade600,
+                            color: AppTheme.getTextSecondaryColor(context),
                           ),
                         ),
                       ],
@@ -84,7 +85,7 @@ class HeroSection extends StatelessWidget {
                   ),
                   Icon(
                     Icons.tune,
-                    color: Colors.grey.shade600,
+                    color: AppTheme.getTextSecondaryColor(context),
                     size: isMobile ? 20 : 24,
                   ),
                 ],

@@ -7,6 +7,7 @@ import '../services/auth_service.dart';
 import '../utils/responsive.dart';
 import '../theme/app_theme.dart';
 import '../utils/custom_page_route.dart';
+import 'invite_tenant_screen.dart';
 import 'package:intl/intl.dart';
 
 class RoomDetailScreen extends StatefulWidget {
@@ -136,23 +137,27 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
         : [_getRoomImageUrl(0)]; // At least one image
 
     return Scaffold(
-      backgroundColor: Colors.grey.shade50,
+      backgroundColor: AppTheme.getBackgroundColor(context),
       body: CustomScrollView(
         slivers: [
           // App Bar with Room Image
           SliverAppBar(
-            expandedHeight: isMobile ? 300 : 350,
+            expandedHeight: isMobile ? 200 : 350,
             floating: false,
             pinned: true,
             backgroundColor: AppTheme.primaryColor,
             flexibleSpace: FlexibleSpaceBar(
               title: Text(
-                'Room ${widget.room.number}',
+                'House ${widget.room.number}',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: isMobile ? 18 : 20,
                   fontWeight: FontWeight.bold,
                 ),
+              ),
+              titlePadding: EdgeInsets.only(
+                left: isMobile ? 50 : 72, // Account for back button
+                bottom: isMobile ? 16 : 20,
               ),
               background: Stack(
                 fit: StackFit.expand,
@@ -241,15 +246,15 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
               ),
             ),
             actions: [
-              IconButton(
-                icon: const Icon(Icons.edit, color: Colors.white),
-                onPressed: () {
-                  // TODO: Navigate to edit room screen
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Edit room feature coming soon')),
-                  );
-                },
-              ),
+              // IconButton(
+              //   icon: const Icon(Icons.edit, color: Colors.white),
+              //   onPressed: () {
+              //     // TODO: Navigate to edit room screen
+              //     ScaffoldMessenger.of(context).showSnackBar(
+              //       const SnackBar(content: Text('Edit room feature coming soon')),
+              //     );
+              //   },
+              // ),
             ],
           ),
 
@@ -298,14 +303,14 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                                   style: TextStyle(
                                     fontSize: isMobile ? 24 : 28,
                                     fontWeight: FontWeight.bold,
-                                    color: Colors.grey.shade800,
+                                    color: AppTheme.getTextPrimaryColor(context),
                                   ),
                                 ),
                                 Text(
                                   'per month',
                                   style: TextStyle(
                                     fontSize: isMobile ? 12 : 13,
-                                    color: Colors.grey.shade600,
+                                    color: AppTheme.getTextSecondaryColor(context),
                                   ),
                                 ),
                               ],
@@ -344,11 +349,13 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
       margin: EdgeInsets.symmetric(horizontal: isMobile ? 16 : 24),
       padding: EdgeInsets.all(isMobile ? 16 : 20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.getCardColor(context),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.shade200,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Colors.black.withOpacity(0.3)
+                : Colors.grey.shade200,
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -366,7 +373,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                 style: TextStyle(
                   fontSize: isMobile ? 18 : 20,
                   fontWeight: FontWeight.bold,
-                  color: Colors.grey.shade800,
+                  color: AppTheme.getTextPrimaryColor(context),
                 ),
               ),
             ],
@@ -386,7 +393,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
               style: TextStyle(
                 fontSize: isMobile ? 14 : 16,
                 fontWeight: FontWeight.w600,
-                color: Colors.grey.shade700,
+                color: AppTheme.getTextSecondaryColor(context),
               ),
             ),
             SizedBox(height: 4),
@@ -394,7 +401,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
               widget.room.description!,
               style: TextStyle(
                 fontSize: isMobile ? 13 : 15,
-                color: Colors.grey.shade600,
+                color: AppTheme.getTextSecondaryColor(context),
                 height: 1.5,
               ),
             ),
@@ -413,11 +420,13 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
       ),
       padding: EdgeInsets.all(isMobile ? 16 : 20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.getCardColor(context),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.shade200,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Colors.black.withOpacity(0.3)
+                : Colors.grey.shade200,
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -435,7 +444,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                 style: TextStyle(
                   fontSize: isMobile ? 18 : 20,
                   fontWeight: FontWeight.bold,
-                  color: Colors.grey.shade800,
+                  color: AppTheme.getTextPrimaryColor(context),
                 ),
               ),
             ],
@@ -464,14 +473,17 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
         top: isMobile ? 16 : 20,
         left: isMobile ? 16 : 24,
         right: isMobile ? 16 : 24,
+        bottom: isMobile ? 56 : 24,
       ),
       padding: EdgeInsets.all(isMobile ? 16 : 20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.getCardColor(context),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.shade200,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Colors.black.withOpacity(0.3)
+                : Colors.grey.shade200,
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -489,7 +501,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                 style: TextStyle(
                   fontSize: isMobile ? 18 : 20,
                   fontWeight: FontWeight.bold,
-                  color: Colors.grey.shade800,
+                  color: AppTheme.getTextPrimaryColor(context),
                 ),
               ),
               const Spacer(),
@@ -550,7 +562,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                       style: TextStyle(
                         fontSize: isMobile ? 16 : 18,
                         fontWeight: FontWeight.bold,
-                        color: Colors.grey.shade800,
+                        color: AppTheme.getTextPrimaryColor(context),
                       ),
                     ),
                     SizedBox(height: 4),
@@ -560,7 +572,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                           Icon(
                             Icons.phone,
                             size: 16,
-                            color: Colors.grey.shade600,
+                            color: AppTheme.getTextSecondaryColor(context),
                           ),
                           const SizedBox(width: 4),
                           Expanded(
@@ -568,7 +580,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                               tenant.phone,
                               style: TextStyle(
                                 fontSize: isMobile ? 13 : 14,
-                                color: Colors.grey.shade600,
+                                color: AppTheme.getTextSecondaryColor(context),
                               ),
                             ),
                           ),
@@ -582,7 +594,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                           Icon(
                             Icons.email,
                             size: 16,
-                            color: Colors.grey.shade600,
+                            color: AppTheme.getTextSecondaryColor(context),
                           ),
                           const SizedBox(width: 4),
                           Expanded(
@@ -590,7 +602,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                               tenant.email,
                               style: TextStyle(
                                 fontSize: isMobile ? 13 : 14,
-                                color: Colors.grey.shade600,
+                                color: AppTheme.getTextSecondaryColor(context),
                               ),
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -716,7 +728,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                 'Tenure',
                 style: TextStyle(
                   fontSize: isMobile ? 12 : 13,
-                  color: Colors.grey.shade600,
+                  color: AppTheme.getTextSecondaryColor(context),
                 ),
               ),
               Text(
@@ -743,11 +755,13 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
       ),
       padding: EdgeInsets.all(isMobile ? 16 : 20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.getCardColor(context),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.shade200,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Colors.black.withOpacity(0.3)
+                : Colors.grey.shade200,
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -765,7 +779,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                 style: TextStyle(
                   fontSize: isMobile ? 18 : 20,
                   fontWeight: FontWeight.bold,
-                  color: Colors.grey.shade800,
+                  color: AppTheme.getTextPrimaryColor(context),
                 ),
               ),
             ],
@@ -810,15 +824,11 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: () {
-                    // TODO: Navigate to invite tenant screen
                     Navigator.push(
                       context,
-                      MaterialPageRoute(
-                        builder: (context) => Scaffold(
-                          appBar: AppBar(title: const Text('Invite Tenant')),
-                          body: const Center(
-                            child: Text('Invite Tenant Screen - Coming Soon'),
-                          ),
+                      CustomPageRoute(
+                        child: InviteTenantScreen(
+                          selectedBuildingId: widget.room.buildingId,
                         ),
                       ),
                     );
@@ -864,11 +874,13 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
       ),
       padding: EdgeInsets.all(isMobile ? 16 : 20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.getCardColor(context),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.shade200,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Colors.black.withOpacity(0.3)
+                : Colors.grey.shade200,
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -886,7 +898,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                 style: TextStyle(
                   fontSize: isMobile ? 18 : 20,
                   fontWeight: FontWeight.bold,
-                  color: Colors.grey.shade800,
+                  color: AppTheme.getTextPrimaryColor(context),
                 ),
               ),
             ],
@@ -921,7 +933,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                       amenity,
                       style: TextStyle(
                         fontSize: isMobile ? 13 : 14,
-                        color: Colors.grey.shade800,
+                        color: AppTheme.getTextPrimaryColor(context),
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -947,7 +959,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
               label,
               style: TextStyle(
                 fontSize: isMobile ? 13 : 15,
-                color: Colors.grey.shade600,
+                color: AppTheme.getTextSecondaryColor(context),
               ),
             ),
           ),
@@ -957,7 +969,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
               style: TextStyle(
                 fontSize: isMobile ? 13 : 15,
                 fontWeight: FontWeight.w500,
-                color: Colors.grey.shade800,
+                color: AppTheme.getTextPrimaryColor(context),
               ),
             ),
           ),

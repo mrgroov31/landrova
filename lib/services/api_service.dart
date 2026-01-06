@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import '../models/room.dart';
 import '../models/tenant.dart';
+import '../models/api_tenant.dart';
 import '../models/complaint.dart';
 import '../models/payment.dart';
 import '../models/building.dart';
@@ -464,7 +465,93 @@ class ApiService {
     }
   }
 
-  // Create tenant via API
+  // Fetch tenants by owner ID
+  static Future<Map<String, dynamic>> fetchTenantsByOwnerId(String ownerId) async {
+    try {
+      final url = Uri.parse('https://www.leranothrive.com/api/owners/$ownerId/tenants');
+      
+      debugPrint('👥 [API] Fetching tenants for ownerId: $ownerId');
+      debugPrint('🌐 [API] URL: $url');
+      debugPrint('📤 [API] Method: GET');
+      debugPrint('📤 [API] Headers: {Content-Type: application/json}');
+      
+      final response = await http.get(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      );
+
+      debugPrint('📥 [API] Response Status Code: ${response.statusCode}');
+      debugPrint('📥 [API] Response Headers: ${response.headers}');
+      debugPrint('📥 [API] Response Body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final decodedResponse = json.decode(response.body);
+        debugPrint('✅ [API] Successfully fetched tenants');
+        debugPrint('📊 [API] Number of tenants: ${decodedResponse['data']?.length ?? 0}');
+        return decodedResponse;
+      } else {
+        debugPrint('❌ [API] Failed to fetch tenants: ${response.statusCode}');
+        debugPrint('❌ [API] Error Body: ${response.body}');
+        throw Exception('Failed to fetch tenants: ${response.statusCode} - ${response.body}');
+      }
+    } catch (e) {
+      debugPrint('💥 [API] Exception while fetching tenants: $e');
+      throw Exception('Error fetching tenants: $e');
+    }
+  }
+  // Parse tenants from API response
+  static List<ApiTenant> parseApiTenants(Map<String, dynamic> response) {
+    debugPrint('🔍 [PARSE] Parsing tenants from response: ${response.keys}');
+    
+    try {
+      if (response['success'] == true && response['data'] != null) {
+        List<dynamic> tenantsData = [];
+        
+        if (response['data'] is List) {
+          // Direct array format: { "success": true, "data": [...] }
+          tenantsData = response['data'] as List<dynamic>;
+          debugPrint('🔍 [PARSE] Data is a List, found ${tenantsData.length} tenants');
+        } else if (response['data'] is Map) {
+          final dataMap = response['data'] as Map<String, dynamic>;
+          if (dataMap['tenants'] != null) {
+            // Nested format: { "success": true, "data": { "tenants": [...] } }
+            tenantsData = dataMap['tenants'] as List<dynamic>;
+            debugPrint('🔍 [PARSE] Data is a Map with tenants key, found ${tenantsData.length} tenants');
+          } else {
+            debugPrint('⚠️ [PARSE] Data is a Map but no tenants key found. Keys: ${dataMap.keys}');
+          }
+        }
+        
+        debugPrint('✅ [PARSE] Total tenants to parse: ${tenantsData.length}');
+        
+        // Parse each tenant with error handling
+        final List<ApiTenant> parsedTenants = [];
+        for (int i = 0; i < tenantsData.length; i++) {
+          try {
+            final tenantJson = tenantsData[i] as Map<String, dynamic>;
+            final tenant = ApiTenant.fromJson(tenantJson);
+            parsedTenants.add(tenant);
+            debugPrint('✅ [PARSE] Successfully parsed tenant ${i + 1}: ${tenant.name}');
+          } catch (e, stackTrace) {
+            debugPrint('❌ [PARSE] Error parsing tenant ${i + 1}: $e');
+            debugPrint('❌ [PARSE] Stack trace: $stackTrace');
+            debugPrint('❌ [PARSE] Tenant data: ${tenantsData[i]}');
+          }
+        }
+        
+        debugPrint('✅ [PARSE] Successfully parsed ${parsedTenants.length} out of ${tenantsData.length} tenants');
+        return parsedTenants;
+      }
+    } catch (e, stackTrace) {
+      debugPrint('💥 [PARSE] Fatal error parsing tenants: $e');
+      debugPrint('💥 [PARSE] Stack trace: $stackTrace');
+    }
+    
+    return [];
+  }
+
   static Future<Map<String, dynamic>> createTenant({
     required String roomId,
     required String name,

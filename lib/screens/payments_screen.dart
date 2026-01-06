@@ -72,10 +72,11 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
     final dateFormat = DateFormat('MMM dd, yyyy');
     
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppTheme.getBackgroundColor(context),
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: Colors.white,
+        backgroundColor: AppTheme.getSurfaceColor(context),
+        foregroundColor: AppTheme.getTextPrimaryColor(context),
         title: const Text(
           'Payments',
           style: TextStyle(

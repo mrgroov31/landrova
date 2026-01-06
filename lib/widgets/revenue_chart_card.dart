@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../utils/responsive.dart';
+import '../theme/app_theme.dart';
 
 class RevenueChartCard extends StatelessWidget {
   final List<double> monthlyRevenue;
@@ -32,8 +33,10 @@ class RevenueChartCard extends StatelessWidget {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              Colors.white,
-              Colors.blue.shade50,
+              AppTheme.getCardColor(context),
+              Theme.of(context).brightness == Brightness.dark
+                  ? AppTheme.darkSurface
+                  : Colors.blue.shade50,
             ],
           ),
         ),
@@ -82,7 +85,7 @@ class RevenueChartCard extends StatelessWidget {
                     horizontalInterval: 10000,
                     getDrawingHorizontalLine: (value) {
                       return FlLine(
-                        color: Colors.grey.shade200,
+                        color: AppTheme.getTextSecondaryColor(context).withOpacity(0.3),
                         strokeWidth: 1,
                       );
                     },
@@ -106,7 +109,7 @@ class RevenueChartCard extends StatelessWidget {
                             return Text(
                               months[value.toInt()],
                               style: TextStyle(
-                                color: Colors.grey.shade600,
+                                color: AppTheme.getTextSecondaryColor(context),
                                 fontSize: 10,
                               ),
                             );
@@ -123,7 +126,7 @@ class RevenueChartCard extends StatelessWidget {
                           return Text(
                             '₹${(value / 1000).toStringAsFixed(0)}k',
                             style: TextStyle(
-                              color: Colors.grey.shade600,
+                              color: AppTheme.getTextSecondaryColor(context),
                               fontSize: 10,
                             ),
                           );
@@ -167,6 +170,7 @@ class RevenueChartCard extends StatelessWidget {
                     Colors.green,
                     theme,
                     isMobile,
+                    context,
                   ),
                 ),
                 SizedBox(width: isMobile ? 12 : 16),
@@ -177,6 +181,7 @@ class RevenueChartCard extends StatelessWidget {
                     Colors.orange,
                     theme,
                     isMobile,
+                    context,
                   ),
                 ),
               ],
@@ -193,6 +198,7 @@ class RevenueChartCard extends StatelessWidget {
     Color color,
     ThemeData theme,
     bool isMobile,
+    BuildContext context,
   ) {
     return Container(
       padding: EdgeInsets.all(isMobile ? 12 : 16),
@@ -207,7 +213,7 @@ class RevenueChartCard extends StatelessWidget {
             label,
             style: TextStyle(
               fontSize: isMobile ? 11 : 12,
-              color: Colors.grey.shade600,
+              color: AppTheme.getTextSecondaryColor(context),
             ),
           ),
           SizedBox(height: isMobile ? 4 : 6),

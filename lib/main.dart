@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:app_links/app_links.dart';
 import 'package:responsive_framework/responsive_framework.dart';
+import 'package:provider/provider.dart';
 import 'theme/app_theme.dart';
+import 'services/theme_service.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/unified_login_screen.dart';
 import 'screens/tenant_onboarding_screen.dart';
@@ -41,11 +43,17 @@ void main() async {
   assert(Hive.isAdapterRegistered(2), 'TenantAdapter not registered');
   assert(Hive.isAdapterRegistered(4), 'VacatingRequestAdapter not registered');
   
-  runApp(const MyApp());
+  // Initialize theme service
+  final themeService = ThemeService();
+  await themeService.loadTheme();
+  
+  runApp(MyApp(themeService: themeService));
 }
 
 class MyApp extends StatefulWidget {
-  const MyApp({super.key});
+  final ThemeService themeService;
+  
+  const MyApp({super.key, required this.themeService});
 
   @override
   State<MyApp> createState() => _MyAppState();
@@ -128,22 +136,35 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      navigatorKey: _navigatorKey,
-      title: 'Own House - Property Management',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
-      builder: (context, child) => ResponsiveBreakpoints.builder(
-        child: child!,
-        breakpoints: [
-          const Breakpoint(start: 0, end: 450, name: MOBILE),
-          const Breakpoint(start: 451, end: 800, name: TABLET),
-          const Breakpoint(start: 801, end: 1920, name: DESKTOP),
-          const Breakpoint(start: 1921, end: double.infinity, name: '4K'),
-        ],
+    return ChangeNotifierProvider.value(
+      value: widget.themeService,
+      child: Consumer<ThemeService>(
+        builder: (context, themeService, child) {
+          return MaterialApp(
+            navigatorKey: _navigatorKey,
+            title: 'Own House - Property Management',
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.lightTheme,
+            darkTheme: AppTheme.darkTheme,
+            themeMode: themeService.themeMode == AppThemeMode.light
+                ? ThemeMode.light
+                : themeService.themeMode == AppThemeMode.dark
+                    ? ThemeMode.dark
+                    : ThemeMode.system,
+            builder: (context, child) => ResponsiveBreakpoints.builder(
+              child: child!,
+              breakpoints: [
+                const Breakpoint(start: 0, end: 450, name: MOBILE),
+                const Breakpoint(start: 451, end: 800, name: TABLET),
+                const Breakpoint(start: 801, end: 1920, name: DESKTOP),
+                const Breakpoint(start: 1921, end: double.infinity, name: '4K'),
+              ],
+            ),
+            // Check authentication and route accordingly
+            home: _getInitialScreen(),
+          );
+        },
       ),
-      // Check authentication and route accordingly
-      home: _getInitialScreen(),
     );
   }
 }

@@ -219,7 +219,7 @@ class _AddRoomScreenState extends State<AddRoomScreen> {
             SnackBar(
               content: Text('Room $roomNumber created successfully!'),
               backgroundColor: Colors.green,
-              duration: const Duration(seconds: 2),
+              duration: const Duration(seconds: 1),
             ),
           );
 
@@ -239,7 +239,7 @@ class _AddRoomScreenState extends State<AddRoomScreen> {
           SnackBar(
             content: Text('Error creating room: ${e.toString()}'),
             backgroundColor: Colors.red,
-            duration: const Duration(seconds: 4),
+            duration: const Duration(seconds: 2),
           ),
         );
       }
@@ -251,20 +251,20 @@ class _AddRoomScreenState extends State<AddRoomScreen> {
     final isMobile = Responsive.isMobile(context);
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppTheme.getBackgroundColor(context),
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: Colors.white,
+        backgroundColor: AppTheme.getSurfaceColor(context),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black87),
+          icon: Icon(Icons.arrow_back, color: AppTheme.getTextPrimaryColor(context)),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title:  Text(
           'Add Room',
           style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 24,
-            color: Colors.black87,
+            color: AppTheme.getTextPrimaryColor(context),
           ),
         ),
       ),
@@ -547,7 +547,7 @@ class _AddRoomScreenState extends State<AddRoomScreen> {
       style: TextStyle(
         fontSize: isMobile ? 16 : 18,
         fontWeight: FontWeight.bold,
-        color: Colors.grey.shade800,
+        color: AppTheme.getTextPrimaryColor(context),
       ),
     );
   }
@@ -555,15 +555,15 @@ class _AddRoomScreenState extends State<AddRoomScreen> {
   Widget _buildRoomTypeSelector(bool isMobile) {
     return Container(
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey.shade300),
+        border: Border.all(color: AppTheme.getTextSecondaryColor(context).withOpacity(0.3)),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         children: [
           _buildRoomTypeOption('Paying Guest (PG)', 'pg', Icons.hotel, Colors.blue, isMobile),
-          Divider(height: 1, color: Colors.grey.shade300),
+          Divider(height: 1, color: AppTheme.getTextSecondaryColor(context).withOpacity(0.2)),
           _buildRoomTypeOption('Rented', 'rented', Icons.home, Colors.green, isMobile),
-          Divider(height: 1, color: Colors.grey.shade300),
+          Divider(height: 1, color: AppTheme.getTextSecondaryColor(context).withOpacity(0.2)),
           _buildRoomTypeOption('Leased', 'leased', Icons.business, Colors.purple, isMobile),
         ],
       ),
@@ -611,7 +611,7 @@ class _AddRoomScreenState extends State<AddRoomScreen> {
                 style: TextStyle(
                   fontSize: isMobile ? 16 : 18,
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                  color: isSelected ? color : Colors.grey.shade800,
+                  color: isSelected ? color : AppTheme.getTextPrimaryColor(context),
                 ),
               ),
             ),
@@ -659,10 +659,10 @@ class _AddRoomScreenState extends State<AddRoomScreen> {
           horizontal: isMobile ? 8 : 12,
         ),
         decoration: BoxDecoration(
-          color: isSelected ? color : Colors.grey.shade100,
+          color: isSelected ? color : AppTheme.getCardColor(context),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? color : Colors.grey.shade300,
+            color: isSelected ? color : AppTheme.getTextSecondaryColor(context).withOpacity(0.3),
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -672,7 +672,7 @@ class _AddRoomScreenState extends State<AddRoomScreen> {
             style: TextStyle(
               fontSize: isMobile ? 13 : 14,
               fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-              color: isSelected ? Colors.white : Colors.grey.shade700,
+              color: isSelected ? Colors.white : AppTheme.getTextSecondaryColor(context),
             ),
           ),
         ),
@@ -726,7 +726,7 @@ class _AddRoomScreenState extends State<AddRoomScreen> {
                   width: isMobile ? 120 : 150,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.grey.shade300),
+                    border: Border.all(color: AppTheme.getTextSecondaryColor(context).withOpacity(0.3)),
                   ),
                   child: Stack(
                     children: [

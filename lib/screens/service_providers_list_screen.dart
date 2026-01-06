@@ -57,12 +57,12 @@ class _ServiceProvidersListScreenState extends State<ServiceProvidersListScreen>
     final isMobile = Responsive.isMobile(context);
     
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppTheme.getBackgroundColor(context),
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: Colors.white,
+        backgroundColor: AppTheme.getSurfaceColor(context),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black87),
+          icon: Icon(Icons.arrow_back, color: AppTheme.getTextPrimaryColor(context)),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
@@ -230,11 +230,11 @@ class _ServiceProvidersListScreenState extends State<ServiceProvidersListScreen>
             filter = value;
           });
         },
-        // ignore: deprecated_member_use
+        backgroundColor: AppTheme.getSurfaceColor(context),
         selectedColor: AppTheme.primaryColor.withOpacity(0.2),
         checkmarkColor: AppTheme.primaryColor,
         labelStyle: TextStyle(
-          color: isSelected ? AppTheme.primaryColor : Colors.grey[700] ?? Colors.grey,
+          color: isSelected ? AppTheme.primaryColor : AppTheme.getTextSecondaryColor(context),
           fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
           fontSize: 13,
         ),
@@ -615,7 +615,7 @@ class _ServiceProvidersListScreenState extends State<ServiceProvidersListScreen>
           label: 'OK',
           onPressed: () {},
         ),
-        duration: const Duration(seconds: 3),
+        duration: const Duration(seconds: 1),
       ),
     );
   }

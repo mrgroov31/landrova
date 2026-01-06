@@ -110,18 +110,19 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen> {
     }
   }
 
-  Color getStatusBackgroundColor() {
+  Color getStatusBackgroundColor(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     switch (complaint.status) {
       case 'pending':
-        return Colors.orange.shade50;
+        return isDark ? Colors.orange.withOpacity(0.2) : Colors.orange.shade50;
       case 'assigned':
-        return Colors.purple.shade50;
+        return isDark ? Colors.purple.withOpacity(0.2) : Colors.purple.shade50;
       case 'in_progress':
-        return Colors.blue.shade50;
+        return isDark ? Colors.blue.withOpacity(0.2) : Colors.blue.shade50;
       case 'resolved':
-        return Colors.green.shade50;
+        return isDark ? Colors.green.withOpacity(0.2) : Colors.green.shade50;
       default:
-        return Colors.grey.shade50;
+        return isDark ? Colors.grey.withOpacity(0.2) : Colors.grey.shade50;
     }
   }
 
@@ -146,7 +147,7 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen> {
     final dateFormat = DateFormat('MMM dd, yyyy • hh:mm a');
     
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppTheme.getBackgroundColor(context),
       body: CustomScrollView(
         slivers: [
           // App Bar
@@ -154,22 +155,22 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen> {
             expandedHeight: isMobile ? 120 : 140,
             floating: false,
             pinned: true,
-            backgroundColor: getStatusBackgroundColor(),
+            backgroundColor: getStatusBackgroundColor(context),
             leading: IconButton(
-              icon: const Icon(Icons.arrow_back, color: Colors.black87),
+              icon: Icon(Icons.arrow_back, color: AppTheme.getTextPrimaryColor(context)),
               onPressed: () => Navigator.pop(context, false),
             ),
             flexibleSpace: FlexibleSpaceBar(
               title: Text(
                 'Complaint Details',
                 style: TextStyle(
-                  color: Colors.grey.shade900,
+                  color: AppTheme.getTextPrimaryColor(context),
                   fontWeight: FontWeight.bold,
                   fontSize: isMobile ? 18 : 20,
                 ),
               ),
               background: Container(
-                color: getStatusBackgroundColor(),
+                color: getStatusBackgroundColor(context),
                 padding: EdgeInsets.only(
                   top: MediaQuery.of(context).padding.top + 60,
                   left: isMobile ? 16 : 24,
@@ -217,7 +218,7 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen> {
                     style: TextStyle(
                       fontSize: isMobile ? 24 : 28,
                       fontWeight: FontWeight.bold,
-                      color: Colors.grey.shade900,
+                      color: AppTheme.getTextPrimaryColor(context),
                     ),
                   ),
                   
@@ -229,7 +230,7 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen> {
                     style: TextStyle(
                       fontSize: isMobile ? 16 : 18,
                       height: 1.5,
-                      color: Colors.grey.shade700,
+                      color: AppTheme.getTextSecondaryColor(context),
                     ),
                   ),
                   
@@ -285,9 +286,15 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen> {
                     Container(
                       padding: EdgeInsets.all(isMobile ? 16 : 20),
                       decoration: BoxDecoration(
-                        color: Colors.blue.shade50,
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? Colors.blue.withOpacity(0.2)
+                            : Colors.blue.shade50,
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: Colors.blue.shade200),
+                        border: Border.all(
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? Colors.blue.withOpacity(0.4)
+                              : Colors.blue.shade200,
+                        ),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -346,7 +353,7 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen> {
                       style: TextStyle(
                         fontSize: isMobile ? 20 : 24,
                         fontWeight: FontWeight.bold,
-                        color: Colors.grey.shade900,
+                        color: AppTheme.getTextPrimaryColor(context),
                       ),
                     ),
                     SizedBox(height: isMobile ? 16 : 20),
@@ -428,10 +435,10 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen> {
     return Container(
       padding: EdgeInsets.all(isMobile ? 12 : 16),
       decoration: BoxDecoration(
-        color: Colors.grey.shade50,
+        color: AppTheme.getSurfaceColor(context),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: color?.withOpacity(0.3) ?? Colors.grey.shade200,
+          color: color?.withOpacity(0.3) ?? AppTheme.getTextSecondaryColor(context).withOpacity(0.2),
           width: 1,
         ),
       ),
@@ -441,7 +448,7 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen> {
           Icon(
             icon,
             size: isMobile ? 20 : 24,
-            color: color ?? Colors.grey.shade700,
+            color: color ?? AppTheme.getTextSecondaryColor(context),
           ),
           SizedBox(width: isMobile ? 8 : 12),
           Column(
@@ -452,7 +459,7 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen> {
                 label,
                 style: TextStyle(
                   fontSize: isMobile ? 11 : 12,
-                  color: Colors.grey.shade600,
+                  color: AppTheme.getTextSecondaryColor(context),
                 ),
               ),
               SizedBox(height: 2),
@@ -461,7 +468,7 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen> {
                 style: TextStyle(
                   fontSize: isMobile ? 13 : 14,
                   fontWeight: FontWeight.w600,
-                  color: color ?? Colors.grey.shade900,
+                  color: color ?? AppTheme.getTextPrimaryColor(context),
                 ),
               ),
             ],
@@ -475,15 +482,17 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen> {
     return Container(
       margin: EdgeInsets.only(bottom: isMobile ? 12 : 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.getCardColor(context),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: Colors.grey.shade200,
+          color: AppTheme.getTextSecondaryColor(context).withOpacity(0.2),
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Colors.black.withOpacity(0.3)
+                : Colors.black.withOpacity(0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -526,7 +535,7 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen> {
                         style: TextStyle(
                           fontSize: isMobile ? 16 : 18,
                           fontWeight: FontWeight.bold,
-                          color: Colors.grey.shade900,
+                          color: AppTheme.getTextPrimaryColor(context),
                         ),
                       ),
                       SizedBox(height: 4),
@@ -534,7 +543,7 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen> {
                         provider.serviceTypeDisplayName,
                         style: TextStyle(
                           fontSize: isMobile ? 13 : 14,
-                          color: Colors.grey.shade600,
+                          color: AppTheme.getTextSecondaryColor(context),
                         ),
                       ),
                       SizedBox(height: 8),
@@ -551,7 +560,7 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen> {
                             style: TextStyle(
                               fontSize: isMobile ? 13 : 14,
                               fontWeight: FontWeight.w600,
-                              color: Colors.grey.shade900,
+                              color: AppTheme.getTextPrimaryColor(context),
                             ),
                           ),
                           SizedBox(width: 8),
@@ -559,7 +568,7 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen> {
                             '• ${provider.totalJobs} jobs',
                             style: TextStyle(
                               fontSize: isMobile ? 12 : 13,
-                              color: Colors.grey.shade600,
+                              color: AppTheme.getTextSecondaryColor(context),
                             ),
                           ),
                         ],
@@ -619,8 +628,8 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen> {
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
         height: MediaQuery.of(context).size.height * 0.7,
-        decoration: const BoxDecoration(
-          color: Colors.white,
+        decoration: BoxDecoration(
+          color: AppTheme.getCardColor(context),
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
         padding: const EdgeInsets.all(24),
@@ -649,9 +658,10 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen> {
                     children: [
                       Text(
                         provider.name,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
+                          color: AppTheme.getTextPrimaryColor(context),
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -659,7 +669,7 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen> {
                         provider.serviceTypeDisplayName,
                         style: TextStyle(
                           fontSize: 14,
-                          color: Colors.grey.shade600,
+                          color: AppTheme.getTextSecondaryColor(context),
                         ),
                       ),
                     ],
@@ -688,9 +698,10 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen> {
                 const SizedBox(width: 8),
                 Text(
                   '${provider.rating}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
+                    color: AppTheme.getTextPrimaryColor(context),
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -698,18 +709,19 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen> {
                   '• ${provider.totalJobs} completed jobs',
                   style: TextStyle(
                     fontSize: 14,
-                    color: Colors.grey.shade600,
+                    color: AppTheme.getTextSecondaryColor(context),
                   ),
                 ),
               ],
             ),
             if (provider.specialties.isNotEmpty) ...[
               const SizedBox(height: 24),
-              const Text(
+              Text(
                 'Specialties',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
+                  color: AppTheme.getTextPrimaryColor(context),
                 ),
               ),
               const SizedBox(height: 12),
@@ -765,7 +777,7 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen> {
   Widget _buildDetailRow(IconData icon, String label, String value) {
     return Row(
       children: [
-        Icon(icon, size: 20, color: Colors.grey.shade600),
+        Icon(icon, size: 20, color: AppTheme.getTextSecondaryColor(context)),
         const SizedBox(width: 12),
         Expanded(
           child: Column(
@@ -775,15 +787,16 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen> {
                 label,
                 style: TextStyle(
                   fontSize: 12,
-                  color: Colors.grey.shade600,
+                  color: AppTheme.getTextSecondaryColor(context),
                 ),
               ),
               const SizedBox(height: 4),
               Text(
                 value,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w500,
+                  color: AppTheme.getTextPrimaryColor(context),
                 ),
               ),
             ],
@@ -850,7 +863,7 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen> {
           SnackBar(
             content: Text('${provider.name} assigned successfully!'),
             backgroundColor: Colors.green,
-            duration: const Duration(seconds: 2),
+            duration: const Duration(seconds: 1),
           ),
         );
         
@@ -938,7 +951,7 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen> {
           label: 'OK',
           onPressed: () {},
         ),
-        duration: const Duration(seconds: 3),
+        duration: const Duration(seconds: 1),
       ),
     );
   }

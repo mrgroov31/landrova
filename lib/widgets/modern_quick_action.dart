@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../utils/responsive.dart';
+import '../theme/app_theme.dart';
 
 class ModernQuickAction extends StatelessWidget {
   final String label;
@@ -25,7 +26,7 @@ class ModernQuickAction extends StatelessWidget {
       margin: EdgeInsets.all(isMobile ? 6 : 8),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        color: Colors.white,
+        color: AppTheme.getCardColor(context),
         boxShadow: [
           BoxShadow(
             color: color.withOpacity(0.1),
@@ -76,7 +77,7 @@ class ModernQuickAction extends StatelessWidget {
                   style: TextStyle(
                     fontSize: isMobile ? 13 : 14,
                     fontWeight: FontWeight.w600,
-                    color: Colors.grey.shade800,
+                    color: AppTheme.getTextPrimaryColor(context),
                   ),
                   textAlign: TextAlign.center,
                   maxLines: 2,

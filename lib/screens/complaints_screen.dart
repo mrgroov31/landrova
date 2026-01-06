@@ -94,10 +94,11 @@ class _ComplaintsScreenState extends State<ComplaintsScreen> {
     final isMobile = Responsive.isMobile(context);
     
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppTheme.getBackgroundColor(context),
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: Colors.white,
+        backgroundColor: AppTheme.getSurfaceColor(context),
+        foregroundColor: AppTheme.getTextPrimaryColor(context),
         title: Text(
           isTenantLoggedIn ? 'My Complaints' : 'Complaints',
           style: const TextStyle(
@@ -240,11 +241,11 @@ class _ComplaintsScreenState extends State<ComplaintsScreen> {
             filter = value;
           });
         },
-        // ignore: deprecated_member_use
+        backgroundColor: AppTheme.getSurfaceColor(context),
         selectedColor: AppTheme.primaryColor.withOpacity(0.2),
         checkmarkColor: AppTheme.primaryColor,
         labelStyle: TextStyle(
-          color: isSelected ? AppTheme.primaryColor : Colors.grey[700] ?? Colors.grey,
+          color: isSelected ? AppTheme.primaryColor : AppTheme.getTextSecondaryColor(context),
           fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
           fontSize: 13,
         ),

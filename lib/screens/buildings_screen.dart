@@ -69,10 +69,11 @@ class _BuildingsScreenState extends State<BuildingsScreen> {
     final isMobile = Responsive.isMobile(context);
     
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppTheme.getBackgroundColor(context),
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: Colors.white,
+        backgroundColor: AppTheme.getSurfaceColor(context),
+        foregroundColor: AppTheme.getTextPrimaryColor(context),
         title: const Text(
           'My Buildings',
           style: TextStyle(
@@ -305,13 +306,17 @@ class _BuildingsScreenState extends State<BuildingsScreen> {
         vertical: 4,
       ),
       decoration: BoxDecoration(
-        color: Colors.grey.shade100,
+        color: AppTheme.getSurfaceColor(context),
         borderRadius: BorderRadius.circular(6),
+        border: Border.all(
+          color: AppTheme.getTextSecondaryColor(context).withOpacity(0.2),
+          width: 1,
+        ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: isMobile ? 11 : 12, color: Colors.grey[700]),
+          Icon(icon, size: isMobile ? 11 : 12, color: AppTheme.getTextSecondaryColor(context)),
           SizedBox(width: isMobile ? 3 : 4),
           Flexible(
             child: Text(

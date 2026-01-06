@@ -58,7 +58,7 @@ class _UnifiedLoginScreenState extends State<UnifiedLoginScreen> {
           SnackBar(
             content: Text('Error: $e'),
             backgroundColor: Colors.red,
-            duration: const Duration(seconds: 3),
+            duration: const Duration(seconds: 1),
           ),
         );
       }
@@ -117,7 +117,7 @@ class _UnifiedLoginScreenState extends State<UnifiedLoginScreen> {
           SnackBar(
             content: Text(result.error ?? 'Invalid email or password'),
             backgroundColor: Colors.red,
-            duration: const Duration(seconds: 3),
+            duration: const Duration(seconds: 1),
           ),
         );
       }
@@ -130,7 +130,7 @@ class _UnifiedLoginScreenState extends State<UnifiedLoginScreen> {
           SnackBar(
             content: Text('Error: $e'),
             backgroundColor: Colors.red,
-            duration: const Duration(seconds: 3),
+            duration: const Duration(seconds: 1),
           ),
         );
       }

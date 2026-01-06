@@ -207,7 +207,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           SnackBar(
             content: Text(errorMessage),
             backgroundColor: Colors.red,
-            duration: const Duration(seconds: 4),
+            duration: const Duration(seconds: 2),
           ),
         );
       }
@@ -322,10 +322,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final isMobile = Responsive.isMobile(context);
     
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppTheme.getBackgroundColor(context),
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: Colors.white,
+        backgroundColor: AppTheme.getSurfaceColor(context),
+        foregroundColor: AppTheme.getTextPrimaryColor(context),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black87),
           onPressed: () => Navigator.pop(context),
@@ -408,11 +409,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           child: ClipOval(
                             child: _profileImage == null
                                 ? Container(
-                                    color: Colors.grey.shade200,
+                                    color: AppTheme.getTextSecondaryColor(context).withOpacity(0.2),
                                     child: Icon(
                                       Icons.person,
                                       size: isMobile ? 60 : 70,
-                                      color: Colors.grey.shade600,
+                                      color: AppTheme.getTextSecondaryColor(context),
                                     ),
                                   )
                                 : Image.file(
@@ -460,7 +461,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 prefixIcon: const Icon(Icons.person),
                 filled: !_isEditing,
-                fillColor: !_isEditing ? Colors.grey.shade100 : null,
+                fillColor: !_isEditing ? AppTheme.getTextSecondaryColor(context).withOpacity(0.1) : null,
               ),
             ),
             
@@ -477,7 +478,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 prefixIcon: const Icon(Icons.email),
                 filled: !_isEditing,
-                fillColor: !_isEditing ? Colors.grey.shade100 : null,
+                fillColor: !_isEditing ? AppTheme.getTextSecondaryColor(context).withOpacity(0.1) : null,
               ),
             ),
             
@@ -494,7 +495,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 prefixIcon: const Icon(Icons.phone),
                 filled: !_isEditing,
-                fillColor: !_isEditing ? Colors.grey.shade100 : null,
+                fillColor: !_isEditing ? AppTheme.getTextSecondaryColor(context).withOpacity(0.1) : null,
               ),
             ),
             

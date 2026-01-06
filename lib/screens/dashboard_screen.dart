@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:ui';
 import '../models/tenant.dart';
 import '../models/room.dart';
 import '../models/complaint.dart';
@@ -22,6 +23,7 @@ import 'complaint_detail_screen.dart';
 import 'payments_screen.dart';
 import 'buildings_screen.dart';
 import 'profile_screen.dart';
+import 'settings_screen.dart';
 import 'register_service_provider_screen.dart';
 import 'service_providers_list_screen.dart';
 import 'vacating_requests_screen.dart';
@@ -159,7 +161,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           SnackBar(
             content: Text('Failed to load data: $e'),
             backgroundColor: Colors.red,
-            duration: const Duration(seconds: 3),
+            duration: const Duration(seconds: 1),
           ),
         );
       }
@@ -233,46 +235,690 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final isTablet = Responsive.isTablet(context);
     
     return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: Colors.white,
-        automaticallyImplyLeading: false,
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: AppTheme.primaryColor,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Icon(Icons.home, color: Colors.white, size: 22),
-            ),
-            const SizedBox(width: 12),
-            Flexible(
-              child: Text(
-                'OwnHouse',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  fontSize: isMobile ? 18 : 22,
+      backgroundColor: AppTheme.getBackgroundColor(context),
+      drawer: _buildNavigationDrawer(isMobile),
+      floatingActionButton: _buildFloatingActionButton(),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: EdgeInsets.all(isMobile ? 16 : 24),
+          child: isLoading
+              ? const Center(
+                  child: CircularProgressIndicator(
+                    color: AppTheme.primaryColor,
+                  ),
+                )
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Header Section
+                    _buildModernHeader(isMobile),
+                    
+                    SizedBox(height: isMobile ? 24 : 32),
+                    
+                    // Unified Super Card (replacing both daily score and quick stats)
+                    _buildUnifiedSuperCard(isMobile),
+                    
+                    SizedBox(height: isMobile ? 24 : 32),
+                    
+                    // Activity Cards
+                    _buildActivityCards(isMobile),
+                    
+                    SizedBox(height: isMobile ? 24 : 32),
+                    
+                    // Recent Activity
+                    _buildRecentActivity(isMobile),
+                  ],
                 ),
-                overflow: TextOverflow.ellipsis,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildModernHeader(bool isMobile) {
+    return Row(
+      children: [
+        // Menu Button
+        Container(
+          width: isMobile ? 44 : 48,
+          height: isMobile ? 44 : 48,
+          decoration: BoxDecoration(
+            color: AppTheme.getTextPrimaryColor(context).withOpacity(0.1),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppTheme.getTextPrimaryColor(context).withOpacity(0.1)),
+          ),
+          child: IconButton(
+            icon: Icon(Icons.menu, color: AppTheme.getTextPrimaryColor(context), size: 20),
+            onPressed: () {
+              Scaffold.of(context).openDrawer();
+            },
+          ),
+        ),
+        
+        SizedBox(width: isMobile ? 12 : 16),
+        
+        // Welcome Text
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Welcome back,',
+                style: TextStyle(
+                  color: AppTheme.getTextSecondaryColor(context),
+                  fontSize: isMobile ? 14 : 16,
+                ),
+              ),
+              Text(
+                'Property Owner',
+                style: TextStyle(
+                  color: AppTheme.getTextPrimaryColor(context),
+                  fontSize: isMobile ? 18 : 22,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        ),
+        
+        // Action Buttons
+        Row(
+          children: [
+            _buildHeaderButton(Icons.notifications_outlined, () {}),
+            SizedBox(width: isMobile ? 8 : 12),
+            _buildHeaderButton(Icons.settings_outlined, () {
+              Navigator.push(
+                context,
+                CustomPageRoute(
+                  child: const SettingsScreen(),
+                  transition: CustomPageTransition.transform,
+                ),
+              );
+            }),
+            SizedBox(width: isMobile ? 8 : 12),
+            // Profile Avatar
+            GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  CustomPageRoute(
+                    child: const ProfileScreen(),
+                    transition: CustomPageTransition.transform,
+                  ),
+                );
+              },
+              child: Container(
+                width: isMobile ? 44 : 48,
+                height: isMobile ? 44 : 48,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: const LinearGradient(
+                    colors: [AppTheme.accentColor, Color(0xFFFF8F00)],
+                  ),
+                  border: Border.all(color: AppTheme.getTextPrimaryColor(context).withOpacity(0.2), width: 2),
+                ),
+                child: const Icon(
+                  Icons.person,
+                  color: Colors.white,
+                  size: 20,
+                ),
               ),
             ),
           ],
         ),
-        actions: [
-          // Building Selector
+      ],
+    );
+  }
+
+  Widget _buildHeaderButton(IconData icon, VoidCallback onTap) {
+    return Container(
+      width: 44,
+      height: 44,
+      decoration: BoxDecoration(
+        color: AppTheme.getTextPrimaryColor(context).withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppTheme.getTextPrimaryColor(context).withOpacity(0.1)),
+      ),
+      child: IconButton(
+        icon: Icon(icon, color: AppTheme.getTextPrimaryColor(context), size: 20),
+        onPressed: onTap,
+      ),
+    );
+  }
+
+  Widget _buildUnifiedSuperCard(bool isMobile) {
+    final totalRevenue = getTotalRevenue();
+    final pendingRevenue = getPendingRevenue();
+    final totalRooms = getTotalRooms();
+    final totalComplaints = getPendingComplaints();
+    
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: isMobile ? 0 : 20),
+      decoration: BoxDecoration(
+        color: AppTheme.getCardColor(context),
+        borderRadius: BorderRadius.circular(32),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF6366F1).withOpacity(0.1),
+            blurRadius: 40,
+            offset: const Offset(0, 20),
+          ),
+        ],
+        border: Border.all(color: AppTheme.getTextSecondaryColor(context).withOpacity(0.1)),
+      ),
+      child: Column(
+        children: [
+          // Gemini Gradient Header
           Container(
-            margin: const EdgeInsets.only(right: 8),
-            decoration: BoxDecoration(
-              color: Colors.grey.shade100,
-              borderRadius: BorderRadius.circular(12),
+            padding: EdgeInsets.all(isMobile ? 28 : 32),
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Color(0xFF4285F4), // Google Blue
+                  Color(0xFF9171F8), // Purple
+                  Color(0xFFF06292), // Pink
+                ],
+              ),
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(32),
+                topRight: Radius.circular(32),
+              ),
             ),
-            child: IconButton(
-              icon: const Icon(Icons.business),
-              onPressed: () {
+            child: Stack(
+              children: [
+                // Blur effect background
+                Positioned(
+                  top: -20,
+                  right: -20,
+                  child: Container(
+                    width: 128,
+                    height: 128,
+                    decoration: BoxDecoration(
+                      color: Colors.transparent,
+                      shape: BoxShape.circle,
+                    ),
+                   
+                  ),
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Header row
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                // color: Colors.white.withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: Colors.white.withOpacity(0.2),
+                                ),
+                              ),
+                              child: const Icon(
+                                Icons.account_balance_wallet_outlined,
+                                color: Colors.white,
+                                size: 18,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'TOTAL REVENUE',
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.9),
+                                fontSize: isMobile ? 10 : 12,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 1.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: Colors.white.withOpacity(0.2),
+                            ),
+                          ),
+                          child: Text(
+                            '+12.5% UP',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: isMobile ? 8 : 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: isMobile ? 16 : 20),
+                    // Animated Revenue Counter
+                    _buildAnimatedCounter(
+                      value: totalRevenue,
+                      prefix: '₹',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: isMobile ? 40 : 48,
+                        fontWeight: FontWeight.w900,
+                        height: 1.0,
+                      ),
+                    ),
+                    SizedBox(height: isMobile ? 12 : 16),
+                    Text(
+                      'SETTLED EARNINGS • CURRENT CYCLE',
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.7),
+                        fontSize: isMobile ? 9 : 11,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          
+          // Floating Stats Bar
+          Transform.translate(
+            offset: const Offset(0, -24),
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 20),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+                border: Border.all(color: AppTheme.getTextSecondaryColor(context).withOpacity(0.1)),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: Row(
+                  children: [
+                    // Pending Dues
+                    Expanded(
+                      child: Container(
+                        color: AppTheme.getCardColor(context),
+                        padding: EdgeInsets.all(isMobile ? 20 : 24),
+                        child: Column(
+                          children: [
+                            const Icon(
+                              Icons.schedule_outlined,
+                              color: Color(0xFFF59E0B),
+                              size: 18,
+                            ),
+                            const SizedBox(height: 4),
+                            _buildAnimatedCounter(
+                              value: pendingRevenue,
+                              prefix: '₹',
+                              style: TextStyle(
+                                color: AppTheme.getTextPrimaryColor(context),
+                                fontSize: isMobile ? 18 : 20,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'PENDING DUES',
+                              style: TextStyle(
+                                color: AppTheme.getTextSecondaryColor(context),
+                                fontSize: isMobile ? 8 : 10,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 1.0,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    Container(width: 1, height: 105, color: AppTheme.getTextSecondaryColor(context)),
+                    // Live Rooms
+                    Expanded(
+                      child: Container(
+                        color: AppTheme.getCardColor(context),
+                        padding: EdgeInsets.all(isMobile ? 20 : 24),
+                        child: Column(
+                          children: [
+                            const Icon(
+                              Icons.business_outlined,
+                              color: Color(0xFF6366F1),
+                              size: 18,
+                            ),
+                            const SizedBox(height: 4),
+                            _buildAnimatedCounter(
+                              value: totalRooms.toDouble(),
+                              style: TextStyle(
+                                color: AppTheme.getTextPrimaryColor(context),
+                                fontSize: isMobile ? 18 : 20,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'OUR ROOMS',
+                              style: TextStyle(
+                                color: AppTheme.getTextSecondaryColor(context),
+                                fontSize: isMobile ? 8 : 10,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 1.0,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          
+          // Enhanced Ticker Section
+          Column(
+            children: [
+              // Ticker Header
+              Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: isMobile ? 28 : 32,
+                  vertical: isMobile ? 12 : 16,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 6,
+                          height: 6,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFEF4444),
+                            shape: BoxShape.circle,
+                          ),
+                          child:  AnimatedContainer(
+                            duration: Duration(milliseconds: 1000),
+                            curve: Curves.easeInOut,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Tenant Complaints',
+                          style: TextStyle(
+                            color: AppTheme.getTextSecondaryColor(context),
+                            fontSize: isMobile ? 8 : 10,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 2.0,
+                          ),
+                        ),
+                      ],
+                    ),
+                    // Container(
+                    //   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    //   decoration: BoxDecoration(
+                    //     color: const Color(0xFF6366F1).withOpacity(0.1),
+                    //     borderRadius: BorderRadius.circular(20),
+                    //   ),
+                    //   child: Text(
+                    //     '$totalComplaints REPORTS',
+                    //     style: TextStyle(
+                    //       color: const Color(0xFF6366F1),
+                    //       fontSize: isMobile ? 8 : 10,
+                    //       fontWeight: FontWeight.w900,
+                    //     ),
+                    //   ),
+                    // ),
+                  ],
+                ),
+              ),
+              
+              // Complaint Ticker
+              ClipRRect(
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(32),
+                  bottomRight: Radius.circular(32),
+                ),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: AppTheme.getSurfaceColor(context),
+                    border: Border(
+                      top: BorderSide(color: AppTheme.getTextSecondaryColor(context).withOpacity(0.2)),
+                    ),
+                  ),
+                  child: _buildComplaintTicker(isMobile),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAnimatedCounter({
+    required double value,
+    String prefix = '',
+    required TextStyle style,
+  }) {
+    return TweenAnimationBuilder<double>(
+      duration: const Duration(milliseconds: 2000),
+      tween: Tween<double>(begin: 0, end: value),
+      curve: Curves.easeOutExpo,
+      builder: (context, animatedValue, child) {
+        return Text(
+          '$prefix${animatedValue.toInt().toString().replaceAllMapped(
+            RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+            (Match m) => '${m[1]},',
+          )}',
+          style: style,
+        );
+      },
+    );
+  }
+
+  Widget _buildComplaintTicker(bool isMobile) {
+    if (complaints.isEmpty) {
+      return Container(
+        height: 112,
+        decoration: BoxDecoration(
+          color: AppTheme.getSurfaceColor(context),
+          border: Border(
+            top: BorderSide(color: AppTheme.getTextSecondaryColor(context).withOpacity(0.2)),
+          ),
+        ),
+        child: Center(
+          child: Text(
+            'No active complaints',
+            style: TextStyle(
+              color: AppTheme.getTextSecondaryColor(context),
+              fontSize: isMobile ? 12 : 14,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+      );
+    }
+
+    // Create extended list for seamless scrolling
+    final extendedComplaints = [...complaints, ...complaints, ...complaints];
+    
+    return Container(
+      height: 112,
+      decoration: BoxDecoration(
+        color: AppTheme.getSurfaceColor(context),
+        border: Border(
+          top: BorderSide(color: AppTheme.getTextSecondaryColor(context).withOpacity(0.2)),
+        ),
+      ),
+      child: Stack(
+        children: [
+          // Fade masks
+          Positioned(
+            left: 0,
+            top: 0,
+            bottom: 0,
+            width: 80,
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                  colors: [
+                    AppTheme.getSurfaceColor(context),
+                    AppTheme.getSurfaceColor(context).withOpacity(0),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            right: 0,
+            top: 0,
+            bottom: 0,
+            width: 80,
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.centerRight,
+                  end: Alignment.centerLeft,
+                  colors: [
+                    AppTheme.getSurfaceColor(context),
+                    AppTheme.getSurfaceColor(context).withOpacity(0),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          
+          // Auto-scrolling content
+          _AutoScrollingTicker(
+            complaints: extendedComplaints,
+            isMobile: isMobile,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActivityCards(bool isMobile) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Quick Actions',
+          style: TextStyle(
+            color: AppTheme.getTextPrimaryColor(context),
+            fontSize: isMobile ? 18 : 22,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        SizedBox(height: isMobile ? 16 : 20),
+        GridView.count(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          crossAxisCount: isMobile ? 2 : 4,
+          childAspectRatio: isMobile ? 1.3 : 1.5,
+          mainAxisSpacing: isMobile ? 12 : 16,
+          crossAxisSpacing: isMobile ? 12 : 16,
+          children: [
+            // _buildActionCard(
+            //   icon: Icons.person_add_outlined,
+            //   title: 'Add Tenant',
+            //   subtitle: 'Invite new tenant',
+            //   color: const Color(0xFF4FC3F7),
+            //   isMobile: isMobile,
+            //   onTap: () {
+            //     _showBuildingSelectionDialog(
+            //       context,
+            //       onBuildingSelected: (buildingId) {
+            //         Navigator.push(
+            //           context,
+            //           CustomPageRoute(
+            //             child: InviteTenantScreen(selectedBuildingId: buildingId),
+            //             transition: CustomPageTransition.transform,
+            //           ),
+            //         ).then((result) {
+            //           if (result == true) {
+            //             loadDashboardData();
+            //           }
+            //         });
+            //       },
+            //     );
+            //   },
+            // ),
+            
+            _buildActionCard(
+              icon: Icons.add_home_outlined,
+              title: 'Add Room',
+              subtitle: 'Create new room',
+              color: const Color(0xFF66BB6A),
+              isMobile: isMobile,
+              onTap: () {
+                _showBuildingSelectionDialog(
+                  context,
+                  onBuildingSelected: (buildingId) {
+                    Navigator.push(
+                      context,
+                      CustomPageRoute(
+                        child: AddRoomScreen(buildingId: buildingId),
+                        transition: CustomPageTransition.transform,
+                      ),
+                    ).then((result) {
+                      if (result != null) {
+                        loadDashboardData();
+                      }
+                    });
+                  },
+                );
+              },
+            ),
+            _buildActionCard(
+              icon: Icons.report_problem_outlined,
+              title: 'Complaints',
+              subtitle: 'View & manage',
+              color: const Color(0xFFFF7043),
+              isMobile: isMobile,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  CustomPageRoute(
+                    child: const ComplaintsScreen(),
+                    transition: CustomPageTransition.transform,
+                  ),
+                );
+              },
+            ),
+            _buildActionCard(
+              icon: Icons.payment_outlined,
+              title: 'Payments',
+              subtitle: 'Track payments',
+              color: const Color(0xFFAB47BC),
+              isMobile: isMobile,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  CustomPageRoute(
+                    child: const PaymentsScreen(),
+                    transition: CustomPageTransition.transform,
+                  ),
+                );
+              },
+            ),
+            _buildActionCard(
+              icon: Icons.business_outlined,
+              title: 'Buildings',
+              subtitle: 'Manage properties',
+              color: const Color(0xFF26A69A),
+              isMobile: isMobile,
+              onTap: () {
                 Navigator.push(
                   context,
                   CustomPageRoute(
@@ -281,193 +927,418 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                 );
               },
-              tooltip: 'Select Building',
             ),
+            _buildActionCard(
+              icon: Icons.handyman_outlined,
+              title: 'Service Providers',
+              subtitle: 'Manage services',
+              color: const Color(0xFF5C6BC0),
+              isMobile: isMobile,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  CustomPageRoute(
+                    child: const ServiceProvidersListScreen(),
+                    transition: CustomPageTransition.transform,
+                  ),
+                );
+              },
+            ),
+            _buildActionCard(
+              icon: Icons.exit_to_app_outlined,
+              title: 'Vacating Requests',
+              subtitle: 'Handle requests',
+              color: const Color(0xFFFF5722),
+              isMobile: isMobile,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  CustomPageRoute(
+                    child: const VacatingRequestsScreen(),
+                    transition: CustomPageTransition.transform,
+                  ),
+                );
+              },
+            ),
+            _buildActionCard(
+              icon: Icons.assessment_outlined,
+              title: 'View Reports',
+              subtitle: 'Analytics & insights',
+              color: const Color(0xFF8E24AA),
+              isMobile: isMobile,
+              onTap: () {
+                // TODO: Implement reports screen
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Reports feature coming soon!'),
+                    backgroundColor: Color(0xFF8E24AA),
+                  ),
+                );
+              },
+            ),
+            _buildActionCard(
+              icon: Icons.build_outlined,
+              title: 'Maintenance',
+              subtitle: 'Service requests',
+              color: const Color(0xFFD32F2F),
+              isMobile: isMobile,
+              onTap: () {
+                // TODO: Implement maintenance screen
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Maintenance feature coming soon!'),
+                    backgroundColor: Color(0xFFD32F2F),
+                  ),
+                );
+              },
+            ),
+            _buildActionCard(
+              icon: Icons.people_outline,
+              title: 'All Tenants',
+              subtitle: 'View tenant list',
+              color: const Color(0xFF00ACC1),
+              isMobile: isMobile,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  CustomPageRoute(
+                    child: const TenantsScreen(),
+                    transition: CustomPageTransition.transform,
+                  ),
+                );
+              },
+            ),
+            _buildActionCard(
+              icon: Icons.hotel_outlined,
+              title: 'All Rooms',
+              subtitle: 'View room list',
+              color: const Color(0xFF43A047),
+              isMobile: isMobile,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  CustomPageRoute(
+                    child: const RoomsScreen(),
+                    transition: CustomPageTransition.transform,
+                  ),
+                );
+              },
+            ),
+            _buildActionCard(
+              icon: Icons.person_outline,
+              title: 'Profile',
+              subtitle: 'Account settings',
+              color: const Color(0xFF6A1B9A),
+              isMobile: isMobile,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  CustomPageRoute(
+                    child: const ProfileScreen(),
+                    transition: CustomPageTransition.transform,
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildActionCard({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Color color,
+    required bool isMobile,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: EdgeInsets.all(isMobile ? 16 : 20),
+        decoration: BoxDecoration(
+          color: AppTheme.getCardColor(context),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppTheme.getTextPrimaryColor(context).withOpacity(0.1)),
+          boxShadow: [
+            BoxShadow(
+              color: color.withOpacity(0.1),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: isMobile ? 36 : 40,
+              height: isMobile ? 36 : 40,
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: color.withOpacity(0.3),
+                  width: 1,
+                ),
+              ),
+              child: Icon(
+                icon,
+                color: color,
+                size: isMobile ? 18 : 20,
+              ),
+            ),
+            const Spacer(),
+            Text(
+              title,
+              style: TextStyle(
+                color: AppTheme.getTextPrimaryColor(context),
+                fontSize: isMobile ? 14 : 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: isMobile ? 2 : 4),
+            Text(
+              subtitle,
+              style: TextStyle(
+                color: AppTheme.getTextSecondaryColor(context),
+                fontSize: isMobile ? 11 : 12,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRecentActivity(bool isMobile) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Recent Activity',
+          style: TextStyle(
+            color: AppTheme.getTextPrimaryColor(context),
+            fontSize: isMobile ? 18 : 22,
+            fontWeight: FontWeight.bold,
           ),
-          Container(
-            margin: const EdgeInsets.only(right: 8),
-            decoration: BoxDecoration(
-              color: Colors.grey.shade100,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: IconButton(
-              icon: const Icon(Icons.notifications_outlined),
-              onPressed: () {},
-              tooltip: 'Notifications',
-            ),
+        ),
+        SizedBox(height: isMobile ? 16 : 20),
+        
+        // Recent Rooms
+        if (rooms.isNotEmpty) ...[
+          _buildActivitySection(
+            title: 'Recent Rooms',
+            items: rooms.take(3).map((room) => _buildRoomActivityItem(room, isMobile)).toList(),
+            onViewAll: () {
+              Navigator.push(
+                context,
+                CustomPageRoute(
+                  child: const RoomsScreen(),
+                  transition: CustomPageTransition.transform,
+                ),
+              );
+            },
+            isMobile: isMobile,
           ),
-          Container(
-            margin: const EdgeInsets.only(right: 8),
-            decoration: BoxDecoration(
-              color: Colors.grey.shade100,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: IconButton(
-              icon: const Icon(Icons.settings_outlined),
-              onPressed: () {},
-              tooltip: 'Settings',
-            ),
+          SizedBox(height: isMobile ? 20 : 24),
+        ],
+        
+        // Recent Complaints
+        if (complaints.isNotEmpty) ...[
+          _buildActivitySection(
+            title: 'Recent Complaints',
+            items: complaints.take(3).map((complaint) => _buildComplaintActivityItem(complaint, isMobile)).toList(),
+            onViewAll: () {
+              Navigator.push(
+                context,
+                CustomPageRoute(
+                  child: const ComplaintsScreen(),
+                  transition: CustomPageTransition.transform,
+                ),
+              );
+            },
+            isMobile: isMobile,
           ),
-          if (!isMobile)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Center(
-                child: InkWell(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      CustomPageRoute(
-                        child: const ProfileScreen(),
-                        transition: CustomPageTransition.transform,
-                      ),
-                    );
-                  },
-                  borderRadius: BorderRadius.circular(20),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    child: Row(
-                      children: [
-                        Container(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [AppTheme.primaryColor, AppTheme.primaryColor.withOpacity(0.7)],
-                            ),
-                            shape: BoxShape.circle,
-                          ),
-                          padding: const EdgeInsets.all(2),
-                          child: const CircleAvatar(
-                            radius: 18,
-                            backgroundColor: Colors.white,
-                            child: Icon(Icons.person, size: 20, color: AppTheme.primaryColor),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Text(
-                          'Owner',
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildActivitySection({
+    required String title,
+    required List<Widget> items,
+    required VoidCallback onViewAll,
+    required bool isMobile,
+  }) {
+    return Container(
+      padding: EdgeInsets.all(isMobile ? 16 : 20),
+      decoration: BoxDecoration(
+        color: AppTheme.getCardColor(context),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppTheme.getTextPrimaryColor(context).withOpacity(0.1)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                title,
+                style: TextStyle(
+                  color: AppTheme.getTextPrimaryColor(context),
+                  fontSize: isMobile ? 16 : 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              GestureDetector(
+                onTap: onViewAll,
+                child: Text(
+                  'View All',
+                  style: TextStyle(
+                    color: AppTheme.primaryColor,
+                    fontSize: isMobile ? 14 : 16,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
-            ),
-          // Profile button for mobile
-          if (isMobile)
-            Container(
-              margin: const EdgeInsets.only(right: 8),
-              decoration: BoxDecoration(
-                color: Colors.grey.shade100,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: IconButton(
-                icon: const Icon(Icons.person),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    CustomPageRoute(
-                      child: const ProfileScreen(),
-                      transition: CustomPageTransition.transform,
-                    ),
-                  );
-                },
-                tooltip: 'Profile',
-              ),
-            ),
+            ],
+          ),
+          SizedBox(height: isMobile ? 12 : 16),
+          ...items,
         ],
       ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.only(
-          left: isMobile ? 16 : 24,
-          right: isMobile ? 16 : 24,
-          top: isMobile ? 16 : 24,
-          bottom: isMobile ? 16 : 24, // Remove extra padding since no nav bar
-        ),
-        child: Center(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              maxWidth: isMobile ? double.infinity : 1400,
+    );
+  }
+
+  Widget _buildRoomActivityItem(Room room, bool isMobile) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: isMobile ? 12 : 16),
+      child: Row(
+        children: [
+          Container(
+            width: isMobile ? 40 : 48,
+            height: isMobile ? 40 : 48,
+            decoration: BoxDecoration(
+              color: room.hasTenant ? Colors.green.withOpacity(0.2) : Colors.blue.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(12),
             ),
-            child: isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Hero Section with Search
-                      HeroSection(
-                        greeting: 'Hey, Owner! 👋',
-                        subtitle: 'Here\'s what\'s happening with your property today',
-                        onSearchTap: () {},
-                      ),
-
-                      // Mini Stats Row
-                      _buildMiniStatsSection(isMobile),
-
-                SizedBox(height: isMobile ? 24 : 28),
-
-                // Main Stats Cards
-                _buildModernStatsSection(isMobile, isTablet),
-
-                SizedBox(height: isMobile ? 24 : 28),
-
-                // Revenue Chart
-                if (!isMobile) _buildRevenueSection(isMobile),
-
-                if (!isMobile) SizedBox(height: isMobile ? 24 : 28),
-
-                // Rooms Section - Listing Style
-                _buildRoomsListingSection(isMobile),
-
-                SizedBox(height: isMobile ? 24 : 28),
-
-                // Quick Actions
-                _buildModernQuickActionsSection(isMobile, isTablet),
-
-                SizedBox(height: isMobile ? 24 : 28),
-
-                      // Main Content Grid
-                      if (isMobile)
-                        Column(
-                          children: [
-                            _buildRoomsSection(isMobile),
-                            const SizedBox(height: 24),
-                            _buildComplaintsSection(isMobile),
-                            const SizedBox(height: 24),
-                            _buildRecentPaymentsSection(isMobile),
-                          ],
-                        )
-                      else
-                        LayoutBuilder(
-                          builder: (context, constraints) {
-                            return Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Expanded(
-                                  flex: 2,
-                                  child: Column(
-                                    children: [
-                                      _buildRoomsSection(isMobile),
-                                      const SizedBox(height: 24),
-                                      _buildRecentPaymentsSection(isMobile),
-                                    ],
-                                  ),
-                                ),
-                                SizedBox(width: isTablet ? 16 : 20),
-                                Expanded(
-                                  flex: 1,
-                                  child: _buildComplaintsSection(isMobile),
-                                ),
-                              ],
-                            );
-                          },
-                        ),
-                    ],
+            child: Icon(
+              room.hasTenant ? Icons.check_circle : Icons.home_outlined,
+              color: room.hasTenant ? Colors.green : Colors.blue,
+              size: isMobile ? 20 : 24,
+            ),
+          ),
+          SizedBox(width: isMobile ? 12 : 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Room ${room.number}',
+                  style: TextStyle(
+                    color: AppTheme.getTextPrimaryColor(context),
+                    fontSize: isMobile ? 14 : 16,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-              ),
+                Text(
+                  room.hasTenant ? 'Occupied by ${room.tenant!.name}' : 'Available',
+                  style: TextStyle(
+                    color: AppTheme.getTextSecondaryColor(context),
+                    fontSize: isMobile ? 12 : 14,
+                  ),
+                ),
+              ],
+            ),
           ),
+          Text(
+            '₹${room.rent.toStringAsFixed(0)}',
+            style: TextStyle(
+              color: AppTheme.getTextPrimaryColor(context),
+              fontSize: isMobile ? 14 : 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildComplaintActivityItem(Complaint complaint, bool isMobile) {
+    Color statusColor = complaint.status == 'pending' 
+        ? Colors.orange 
+        : complaint.status == 'resolved' 
+            ? Colors.green 
+            : Colors.blue;
+    
+    return Padding(
+      padding: EdgeInsets.only(bottom: isMobile ? 12 : 16),
+      child: Row(
+        children: [
+          Container(
+            width: isMobile ? 40 : 48,
+            height: isMobile ? 40 : 48,
+            decoration: BoxDecoration(
+              color: statusColor.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              complaint.status == 'pending' 
+                  ? Icons.pending_outlined
+                  : complaint.status == 'resolved'
+                      ? Icons.check_circle_outline
+                      : Icons.build_outlined,
+              color: statusColor,
+              size: isMobile ? 20 : 24,
+            ),
+          ),
+          SizedBox(width: isMobile ? 12 : 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  complaint.title,
+                  style: TextStyle(
+                    color: AppTheme.getTextPrimaryColor(context),
+                    fontSize: isMobile ? 14 : 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Text(
+                  'Room ${complaint.roomNumber} • ${complaint.status}',
+                  style: TextStyle(
+                    color: AppTheme.getTextSecondaryColor(context),
+                    fontSize: isMobile ? 12 : 14,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: statusColor.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              complaint.priority.toUpperCase(),
+              style: TextStyle(
+                color: statusColor,
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -1448,5 +2319,579 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
     );
   }
+
+  Widget _buildNavigationDrawer(bool isMobile) {
+    return Drawer(
+      backgroundColor: AppTheme.getCardColor(context),
+      child: SafeArea(
+        child: Column(
+          children: [
+            // Drawer Header
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [AppTheme.primaryColor, AppTheme.secondaryColor],
+                ),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 50,
+                    height: 50,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white.withOpacity(0.2),
+                    ),
+                    child: const Icon(
+                      Icons.home,
+                      color: Colors.white,
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'OwnHouse',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: isMobile ? 18 : 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          'Property Management',
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.8),
+                            fontSize: isMobile ? 12 : 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            
+            // Navigation Items
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                children: [
+                  _buildDrawerItem(
+                    icon: Icons.dashboard_outlined,
+                    title: 'Dashboard',
+                    onTap: () => Navigator.pop(context),
+                  ),
+                  _buildDrawerItem(
+                    icon: Icons.business_outlined,
+                    title: 'Buildings',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        CustomPageRoute(
+                          child: const BuildingsScreen(),
+                          transition: CustomPageTransition.transform,
+                        ),
+                      );
+                    },
+                  ),
+                  _buildDrawerItem(
+                    icon: Icons.hotel_outlined,
+                    title: 'Rooms',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        CustomPageRoute(
+                          child: const RoomsScreen(),
+                          transition: CustomPageTransition.transform,
+                        ),
+                      );
+                    },
+                  ),
+                  _buildDrawerItem(
+                    icon: Icons.people_outline,
+                    title: 'Tenants',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        CustomPageRoute(
+                          child: const TenantsScreen(),
+                          transition: CustomPageTransition.transform,
+                        ),
+                      );
+                    },
+                  ),
+                  _buildDrawerItem(
+                    icon: Icons.report_problem_outlined,
+                    title: 'Complaints',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        CustomPageRoute(
+                          child: const ComplaintsScreen(),
+                          transition: CustomPageTransition.transform,
+                        ),
+                      );
+                    },
+                  ),
+                  _buildDrawerItem(
+                    icon: Icons.payment_outlined,
+                    title: 'Payments',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        CustomPageRoute(
+                          child: const PaymentsScreen(),
+                          transition: CustomPageTransition.transform,
+                        ),
+                      );
+                    },
+                  ),
+                  _buildDrawerItem(
+                    icon: Icons.handyman_outlined,
+                    title: 'Service Providers',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        CustomPageRoute(
+                          child: const ServiceProvidersListScreen(),
+                          transition: CustomPageTransition.transform,
+                        ),
+                      );
+                    },
+                  ),
+                  _buildDrawerItem(
+                    icon: Icons.exit_to_app_outlined,
+                    title: 'Vacating Requests',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        CustomPageRoute(
+                          child: const VacatingRequestsScreen(),
+                          transition: CustomPageTransition.transform,
+                        ),
+                      );
+                    },
+                  ),
+                  Divider(color: AppTheme.getTextSecondaryColor(context).withOpacity(0.3)),
+                  _buildDrawerItem(
+                    icon: Icons.person_outline,
+                    title: 'Profile',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        CustomPageRoute(
+                          child: const ProfileScreen(),
+                          transition: CustomPageTransition.transform,
+                        ),
+                      );
+                    },
+                  ),
+                  _buildDrawerItem(
+                    icon: Icons.settings_outlined,
+                    title: 'Settings',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        CustomPageRoute(
+                          child: const SettingsScreen(),
+                          transition: CustomPageTransition.transform,
+                        ),
+                      );
+                    },
+                  ),
+                  _buildDrawerItem(
+                    icon: Icons.logout_outlined,
+                    title: 'Logout',
+                    onTap: () {
+                      Navigator.pop(context);
+                      _showLogoutDialog(context);
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDrawerItem({
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+  }) {
+    return ListTile(
+      leading: Icon(
+        icon,
+        color: AppTheme.getTextSecondaryColor(context),
+        size: 22,
+      ),
+      title: Text(
+        title,
+        style: TextStyle(
+          color: AppTheme.getTextPrimaryColor(context),
+          fontSize: 16,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+      onTap: onTap,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+    );
+  }
+
+  Widget _buildFloatingActionButton() {
+    return FloatingActionButton.extended(
+      onPressed: () {
+        _showQuickActionDialog();
+      },
+      backgroundColor: AppTheme.primaryColor,
+      foregroundColor: Colors.white,
+      icon: const Icon(Icons.add),
+      label: const Text(
+        'Quick Add',
+        style: TextStyle(fontWeight: FontWeight.bold),
+      ),
+    );
+  }
+
+  void _showQuickActionDialog() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppTheme.getCardColor(context),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppTheme.getTextSecondaryColor(context),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'Quick Actions',
+              style: TextStyle(
+                color: AppTheme.getTextPrimaryColor(context),
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 20),
+            GridView.count(
+              shrinkWrap: true,
+              crossAxisCount: 2,
+              childAspectRatio: 2.5,
+              mainAxisSpacing: 12,
+              crossAxisSpacing: 12,
+              children: [
+                _buildQuickActionButton(
+                  icon: Icons.person_add_outlined,
+                  title: 'Add Tenant',
+                  color: const Color(0xFF4FC3F7),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _showBuildingSelectionDialog(
+                      context,
+                      onBuildingSelected: (buildingId) {
+                        Navigator.push(
+                          context,
+                          CustomPageRoute(
+                            child: InviteTenantScreen(selectedBuildingId: buildingId),
+                            transition: CustomPageTransition.transform,
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
+                _buildQuickActionButton(
+                  icon: Icons.add_home_outlined,
+                  title: 'Add Room',
+                  color: const Color(0xFF66BB6A),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _showBuildingSelectionDialog(
+                      context,
+                      onBuildingSelected: (buildingId) {
+                        Navigator.push(
+                          context,
+                          CustomPageRoute(
+                            child: AddRoomScreen(buildingId: buildingId),
+                            transition: CustomPageTransition.transform,
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
+                _buildQuickActionButton(
+                  icon: Icons.business_outlined,
+                  title: 'Add Building',
+                  color: const Color(0xFF26A69A),
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      CustomPageRoute(
+                        child: const BuildingsScreen(),
+                        transition: CustomPageTransition.transform,
+                      ),
+                    );
+                  },
+                ),
+                _buildQuickActionButton(
+                  icon: Icons.handyman_outlined,
+                  title: 'Service Provider',
+                  color: const Color(0xFF5C6BC0),
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      CustomPageRoute(
+                        child: const RegisterServiceProviderScreen(),
+                        transition: CustomPageTransition.transform,
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuickActionButton({
+    required IconData icon,
+    required String title,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withOpacity(0.3)),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: color, size: 20),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                title,
+                style: TextStyle(
+                  color: AppTheme.getTextPrimaryColor(context),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
+
+// Auto-scrolling ticker widget for complaints
+class _AutoScrollingTicker extends StatefulWidget {
+  final List<Complaint> complaints;
+  final bool isMobile;
+
+  const _AutoScrollingTicker({
+    required this.complaints,
+    required this.isMobile,
+  });
+
+  @override
+  State<_AutoScrollingTicker> createState() => _AutoScrollingTickerState();
+}
+
+class _AutoScrollingTickerState extends State<_AutoScrollingTicker>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+  late ScrollController _scrollController;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
+    
+    // Create animation controller for continuous scrolling
+    _controller = AnimationController(
+      duration: const Duration(seconds: 45), // 45 seconds for full cycle
+      vsync: this,
+    );
+
+    // Start the animation after a short delay
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _startScrolling();
+    });
+  }
+
+  void _startScrolling() {
+    if (!mounted) return;
+    
+    // Calculate total scroll distance
+    final itemWidth = 220.0 + 80.0; // item width + margins
+    final totalWidth = widget.complaints.length * itemWidth;
+    
+    _animation = Tween<double>(
+      begin: 0.0,
+      end: totalWidth / 2, // Scroll to halfway point for seamless loop
+    ).animate(CurvedAnimation(
+      parent: _controller,
+      curve: Curves.linear,
+    ));
+
+    _animation.addListener(() {
+      if (_scrollController.hasClients) {
+        _scrollController.jumpTo(_animation.value);
+      }
+    });
+
+    _animation.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        // Reset to beginning for seamless loop
+        _controller.reset();
+        _controller.forward();
+      }
+    });
+
+    _controller.forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final dateFormat = DateFormat('MMM dd, yyyy');
+    
+    return SingleChildScrollView(
+      controller: _scrollController,
+      scrollDirection: Axis.horizontal,
+      physics: const NeverScrollableScrollPhysics(),
+      child: Row(
+        children: widget.complaints.asMap().entries.map((entry) {
+          final complaint = entry.value;
+          
+          return Container(
+            width: 220,
+            margin: const EdgeInsets.symmetric(horizontal: 40),
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            decoration: BoxDecoration(
+              border: Border(
+                left: BorderSide(
+                  color: const Color(0xFF6366F1).withOpacity(0.3),
+                  width: 2,
+                ),
+              ),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.only(left: 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color: complaint.priority == 'high' 
+                              ? const Color(0xFFEF4444)
+                              : complaint.priority == 'urgent'
+                                  ? const Color(0xFFEF4444)
+                                  : const Color(0xFFF59E0B),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          complaint.title,
+                          style: TextStyle(
+                            color: AppTheme.getTextPrimaryColor(context),
+                            fontSize: widget.isMobile ? 12 : 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Raised by: ${complaint.tenantName} • Rm ${complaint.roomNumber}',
+                    style: TextStyle(
+                      color: const Color(0xFF6366F1), // Indigo color for tenant name
+                      fontSize: widget.isMobile ? 10 : 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.calendar_today,
+                        size: 10,
+                        color: AppTheme.getTextSecondaryColor(context),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        dateFormat.format(complaint.createdAt),
+                        style: TextStyle(
+                          color: AppTheme.getTextSecondaryColor(context),
+                          fontSize: widget.isMobile ? 8 : 10,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+}

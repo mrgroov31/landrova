@@ -183,12 +183,12 @@ class _VacatingRequestsScreenState extends State<VacatingRequestsScreen> {
     final dateFormat = DateFormat('MMM dd, yyyy');
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppTheme.getBackgroundColor(context),
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: Colors.white,
+        backgroundColor: AppTheme.getSurfaceColor(context),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black87),
+          icon: Icon(Icons.arrow_back, color: AppTheme.getTextPrimaryColor(context)),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
@@ -268,10 +268,11 @@ class _VacatingRequestsScreenState extends State<VacatingRequestsScreen> {
           filter = value;
         });
       },
+      backgroundColor: AppTheme.getSurfaceColor(context),
       selectedColor: AppTheme.primaryColor.withOpacity(0.2),
       checkmarkColor: AppTheme.primaryColor,
       labelStyle: TextStyle(
-        color: isSelected ? AppTheme.primaryColor : Colors.grey.shade700,
+        color: isSelected ? AppTheme.primaryColor : AppTheme.getTextSecondaryColor(context),
         fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
         fontSize: isMobile ? 13 : 14,
       ),

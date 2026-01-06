@@ -72,7 +72,7 @@ class _RegisterServiceProviderScreenState extends State<RegisterServiceProviderS
         SnackBar(
           content: Text('${newProvider.name} registered successfully!'),
           backgroundColor: Colors.green,
-          duration: const Duration(seconds: 2),
+          duration: const Duration(seconds: 1),
         ),
       );
 
@@ -85,12 +85,12 @@ class _RegisterServiceProviderScreenState extends State<RegisterServiceProviderS
     final isMobile = Responsive.isMobile(context);
     
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppTheme.getBackgroundColor(context),
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: Colors.white,
+        backgroundColor: AppTheme.getSurfaceColor(context),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black87),
+          icon: Icon(Icons.arrow_back, color: AppTheme.getTextPrimaryColor(context)),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(

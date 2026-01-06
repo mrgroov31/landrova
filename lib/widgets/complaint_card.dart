@@ -3,6 +3,7 @@ import '../models/complaint.dart';
 import '../utils/responsive.dart';
 import '../utils/custom_page_route.dart';
 import '../screens/complaint_detail_screen.dart';
+import '../theme/app_theme.dart';
 import 'package:intl/intl.dart';
 
 class ComplaintCard extends StatelessWidget {
@@ -30,33 +31,35 @@ class ComplaintCard extends StatelessWidget {
     }
   }
 
-  Color getStatusBackgroundColor() {
+  Color getStatusBackgroundColor(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     switch (complaint.status) {
       case 'pending':
-        return Colors.orange.shade50;
+        return isDark ? Colors.orange.withOpacity(0.2) : Colors.orange.shade50;
       case 'assigned':
-        return Colors.purple.shade50;
+        return isDark ? Colors.purple.withOpacity(0.2) : Colors.purple.shade50;
       case 'in_progress':
-        return Colors.blue.shade50;
+        return isDark ? Colors.blue.withOpacity(0.2) : Colors.blue.shade50;
       case 'resolved':
-        return Colors.green.shade50;
+        return isDark ? Colors.green.withOpacity(0.2) : Colors.green.shade50;
       default:
-        return Colors.grey.shade50;
+        return isDark ? Colors.grey.withOpacity(0.2) : Colors.grey.shade50;
     }
   }
 
-  Color getStatusBorderColor() {
+  Color getStatusBorderColor(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     switch (complaint.status) {
       case 'pending':
-        return Colors.orange.shade200;
+        return isDark ? Colors.orange.withOpacity(0.4) : Colors.orange.shade200;
       case 'assigned':
-        return Colors.purple.shade200;
+        return isDark ? Colors.purple.withOpacity(0.4) : Colors.purple.shade200;
       case 'in_progress':
-        return Colors.blue.shade200;
+        return isDark ? Colors.blue.withOpacity(0.4) : Colors.blue.shade200;
       case 'resolved':
-        return Colors.green.shade200;
+        return isDark ? Colors.green.withOpacity(0.4) : Colors.green.shade200;
       default:
-        return Colors.grey.shade200;
+        return isDark ? Colors.grey.withOpacity(0.4) : Colors.grey.shade200;
     }
   }
 
@@ -125,10 +128,10 @@ class ComplaintCard extends StatelessWidget {
         child: Container(
           margin: EdgeInsets.only(bottom: isMobile ? 12 : 16),
           decoration: BoxDecoration(
-            color: getStatusBackgroundColor(),
+            color: getStatusBackgroundColor(context),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: getStatusBorderColor(),
+              color: getStatusBorderColor(context),
               width: 2,
             ),
             boxShadow: [
@@ -154,7 +157,7 @@ class ComplaintCard extends StatelessWidget {
                         style: TextStyle(
                           fontSize: isMobile ? 18 : 20,
                           fontWeight: FontWeight.bold,
-                          color: Colors.grey.shade900,
+                          color: AppTheme.getTextPrimaryColor(context),
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
@@ -191,7 +194,7 @@ class ComplaintCard extends StatelessWidget {
                   style: TextStyle(
                     fontSize: isMobile ? 14 : 15,
                     height: 1.4,
-                    color: Colors.grey.shade700,
+                    color: AppTheme.getTextSecondaryColor(context),
                   ),
                   maxLines: 3,
                   overflow: TextOverflow.ellipsis,
@@ -211,14 +214,14 @@ class ComplaintCard extends StatelessWidget {
                         Icon(
                           Icons.room_outlined,
                           size: isMobile ? 16 : 18,
-                          color: Colors.grey.shade700,
+                          color: AppTheme.getTextSecondaryColor(context),
                         ),
                         SizedBox(width: isMobile ? 4 : 6),
                         Text(
                           'Room ${complaint.roomNumber}',
                           style: TextStyle(
                             fontSize: isMobile ? 13 : 14,
-                            color: Colors.grey.shade700,
+                            color: AppTheme.getTextSecondaryColor(context),
                           ),
                         ),
                       ],
@@ -230,14 +233,14 @@ class ComplaintCard extends StatelessWidget {
                         Icon(
                           Icons.person_outline,
                           size: isMobile ? 16 : 18,
-                          color: Colors.grey.shade700,
+                          color: AppTheme.getTextSecondaryColor(context),
                         ),
                         SizedBox(width: isMobile ? 4 : 6),
                         Text(
                           complaint.tenantName,
                           style: TextStyle(
                             fontSize: isMobile ? 13 : 14,
-                            color: Colors.grey.shade700,
+                            color: AppTheme.getTextSecondaryColor(context),
                           ),
                         ),
                       ],
@@ -288,14 +291,14 @@ class ComplaintCard extends StatelessWidget {
                     Icon(
                       Icons.calendar_today_outlined,
                       size: isMobile ? 14 : 16,
-                      color: Colors.grey.shade600,
+                      color: AppTheme.getTextSecondaryColor(context),
                     ),
                     SizedBox(width: isMobile ? 4 : 6),
                     Text(
                       'Created: ${dateFormat.format(complaint.createdAt)}',
                       style: TextStyle(
                         fontSize: isMobile ? 12 : 13,
-                        color: Colors.grey.shade600,
+                        color: AppTheme.getTextSecondaryColor(context),
                       ),
                     ),
                   ],

@@ -138,7 +138,7 @@ class _BuildingDetailScreenState extends State<BuildingDetailScreen> {
     final isMobile = Responsive.isMobile(context);
 
     return Scaffold(
-      backgroundColor: Colors.grey.shade50,
+      backgroundColor: AppTheme.getBackgroundColor(context),
       body: CustomScrollView(
         slivers: [
           // App Bar with Building Info
@@ -259,7 +259,7 @@ class _BuildingDetailScreenState extends State<BuildingDetailScreen> {
                               style: TextStyle(
                                 fontSize: isMobile ? 20 : 24,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.grey.shade800,
+                                color: AppTheme.getTextPrimaryColor(context),
                               ),
                             ),
                             SizedBox(height: isMobile ? 16 : 20),
@@ -272,7 +272,7 @@ class _BuildingDetailScreenState extends State<BuildingDetailScreen> {
                               style: TextStyle(
                                 fontSize: isMobile ? 20 : 24,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.grey.shade800,
+                                color: AppTheme.getTextPrimaryColor(context),
                               ),
                             ),
                             SizedBox(height: isMobile ? 16 : 20),
@@ -289,7 +289,7 @@ class _BuildingDetailScreenState extends State<BuildingDetailScreen> {
                                     style: TextStyle(
                                       fontSize: isMobile ? 20 : 24,
                                       fontWeight: FontWeight.bold,
-                                      color: Colors.grey.shade800,
+                                      color: AppTheme.getTextPrimaryColor(context),
                                     ),
                                   ),
                                   Row(
@@ -341,7 +341,7 @@ class _BuildingDetailScreenState extends State<BuildingDetailScreen> {
                                     style: TextStyle(
                                       fontSize: isMobile ? 20 : 24,
                                       fontWeight: FontWeight.bold,
-                                      color: Colors.grey.shade800,
+                                      color: AppTheme.getTextPrimaryColor(context),
                                     ),
                                   ),
                                   TextButton(
@@ -377,11 +377,13 @@ class _BuildingDetailScreenState extends State<BuildingDetailScreen> {
       margin: EdgeInsets.all(isMobile ? 16 : 24),
       padding: EdgeInsets.all(isMobile ? 16 : 20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.getCardColor(context),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.shade200,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Colors.black.withOpacity(0.3)
+                : Colors.grey.shade200,
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -399,7 +401,7 @@ class _BuildingDetailScreenState extends State<BuildingDetailScreen> {
                 style: TextStyle(
                   fontSize: isMobile ? 18 : 20,
                   fontWeight: FontWeight.bold,
-                  color: Colors.grey.shade800,
+                  color: AppTheme.getTextPrimaryColor(context),
                 ),
               ),
             ],
@@ -420,7 +422,7 @@ class _BuildingDetailScreenState extends State<BuildingDetailScreen> {
                     style: TextStyle(
                       fontSize: isMobile ? 14 : 16,
                       fontWeight: FontWeight.w600,
-                      color: Colors.grey.shade700,
+                      color: AppTheme.getTextSecondaryColor(context),
                     ),
                   ),
                   SizedBox(height: 4),
@@ -428,7 +430,7 @@ class _BuildingDetailScreenState extends State<BuildingDetailScreen> {
                     widget.building.description!,
                     style: TextStyle(
                       fontSize: isMobile ? 13 : 15,
-                      color: Colors.grey.shade600,
+                      color: AppTheme.getTextSecondaryColor(context),
                     ),
                   ),
                 ],
@@ -441,7 +443,7 @@ class _BuildingDetailScreenState extends State<BuildingDetailScreen> {
               style: TextStyle(
                 fontSize: isMobile ? 14 : 16,
                 fontWeight: FontWeight.w600,
-                color: Colors.grey.shade700,
+                color: AppTheme.getTextSecondaryColor(context),
               ),
             ),
             SizedBox(height: 8),
@@ -453,7 +455,12 @@ class _BuildingDetailScreenState extends State<BuildingDetailScreen> {
                   label: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(facility.name),
+                      Text(
+                        facility.name,
+                        style: TextStyle(
+                          color: AppTheme.getTextPrimaryColor(context),
+                        ),
+                      ),
                       if (facility.isPaid) ...[
                         SizedBox(width: 4),
                         Icon(Icons.attach_money, size: 14, color: Colors.orange),
@@ -461,8 +468,8 @@ class _BuildingDetailScreenState extends State<BuildingDetailScreen> {
                     ],
                   ),
                   backgroundColor: facility.isPaid 
-                      ? Colors.orange.shade50 
-                      : Colors.green.shade50,
+                      ? Colors.orange.withOpacity(0.1)
+                      : Colors.green.withOpacity(0.1),
                 );
               }).toList(),
             ),
@@ -484,7 +491,7 @@ class _BuildingDetailScreenState extends State<BuildingDetailScreen> {
               label,
               style: TextStyle(
                 fontSize: isMobile ? 13 : 15,
-                color: Colors.grey.shade600,
+                color: AppTheme.getTextSecondaryColor(context),
               ),
             ),
           ),
@@ -494,7 +501,7 @@ class _BuildingDetailScreenState extends State<BuildingDetailScreen> {
               style: TextStyle(
                 fontSize: isMobile ? 13 : 15,
                 fontWeight: FontWeight.w500,
-                color: Colors.grey.shade800,
+                color: AppTheme.getTextPrimaryColor(context),
               ),
             ),
           ),
@@ -618,14 +625,14 @@ class _BuildingDetailScreenState extends State<BuildingDetailScreen> {
       return Container(
         padding: EdgeInsets.all(isMobile ? 24 : 32),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppTheme.getCardColor(context),
           borderRadius: BorderRadius.circular(16),
         ),
         child: Center(
           child: Text(
             'No available rooms',
             style: TextStyle(
-              color: Colors.grey.shade600,
+              color: AppTheme.getTextSecondaryColor(context),
               fontSize: isMobile ? 14 : 16,
             ),
           ),
@@ -670,14 +677,14 @@ class _BuildingDetailScreenState extends State<BuildingDetailScreen> {
       return Container(
         padding: EdgeInsets.all(isMobile ? 24 : 32),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppTheme.getCardColor(context),
           borderRadius: BorderRadius.circular(16),
         ),
         child: Center(
           child: Text(
             'No complaints',
             style: TextStyle(
-              color: Colors.grey.shade600,
+              color: AppTheme.getTextSecondaryColor(context),
               fontSize: isMobile ? 14 : 16,
             ),
           ),

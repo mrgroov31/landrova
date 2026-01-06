@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/room.dart';
 import '../utils/responsive.dart';
+import '../theme/app_theme.dart';
 
 class RoomStatusCard extends StatelessWidget {
   final Room room;
@@ -117,7 +118,7 @@ class RoomStatusCard extends StatelessWidget {
                               vertical: isMobile ? 6 : 8,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.grey.shade100,
+                              color: AppTheme.getTextSecondaryColor(context).withOpacity(0.1),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(

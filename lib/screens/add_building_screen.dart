@@ -125,7 +125,7 @@ class _AddBuildingScreenState extends State<AddBuildingScreen> {
           SnackBar(
             content: Text('${_nameController.text.trim()} created successfully!'),
             backgroundColor: Colors.green,
-            duration: const Duration(seconds: 2),
+            duration: const Duration(seconds: 1),
           ),
         );
 
@@ -177,7 +177,7 @@ class _AddBuildingScreenState extends State<AddBuildingScreen> {
           SnackBar(
             content: Text('Error creating building: ${e.toString()}'),
             backgroundColor: Colors.red,
-            duration: const Duration(seconds: 4),
+            duration: const Duration(seconds: 2),
           ),
         );
       }
@@ -189,12 +189,12 @@ class _AddBuildingScreenState extends State<AddBuildingScreen> {
     final isMobile = Responsive.isMobile(context);
     
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppTheme.getBackgroundColor(context),
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: Colors.white,
+        backgroundColor: AppTheme.getSurfaceColor(context),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black87),
+          icon: Icon(Icons.arrow_back, color: AppTheme.getTextPrimaryColor(context)),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
@@ -892,7 +892,7 @@ class _AddBuildingScreenState extends State<AddBuildingScreen> {
           SnackBar(
             content: Text(errorMessage),
             backgroundColor: Colors.red,
-            duration: const Duration(seconds: 4),
+            duration: const Duration(seconds: 2),
           ),
         );
       }
@@ -1025,7 +1025,7 @@ class _AddBuildingScreenState extends State<AddBuildingScreen> {
           SnackBar(
             content: Text(errorMessage),
             backgroundColor: Colors.red,
-            duration: const Duration(seconds: 4),
+            duration: const Duration(seconds: 2),
           ),
         );
       }

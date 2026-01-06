@@ -57,7 +57,7 @@ class _OwnerLoginScreenState extends State<OwnerLoginScreen> {
           SnackBar(
             content: Text(result.error ?? 'Login failed'),
             backgroundColor: Colors.red,
-            duration: const Duration(seconds: 3),
+            duration: const Duration(seconds: 1),
           ),
         );
       }
@@ -70,7 +70,7 @@ class _OwnerLoginScreenState extends State<OwnerLoginScreen> {
           SnackBar(
             content: Text('Error: $e'),
             backgroundColor: Colors.red,
-            duration: const Duration(seconds: 3),
+            duration: const Duration(seconds: 1),
           ),
         );
       }

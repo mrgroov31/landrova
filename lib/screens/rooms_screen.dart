@@ -127,26 +127,27 @@ class _RoomsScreenState extends State<RoomsScreen> {
     final isMobile = Responsive.isMobile(context);
     
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppTheme.getBackgroundColor(context),
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: Colors.white,
+        backgroundColor: AppTheme.getSurfaceColor(context),
+        foregroundColor: AppTheme.getTextPrimaryColor(context),
         title: const Text(
           'Rooms',
           style: TextStyle(
             fontWeight: FontWeight.bold,
-            fontSize: 24,
+            fontSize: 19,
           ),
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () {},
-          ),
-          IconButton(
-            icon: const Icon(Icons.filter_list),
-            onPressed: () {},
-          ),
+          // IconButton(
+          //   icon: const Icon(Icons.search),
+          //   onPressed: () {},
+          // ),
+          // IconButton(
+          //   icon: const Icon(Icons.filter_list),
+          //   onPressed: () {},
+          // ),
         ],
       ),
       body: Column(
@@ -240,18 +241,18 @@ class _RoomsScreenState extends State<RoomsScreen> {
           
           // Filter Chips - Status
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Status',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.grey[700],
-                  ),
-                ),
+                // Text(
+                //   'Status',
+                //   style: TextStyle(
+                //     fontSize: 12,
+                //     fontWeight: FontWeight.w600,
+                //     color: Colors.grey[700],
+                //   ),
+                // ),
                 const SizedBox(height: 8),
                 SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
@@ -377,10 +378,11 @@ class _RoomsScreenState extends State<RoomsScreen> {
             statusFilter = value;
           });
         },
+        backgroundColor: AppTheme.getSurfaceColor(context),
         selectedColor: AppTheme.primaryColor.withOpacity(0.2),
         checkmarkColor: AppTheme.primaryColor,
         labelStyle: TextStyle(
-          color: isSelected ? AppTheme.primaryColor : Colors.grey[700] ?? Colors.grey,
+          color: isSelected ? AppTheme.primaryColor : AppTheme.getTextSecondaryColor(context),
           fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
           fontSize: 13,
         ),

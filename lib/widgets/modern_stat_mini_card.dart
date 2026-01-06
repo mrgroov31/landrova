@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:lottie/lottie.dart';
 import '../utils/responsive.dart';
+import '../theme/app_theme.dart';
 
 class ModernStatMiniCard extends StatelessWidget {
   final String title;
@@ -44,7 +45,7 @@ class ModernStatMiniCard extends StatelessWidget {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              Colors.white,
+              AppTheme.getCardColor(context),
               (color ?? Colors.blue).withOpacity(0.02),
             ],
           ),
@@ -149,7 +150,7 @@ class ModernStatMiniCard extends StatelessWidget {
                 style: TextStyle(
                   fontSize: isMobile ? 20 : 28,
                   fontWeight: FontWeight.bold,
-                  color: Colors.grey.shade900,
+                  color: AppTheme.getTextPrimaryColor(context),
                   letterSpacing: -0.5,
                   height: 1.0,
                 ),
@@ -164,7 +165,7 @@ class ModernStatMiniCard extends StatelessWidget {
                 title,
                 style: TextStyle(
                   fontSize: isMobile ? 13 : 14,
-                  color: Colors.grey.shade600,
+                  color: AppTheme.getTextSecondaryColor(context),
                   fontWeight: FontWeight.w500,
                 ),
                 maxLines: 1,
@@ -179,7 +180,7 @@ class ModernStatMiniCard extends StatelessWidget {
                   subtitle!,
                   style: TextStyle(
                     fontSize: isMobile ? 11 : 12,
-                    color: Colors.grey.shade500,
+                    color: AppTheme.getTextSecondaryColor(context),
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,

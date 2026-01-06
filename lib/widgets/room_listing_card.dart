@@ -65,7 +65,7 @@ class RoomListingCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        height: isMobile ? 420 : 480, // Fixed height for carousel
+        height: isMobile ? 350 : 480, // Fixed height for carousel
         margin: EdgeInsets.only(bottom: isMobile ? 16 : 20),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
@@ -190,7 +190,7 @@ class RoomListingCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Room ${room.number}',
+                          'house ${room.number}',
                           style: TextStyle(
                             fontSize: isMobile ? 24 : 28,
                             fontWeight: FontWeight.bold,
@@ -292,62 +292,7 @@ class RoomListingCard extends StatelessWidget {
                               ),
                           ],
                         ),
-                        if (room.hasTenant) ...[
-                          SizedBox(height: isMobile ? 8 : 12),
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.person_outline,
-                                size: 16,
-                                color: Colors.white.withOpacity(0.9),
-                              ),
-                              SizedBox(width: 6),
-                              Flexible(
-                                child: Text(
-                                  'Occupied by ${room.tenant!.name}',
-                                  style: TextStyle(
-                                    fontSize: isMobile ? 13 : 14,
-                                    color: Colors.white.withOpacity(0.9),
-                                    fontWeight: FontWeight.w500,
-                                    shadows: [
-                                      Shadow(
-                                        color: Colors.black.withOpacity(0.5),
-                                        blurRadius: 6,
-                                      ),
-                                    ],
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ] else if (tenantName != null) ...[
-                          SizedBox(height: isMobile ? 8 : 12),
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.person_outline,
-                                size: 16,
-                                color: Colors.white.withOpacity(0.9),
-                              ),
-                              SizedBox(width: 6),
-                              Text(
-                                'Occupied by $tenantName',
-                                style: TextStyle(
-                                  fontSize: isMobile ? 13 : 14,
-                                  color: Colors.white.withOpacity(0.9),
-                                  shadows: [
-                                    Shadow(
-                                      color: Colors.black.withOpacity(0.5),
-                                      blurRadius: 6,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
+                     
                         SizedBox(height: isMobile ? 12 : 16),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -385,34 +330,38 @@ class RoomListingCard extends StatelessWidget {
                                 ),
                               ],
                             ),
-                            GestureDetector(
-                              onTap: onTap,
-                              child: Container(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: isMobile ? 16 : 20,
-                                  vertical: isMobile ? 10 : 12,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(12),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(0.3),
-                                      blurRadius: 8,
-                                      offset: const Offset(0, 2),
-                                    ),
-                                  ],
-                                ),
-                                child: Text(
-                                  'View Details',
-                                  style: TextStyle(
-                                    color: theme.colorScheme.primary,
-                                    fontSize: isMobile ? 13 : 14,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                            ),
+                            // GestureDetector(
+                            //   onTap: onTap,
+                            //   child: Container(
+                            //     padding: EdgeInsets.symmetric(
+                            //       horizontal: isMobile ? 16 : 20,
+                            //       vertical: isMobile ? 10 : 12,
+                            //     ),
+                            //     decoration: BoxDecoration(
+                            //       color: Colors.white,
+                            //       borderRadius: BorderRadius.circular(12),
+                            //       boxShadow: [
+                            //         BoxShadow(
+                            //           color: Colors.black.withOpacity(0.3),
+                            //           blurRadius: 8,
+                            //           offset: const Offset(0, 2),
+                            //         ),
+                            //       ],
+                            //     ),
+                            //     child: Text(
+                            //       'View Details',
+                            //       style: TextStyle(
+                            //         color: theme.colorScheme.primary,
+                            //         fontSize: isMobile ? 13 : 14,
+                            //         fontWeight: FontWeight.w600,
+                            //       ),
+                            //     ),
+                            //   ),
+                            // ),
+                               if (room.hasTenant || room.currentOccupancy > 0) ...[
+                          SizedBox(height: isMobile ? 8 : 12),
+                          _buildTenantAvatars(isMobile),
+                        ],
                           ],
                         ),
                       ],
@@ -467,6 +416,162 @@ class RoomListingCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildTenantAvatars(bool isMobile) {
+    // Generate mock tenant data based on room occupancy
+    List<Map<String, String>> tenants = [];
+    
+    if (room.hasTenant && room.tenant != null) {
+      // Use actual tenant data if available
+      tenants.add({
+        'name': room.tenant!.name,
+        'initial': room.tenant!.name.isNotEmpty ? room.tenant!.name[0].toUpperCase() : 'T',
+      });
+    } else if (tenantName != null) {
+      // Use provided tenant name
+      tenants.add({
+        'name': tenantName!,
+        'initial': tenantName!.isNotEmpty ? tenantName![0].toUpperCase() : 'T',
+      });
+    }
+    
+    // Add mock tenants for remaining occupancy (for PG rooms)
+    int remainingOccupancy = room.currentOccupancy - tenants.length;
+    if (remainingOccupancy > 0) {
+      List<String> mockNames = ['Alex', 'Sam', 'Jordan', 'Casey', 'Taylor', 'Morgan', 'Riley', 'Avery'];
+      for (int i = 0; i < remainingOccupancy && i < mockNames.length; i++) {
+        tenants.add({
+          'name': mockNames[i],
+          'initial': mockNames[i][0],
+        });
+      }
+    }
+
+    if (tenants.isEmpty) return const SizedBox.shrink();
+
+    const int maxVisibleAvatars = 4;
+    final int visibleCount = tenants.length > maxVisibleAvatars ? maxVisibleAvatars : tenants.length;
+    final int remainingCount = tenants.length - maxVisibleAvatars;
+    final double avatarSize = isMobile ? 32.0 : 36.0;
+    const double overlapOffset = 20.0;
+
+    return Row(
+      children: [
+        // Icon(
+        //   Icons.people_outline,
+        //   size: 16,
+        //   color: Colors.white.withOpacity(0.9),
+        // ),
+        // SizedBox(width: 8),
+        SizedBox(
+          width: (visibleCount * overlapOffset) + avatarSize + (remainingCount > 0 ? overlapOffset + avatarSize : 0),
+          height: avatarSize,
+          child: Stack(
+            children: [
+              // Visible tenant avatars
+              ...List.generate(visibleCount, (index) {
+                final tenant = tenants[index];
+                final colors = [
+                  Colors.blue.shade400,
+                  Colors.green.shade400,
+                  Colors.purple.shade400,
+                  Colors.orange.shade400,
+                  Colors.pink.shade400,
+                  Colors.teal.shade400,
+                  Colors.indigo.shade400,
+                  Colors.red.shade400,
+                ];
+                
+                return Positioned(
+                  left: index * overlapOffset,
+                  child: Container(
+                    width: avatarSize,
+                    height: avatarSize,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: colors[index % colors.length],
+                      border: Border.all(
+                        color: Colors.white,
+                        width: 2,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.3),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Center(
+                      child: Text(
+                        tenant['initial']!,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: isMobile ? 12 : 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              }),
+              
+              // "+X" indicator for remaining tenants
+              if (remainingCount > 0)
+                Positioned(
+                  left: visibleCount * overlapOffset,
+                  child: Container(
+                    width: avatarSize,
+                    height: avatarSize,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.black.withOpacity(0.7),
+                      border: Border.all(
+                        color: Colors.white,
+                        width: 2,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.3),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Center(
+                      child: Text(
+                        '+$remainingCount',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: isMobile ? 10 : 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+       
+        SizedBox(width: 8),
+        // Text(
+        //   tenants.length == 1 ? tenants[0]['name']! : '${tenants.length} tenants',
+        //   style: TextStyle(
+        //     fontSize: isMobile ? 13 : 14,
+        //     color: Colors.white.withOpacity(0.9),
+        //     fontWeight: FontWeight.w500,
+        //     shadows: [
+        //       Shadow(
+        //         color: Colors.black.withOpacity(0.5),
+        //         blurRadius: 6,
+        //       ),
+        //     ],
+        //   ),
+        // ),
+      ],
     );
   }
 }

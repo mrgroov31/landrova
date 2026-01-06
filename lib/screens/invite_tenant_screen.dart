@@ -98,11 +98,21 @@ class _InviteTenantScreenState extends State<InviteTenantScreen> {
       final response = await ApiService.fetchRoomsByOwnerId(ownerId);
       var rooms = ApiService.parseRooms(response);
       
-      // Filter by selected building and only show vacant rooms
+      debugPrint('🏠 [INVITE] Total rooms fetched: ${rooms.length}');
+      debugPrint('🏠 [INVITE] Selected building ID: $_selectedBuildingId');
+      
+      // Filter by selected building and only show available rooms
       rooms = rooms.where((room) => 
         room.buildingId == _selectedBuildingId && 
-        room.status == 'vacant'
+        !room.isOccupied && 
+        !room.hasTenant &&
+        room.status != 'maintenance'
       ).toList();
+      
+      debugPrint('🏠 [INVITE] Available rooms after filtering: ${rooms.length}');
+      for (final room in rooms) {
+        debugPrint('  - Room ${room.number}: status=${room.status}, isOccupied=${room.isOccupied}, hasTenant=${room.hasTenant}');
+      }
       
       // Sort rooms by room number for better UX
       rooms.sort((a, b) => a.number.compareTo(b.number));
@@ -209,12 +219,12 @@ class _InviteTenantScreenState extends State<InviteTenantScreen> {
     final isMobile = Responsive.isMobile(context);
     
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppTheme.getBackgroundColor(context),
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: Colors.white,
+        backgroundColor: AppTheme.getSurfaceColor(context),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black87),
+          icon: Icon(Icons.arrow_back, color: AppTheme.getTextPrimaryColor(context)),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
@@ -354,7 +364,7 @@ class _InviteTenantScreenState extends State<InviteTenantScreen> {
                               const SizedBox(width: 12),
                               Expanded(
                                 child: Text(
-                                  'No vacant rooms available in this building.',
+                                  'No available rooms in this building.',
                                   style: TextStyle(
                                     color: Colors.orange.shade700,
                                     fontSize: isMobile ? 13 : 14,
@@ -370,7 +380,7 @@ class _InviteTenantScreenState extends State<InviteTenantScreen> {
                             DropdownButtonFormField<String>(
                               value: _selectedRoomNumber,
                               decoration: InputDecoration(
-                                labelText: 'Select Room *',
+                                labelText: 'Select Available Room *',
                                 hintText: 'Choose an available room',
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
@@ -558,9 +568,9 @@ class _InviteTenantScreenState extends State<InviteTenantScreen> {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppTheme.getCardColor(context),
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.grey.shade300),
+                        border: Border.all(color: AppTheme.getTextSecondaryColor(context).withOpacity(0.3)),
                       ),
                       child: SelectableText(
                         _generatedLink!,
