@@ -54,7 +54,7 @@ class RoomListingCard extends StatelessWidget {
     // Generate image ID based on room number for variety
     final roomHash = room.number.hashCode;
     final imageId = (roomHash.abs() % 1000) + 1;
-    return 'https://picsum.photos/seed/room${imageId}/800/600';
+    return 'https://picsum.photos/seed/room$imageId/800/600';
   }
 
   @override

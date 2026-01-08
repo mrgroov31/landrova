@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import '../services/auth_service.dart';
 import '../utils/responsive.dart';
 import '../theme/app_theme.dart';
@@ -78,15 +77,18 @@ class _UnifiedLoginScreenState extends State<UnifiedLoginScreen> {
       final email = _emailController.text.trim();
       final password = _passwordController.text.trim();
 
+      // Debug: Check available tenants
+      await AuthService.debugAvailableTenants();
+
       // Try owner login first
       var result = await AuthService.loginOwner(
         email: email,
         password: password,
       );
 
-      // If owner login fails, try tenant login
+      // If owner login fails, try enhanced tenant login
       if (!result.success) {
-        result = await AuthService.loginTenant(
+        result = await AuthService.loginTenantEnhanced(
           email: email,
           password: password,
         );
@@ -117,7 +119,7 @@ class _UnifiedLoginScreenState extends State<UnifiedLoginScreen> {
           SnackBar(
             content: Text(result.error ?? 'Invalid email or password'),
             backgroundColor: Colors.red,
-            duration: const Duration(seconds: 1),
+            duration: const Duration(seconds: 3),
           ),
         );
       }
@@ -128,9 +130,9 @@ class _UnifiedLoginScreenState extends State<UnifiedLoginScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: $e'),
+            content: Text('Login error: $e'),
             backgroundColor: Colors.red,
-            duration: const Duration(seconds: 1),
+            duration: const Duration(seconds: 3),
           ),
         );
       }

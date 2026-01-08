@@ -6,6 +6,7 @@ import '../models/room.dart';
 import '../models/tenant.dart';
 import '../services/complaint_service.dart';
 import '../services/api_service.dart';
+import '../services/auth_service.dart';
 import '../utils/responsive.dart';
 import '../theme/app_theme.dart';
 import '../utils/custom_page_route.dart';
@@ -51,7 +52,8 @@ class _AddComplaintScreenState extends State<AddComplaintScreen> {
 
   Future<void> _loadRoomsAndTenants() async {
     try {
-      final roomsResponse = await ApiService.fetchRooms();
+      final ownerId = AuthService.getOwnerId();
+      final roomsResponse = await ApiService.fetchRoomsByOwnerId(ownerId);
       final tenantsResponse = await ApiService.fetchTenants();
       
       final rooms = ApiService.parseRooms(roomsResponse);
@@ -139,26 +141,46 @@ class _AddComplaintScreenState extends State<AddComplaintScreen> {
     });
 
     try {
-      final now = DateTime.now();
-      final complaintId = DateTime.now().millisecondsSinceEpoch.toString();
-      
-      // For now, we'll store image paths as empty (can be enhanced later)
-      final complaint = Complaint(
-        id: complaintId,
-        title: _titleController.text.trim(),
-        description: _descriptionController.text.trim(),
-        roomNumber: _selectedRoomNumber!,
-        tenantId: _selectedTenantId!,
-        tenantName: _selectedTenantName ?? 'Unknown',
-        status: 'pending',
-        createdAt: now,
-        updatedAt: now,
-        priority: _priority,
-        category: _category,
-        images: [], // Can be enhanced to store image paths
+      // Get room and building IDs from the selected room
+      final selectedRoom = _rooms.firstWhere(
+        (room) => room.number == _selectedRoomNumber,
       );
 
-      await ComplaintService.addComplaint(complaint);
+      debugPrint('🚀 [AddComplaint] Creating complaint with:');
+      debugPrint('🚀 [AddComplaint] - Room: ${selectedRoom.number} (${selectedRoom.id})');
+      debugPrint('🚀 [AddComplaint] - Building: ${selectedRoom.buildingId}');
+      debugPrint('🚀 [AddComplaint] - Tenant: $_selectedTenantName ($_selectedTenantId)');
+
+      // Convert images to base64 if needed (for now, we'll use empty list)
+      List<String> imageBase64List = [];
+      // TODO: Convert _selectedImages to base64 strings if needed
+      
+      // Try to get the actual tenant ID from the backend by checking if this tenant exists
+      // For now, let's try using the tenant ID from room data, but add better error handling
+      String tenantIdToUse = _selectedTenantId!;
+      
+      // If we have room tenant data, let's also try using the tenant's email as a fallback
+      if (selectedRoom.hasTenant && selectedRoom.tenant != null) {
+        debugPrint('🚀 [AddComplaint] Room tenant details:');
+        debugPrint('🚀 [AddComplaint] - ID: ${selectedRoom.tenant!.id}');
+        debugPrint('🚀 [AddComplaint] - Email: ${selectedRoom.tenant!.email}');
+        debugPrint('🚀 [AddComplaint] - Phone: ${selectedRoom.tenant!.phone}');
+        tenantIdToUse = selectedRoom.tenant!.id;
+      }
+      
+      // Call the new API to create complaint
+      final response = await ApiService.createComplaint(
+        title: _titleController.text.trim(),
+        description: _descriptionController.text.trim(),
+        roomId: selectedRoom.id,
+        buildingId: selectedRoom.buildingId,
+        tenantId: tenantIdToUse,
+        category: _category ?? 'other',
+        priority: _priority,
+        images: imageBase64List,
+        contactPreference: 'phone',
+        urgentContact: _priority == 'urgent',
+      );
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -175,10 +197,19 @@ class _AddComplaintScreenState extends State<AddComplaintScreen> {
         setState(() {
           _isLoading = false;
         });
+        
+        String errorMessage = 'Error submitting complaint: $e';
+        
+        // Check if it's a tenant not found error
+        if (e.toString().contains('Tenant not found')) {
+          errorMessage = 'Tenant not found in system. The tenant may need to be registered first.';
+        }
+        
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error submitting complaint: $e'),
+            content: Text(errorMessage),
             backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
           ),
         );
       }
@@ -352,8 +383,19 @@ class _AddComplaintScreenState extends State<AddComplaintScreen> {
   }
 
   Widget _buildRoomSelector(bool isMobile) {
-    // Get occupied rooms
-    final occupiedRooms = _rooms.where((room) => room.status == 'occupied').toList();
+    // Get rooms with tenants (check multiple conditions for better compatibility)
+    final occupiedRooms = _rooms.where((room) => 
+      room.status == 'occupied' || 
+      room.isOccupied || 
+      room.hasTenant ||
+      room.tenant != null
+    ).toList();
+    
+    debugPrint('🏠 [AddComplaint] Total rooms: ${_rooms.length}');
+    debugPrint('🏠 [AddComplaint] Occupied rooms found: ${occupiedRooms.length}');
+    for (final room in _rooms) {
+      debugPrint('🏠 [AddComplaint] Room ${room.number}: status=${room.status}, isOccupied=${room.isOccupied}, hasTenant=${room.hasTenant}, tenant=${room.tenant?.name ?? 'null'}');
+    }
     
     if (occupiedRooms.isEmpty) {
       return Container(
@@ -379,7 +421,7 @@ class _AddComplaintScreenState extends State<AddComplaintScreen> {
     }
 
     return DropdownButtonFormField<String>(
-      value: _selectedRoomNumber,
+      initialValue: _selectedRoomNumber,
       decoration: InputDecoration(
         labelText: 'Select Room *',
         border: OutlineInputBorder(
@@ -388,9 +430,12 @@ class _AddComplaintScreenState extends State<AddComplaintScreen> {
         prefixIcon: const Icon(Icons.room),
       ),
       items: occupiedRooms.map((room) {
+        final tenantName = room.hasTenant && room.tenant != null 
+            ? room.tenant!.name 
+            : 'Unknown Tenant';
         return DropdownMenuItem<String>(
           value: room.number,
-          child: Text('Room ${room.number}'),
+          child: Text('Room ${room.number} - $tenantName'),
         );
       }).toList(),
       onChanged: (value) {
@@ -398,16 +443,31 @@ class _AddComplaintScreenState extends State<AddComplaintScreen> {
           _selectedRoomNumber = value;
           // Auto-select tenant for this room
           try {
-            final tenant = _tenants.firstWhere(
-              (t) => t.roomNumber == value && t.isActive,
-              orElse: () => _tenants.firstWhere(
-                (t) => t.roomNumber == value,
-              ),
-            );
-            _selectedTenantId = tenant.id;
-            _selectedTenantName = tenant.name;
+            // First, try to find tenant from the selected room's embedded data
+            final selectedRoom = _rooms.firstWhere((room) => room.number == value);
+            if (selectedRoom.hasTenant && selectedRoom.tenant != null) {
+              _selectedTenantId = selectedRoom.tenant!.id;
+              _selectedTenantName = selectedRoom.tenant!.name;
+              debugPrint('🏠 [AddComplaint] Found tenant from room data: ${selectedRoom.tenant!.name}');
+              debugPrint('🏠 [AddComplaint] Tenant ID: ${selectedRoom.tenant!.id}');
+              debugPrint('🏠 [AddComplaint] Tenant Email: ${selectedRoom.tenant!.email}');
+              debugPrint('🏠 [AddComplaint] Tenant Phone: ${selectedRoom.tenant!.phone}');
+            } else {
+              // Fallback: try to find tenant from tenants list
+              final tenant = _tenants.firstWhere(
+                (t) => t.roomNumber == value && t.isActive,
+                orElse: () => _tenants.firstWhere(
+                  (t) => t.roomNumber == value,
+                ),
+              );
+              _selectedTenantId = tenant.id;
+              _selectedTenantName = tenant.name;
+              debugPrint('🏠 [AddComplaint] Found tenant from tenants list: ${tenant.name}');
+              debugPrint('🏠 [AddComplaint] Tenant ID: ${tenant.id}');
+            }
           } catch (e) {
             // No tenant found for this room
+            debugPrint('❌ [AddComplaint] No tenant found for room $value: $e');
             _selectedTenantId = null;
             _selectedTenantName = null;
           }
@@ -611,7 +671,7 @@ class _AddComplaintScreenState extends State<AddComplaintScreen> {
               ),
             ),
           );
-        }).toList(),
+        }),
       ],
     );
   }

@@ -6,7 +6,6 @@ import '../services/auth_service.dart';
 import '../utils/responsive.dart';
 import '../theme/app_theme.dart';
 import '../utils/custom_page_route.dart';
-import 'dashboard_screen.dart';
 import 'add_building_screen.dart';
 import 'building_detail_screen.dart';
 
@@ -79,12 +78,14 @@ class _BuildingsScreenState extends State<BuildingsScreen> {
           style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 24,
-            color: Colors.black87,
+            // color: Colors.,
           ),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.search, color: Colors.black87),
+            icon: const Icon(Icons.search, 
+            // color: Colors.black87
+            ),
             onPressed: () {},
           ),
         ],

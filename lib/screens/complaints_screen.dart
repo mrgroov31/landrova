@@ -39,13 +39,15 @@ class _ComplaintsScreenState extends State<ComplaintsScreen> {
         error = null;
       });
       
-      // Load from ComplaintService (which merges API and Hive data)
-      var loadedComplaints = await ComplaintService.getAllComplaints();
+      // Load from new API
+      final ownerId = AuthService.getOwnerId();
+      final complaintsResponse = await ApiService.fetchComplaintsByOwnerId(ownerId);
+      var loadedComplaints = ApiService.parseApiComplaints(complaintsResponse);
       
       // Filter by building if selected
       if (widget.selectedBuildingId != null && widget.selectedBuildingId!.isNotEmpty) {
         // Get rooms for this building
-        final roomsResponse = await ApiService.fetchRooms();
+        final roomsResponse = await ApiService.fetchRoomsByOwnerId(ownerId);
         final allRooms = ApiService.parseRooms(roomsResponse);
         final buildingRooms = allRooms.where((r) => r.buildingId == widget.selectedBuildingId).toList();
         final roomNumbers = buildingRooms.map((r) => r.number).toSet();

@@ -25,7 +25,7 @@ class _InviteTenantScreenState extends State<InviteTenantScreen> {
   String? _invitationToken;
   List<Room> _rooms = [];
   List<Building> _buildings = [];
-  bool _isLoading = false;
+  final bool _isLoading = false;
   bool _isLoadingBuildings = false;
   bool _isLoadingRooms = false;
 
@@ -227,12 +227,12 @@ class _InviteTenantScreenState extends State<InviteTenantScreen> {
           icon: Icon(Icons.arrow_back, color: AppTheme.getTextPrimaryColor(context)),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           'Invite Tenant',
           style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 24,
-            color: Colors.black87,
+            color: AppTheme.getTextPrimaryColor(context),
           ),
         ),
       ),
@@ -296,7 +296,7 @@ class _InviteTenantScreenState extends State<InviteTenantScreen> {
             _isLoadingBuildings
                 ? const Center(child: CircularProgressIndicator())
                 : DropdownButtonFormField<String>(
-                    value: _selectedBuildingId,
+                    initialValue: _selectedBuildingId,
                     decoration: InputDecoration(
                       labelText: 'Select Building *',
                       border: OutlineInputBorder(
@@ -378,7 +378,7 @@ class _InviteTenantScreenState extends State<InviteTenantScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             DropdownButtonFormField<String>(
-                              value: _selectedRoomNumber,
+                              initialValue: _selectedRoomNumber,
                               decoration: InputDecoration(
                                 labelText: 'Select Available Room *',
                                 hintText: 'Choose an available room',

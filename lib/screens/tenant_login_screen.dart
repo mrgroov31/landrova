@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../utils/responsive.dart';
-import '../theme/app_theme.dart';
 import 'tenant_dashboard_screen.dart';
 
 class TenantLoginScreen extends StatefulWidget {

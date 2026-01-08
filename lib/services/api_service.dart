@@ -567,6 +567,7 @@ class ApiService {
     required double depositPaid,
     String? occupation,
     String? invitationToken,
+    String? roomNumber, // Add room number parameter
   }) async {
     try {
       final url = Uri.parse('https://www.leranothrive.com/api/tenants');
@@ -582,13 +583,16 @@ class ApiService {
         'aadharNumber': idProofNumber,
         'emergencyContact': emergencyContactPhone,
         'occupation': occupation ?? '',
-        'profileImage': null,
-        'aadharFrontImage': null,
-        'aadharBackImage': null,
-        'panCardImage': null,
-        'addressProofImage': null,
         'invitationToken': invitationToken,
       };
+      
+      // Add room number only if provided
+      if (roomNumber != null && roomNumber.isNotEmpty) {
+        payload['roomNumber'] = roomNumber;
+      }
+      
+      // Remove null values to clean up payload
+      payload.removeWhere((key, value) => value == null);
 
       debugPrint('');
       debugPrint('🚀 ===== TENANT CREATION API CALL START =====');
@@ -601,6 +605,7 @@ class ApiService {
       debugPrint('');
       debugPrint('📋 [API] Payload Details:');
       debugPrint('📋 [API] - Room ID: $roomId');
+      debugPrint('📋 [API] - Room Number: ${roomNumber ?? 'Not provided'}');
       debugPrint('📋 [API] - Tenant Name: $name');
       debugPrint('📋 [API] - Email: $email');
       debugPrint('📋 [API] - Phone: $phone');
@@ -652,6 +657,185 @@ class ApiService {
       debugPrint('');
       throw Exception('Error creating tenant: $e');
     }
+  }
+
+  // Create complaint via API
+  static Future<Map<String, dynamic>> createComplaint({
+    required String title,
+    required String description,
+    required String roomId,
+    required String buildingId,
+    required String tenantId,
+    required String category,
+    required String priority,
+    List<String> images = const [],
+    String contactPreference = 'phone',
+    bool urgentContact = false,
+  }) async {
+    try {
+      final url = Uri.parse('https://www.leranothrive.com/api/complaints'); // Added www subdomain
+      
+      final payload = {
+        'title': title,
+        'description': description,
+        'roomId': roomId,
+        'buildingId': buildingId,
+        'tenantId': tenantId,
+        'category': category,
+        'priority': priority,
+        'images': images,
+        'contactPreference': contactPreference,
+        'urgentContact': urgentContact,
+      };
+
+      debugPrint('');
+      debugPrint('🚀 ===== COMPLAINT CREATION API CALL START =====');
+      debugPrint('📝 [API] Creating complaint: $title');
+      debugPrint('🌐 [API] URL: $url');
+      debugPrint('📤 [API] Method: POST');
+      debugPrint('📤 [API] Headers: {Content-Type: application/json}');
+      debugPrint('📤 [API] Request Payload:');
+      debugPrint('📤 [API] ${json.encode(payload)}');
+      debugPrint('');
+      debugPrint('📋 [API] Payload Details:');
+      debugPrint('📋 [API] - Title: $title');
+      debugPrint('📋 [API] - Description: $description');
+      debugPrint('📋 [API] - Room ID: $roomId');
+      debugPrint('📋 [API] - Building ID: $buildingId');
+      debugPrint('📋 [API] - Tenant ID: $tenantId');
+      debugPrint('📋 [API] - Category: $category');
+      debugPrint('📋 [API] - Priority: $priority');
+      debugPrint('📋 [API] - Images Count: ${images.length}');
+      debugPrint('📋 [API] - Contact Preference: $contactPreference');
+      debugPrint('📋 [API] - Urgent Contact: $urgentContact');
+      debugPrint('');
+
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: json.encode(payload),
+      );
+
+      debugPrint('📥 ===== COMPLAINT CREATION API RESPONSE =====');
+      debugPrint('📥 [API] Response Status Code: ${response.statusCode}');
+      debugPrint('📥 [API] Response Headers: ${response.headers}');
+      debugPrint('📥 [API] Response Body:');
+      debugPrint('📥 [API] ${response.body}');
+      debugPrint('');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final decodedResponse = json.decode(response.body);
+        debugPrint('✅ [API] SUCCESS: Complaint created successfully!');
+        debugPrint('✅ [API] Complaint Title: $title');
+        debugPrint('✅ [API] Response Data: ${decodedResponse['data']}');
+        debugPrint('🚀 ===== COMPLAINT CREATION API CALL END =====');
+        debugPrint('');
+        return decodedResponse;
+      } else {
+        debugPrint('❌ [API] FAILED: Complaint creation failed!');
+        debugPrint('❌ [API] Status Code: ${response.statusCode}');
+        debugPrint('❌ [API] Error Body: ${response.body}');
+        debugPrint('🚀 ===== COMPLAINT CREATION API CALL END =====');
+        debugPrint('');
+        throw Exception('Failed to create complaint: ${response.statusCode} - ${response.body}');
+      }
+    } catch (e) {
+      debugPrint('💥 [API] EXCEPTION: Complaint creation failed with exception!');
+      debugPrint('💥 [API] Exception Details: $e');
+      debugPrint('💥 [API] Exception Type: ${e.runtimeType}');
+      debugPrint('🚀 ===== COMPLAINT CREATION API CALL END =====');
+      debugPrint('');
+      throw Exception('Error creating complaint: $e');
+    }
+  }
+
+  // Fetch complaints by owner ID
+  static Future<Map<String, dynamic>> fetchComplaintsByOwnerId(String ownerId) async {
+    try {
+      final url = Uri.parse('https://www.leranothrive.com/api/complaints?ownerId=$ownerId'); // Added www subdomain
+      
+      debugPrint('📝 [API] Fetching complaints for ownerId: $ownerId');
+      debugPrint('🌐 [API] URL: $url');
+      debugPrint('📤 [API] Method: GET');
+      debugPrint('📤 [API] Headers: {accept: */*}');
+      
+      final response = await http.get(
+        url,
+        headers: {
+          'accept': '*/*',
+        },
+      );
+
+      debugPrint('📥 [API] Response Status Code: ${response.statusCode}');
+      debugPrint('📥 [API] Response Headers: ${response.headers}');
+      log('📥 [API] Response Body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final decodedResponse = json.decode(response.body);
+        debugPrint('✅ [API] Successfully fetched complaints');
+        final complaintsData = decodedResponse['data'];
+        if (complaintsData != null && complaintsData['complaints'] != null) {
+          debugPrint('📊 [API] Number of complaints: ${complaintsData['complaints'].length}');
+          debugPrint('📊 [API] Total: ${complaintsData['total']}');
+          debugPrint('📊 [API] Pending: ${complaintsData['pending']}');
+          debugPrint('📊 [API] In Progress: ${complaintsData['in_progress']}');
+          debugPrint('📊 [API] Resolved: ${complaintsData['resolved']}');
+        }
+        return decodedResponse;
+      } else {
+        debugPrint('❌ [API] Failed to fetch complaints: ${response.statusCode}');
+        debugPrint('❌ [API] Error Body: ${response.body}');
+        throw Exception('Failed to fetch complaints: ${response.statusCode} - ${response.body}');
+      }
+    } catch (e) {
+      debugPrint('💥 [API] Exception while fetching complaints: $e');
+      throw Exception('Error fetching complaints: $e');
+    }
+  }
+
+  // Parse complaints from API response
+  static List<Complaint> parseApiComplaints(Map<String, dynamic> response) {
+    debugPrint('🔍 [PARSE] Parsing complaints from response: ${response.keys}');
+    
+    try {
+      if (response['status'] == 'success' && response['data'] != null) {
+        final dataMap = response['data'] as Map<String, dynamic>;
+        
+        if (dataMap['complaints'] != null) {
+          final complaintsData = dataMap['complaints'] as List<dynamic>;
+          debugPrint('🔍 [PARSE] Found ${complaintsData.length} complaints');
+          
+          // Parse each complaint with error handling
+          final List<Complaint> parsedComplaints = [];
+          for (int i = 0; i < complaintsData.length; i++) {
+            try {
+              final complaintJson = complaintsData[i] as Map<String, dynamic>;
+              final complaint = Complaint.fromJson(complaintJson);
+              parsedComplaints.add(complaint);
+              debugPrint('✅ [PARSE] Successfully parsed complaint ${i + 1}: ${complaint.title}');
+            } catch (e, stackTrace) {
+              debugPrint('❌ [PARSE] Error parsing complaint ${i + 1}: $e');
+              debugPrint('❌ [PARSE] Stack trace: $stackTrace');
+              debugPrint('❌ [PARSE] Complaint data: ${complaintsData[i]}');
+            }
+          }
+          
+          debugPrint('✅ [PARSE] Successfully parsed ${parsedComplaints.length} out of ${complaintsData.length} complaints');
+          return parsedComplaints;
+        } else {
+          debugPrint('⚠️ [PARSE] No complaints key found in data. Keys: ${dataMap.keys}');
+        }
+      } else {
+        debugPrint('⚠️ [PARSE] Invalid response format. Status: ${response['status']}, Data: ${response['data']}');
+      }
+    } catch (e, stackTrace) {
+      debugPrint('💥 [PARSE] Fatal error parsing complaints: $e');
+      debugPrint('💥 [PARSE] Stack trace: $stackTrace');
+    }
+    
+    return [];
   }
 }
 

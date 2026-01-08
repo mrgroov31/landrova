@@ -1,21 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:app_links/app_links.dart';
 import 'package:responsive_framework/responsive_framework.dart';
 import 'package:provider/provider.dart';
 import 'theme/app_theme.dart';
 import 'services/theme_service.dart';
-import 'screens/dashboard_screen.dart';
-import 'screens/unified_login_screen.dart';
 import 'screens/tenant_onboarding_screen.dart';
-import 'screens/tenant_dashboard_screen.dart';
-import 'screens/public_rooms_listing_screen.dart';
+import 'screens/splash_screen.dart';
 import 'models/service_provider_adapter.dart';
 import 'models/complaint_adapter.dart';
 import 'models/tenant_adapter.dart';
 import 'models/vacating_request_adapter.dart';
 import 'services/invitation_service.dart';
-import 'services/auth_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -121,17 +118,8 @@ class _MyAppState extends State<MyApp> {
   }
 
   Widget _getInitialScreen() {
-    // Check if user is logged in
-    if (AuthService.isLoggedIn) {
-      final user = AuthService.currentUser;
-      if (user?.isOwner == true) {
-        return const DashboardScreen();
-      } else if (user?.isTenant == true) {
-        return const TenantDashboardScreen();
-      }
-    }
-    // Show unified login screen if not logged in
-    return const UnifiedLoginScreen();
+    // Always show splash screen first
+    return const SplashScreen();
   }
 
   @override
@@ -140,28 +128,37 @@ class _MyAppState extends State<MyApp> {
       value: widget.themeService,
       child: Consumer<ThemeService>(
         builder: (context, themeService, child) {
-          return MaterialApp(
-            navigatorKey: _navigatorKey,
-            title: 'Own House - Property Management',
-            debugShowCheckedModeBanner: false,
-            theme: AppTheme.lightTheme,
-            darkTheme: AppTheme.darkTheme,
-            themeMode: themeService.themeMode == AppThemeMode.light
-                ? ThemeMode.light
-                : themeService.themeMode == AppThemeMode.dark
-                    ? ThemeMode.dark
-                    : ThemeMode.system,
-            builder: (context, child) => ResponsiveBreakpoints.builder(
-              child: child!,
-              breakpoints: [
-                const Breakpoint(start: 0, end: 450, name: MOBILE),
-                const Breakpoint(start: 451, end: 800, name: TABLET),
-                const Breakpoint(start: 801, end: 1920, name: DESKTOP),
-                const Breakpoint(start: 1921, end: double.infinity, name: '4K'),
-              ],
-            ),
-            // Check authentication and route accordingly
-            home: _getInitialScreen(),
+          return ScreenUtilInit(
+            designSize: const Size(375, 812), // iPhone 13 Pro design size
+            minTextAdapt: true,
+            splitScreenMode: true,
+            builder: (context, child) {
+              return
+               MaterialApp(
+                navigatorKey: _navigatorKey,
+                title: 'Own House - Property Management',
+                debugShowCheckedModeBanner: false,
+                theme: AppTheme.lightTheme,
+                darkTheme: AppTheme.darkTheme,
+                themeMode: themeService.themeMode == AppThemeMode.light
+                    ? ThemeMode.light
+                    : themeService.themeMode == AppThemeMode.dark
+                        ? ThemeMode.dark
+                        : ThemeMode.system,
+                builder: (context, child) => ResponsiveBreakpoints.builder(
+                  child: child!,
+                  breakpoints: [
+                    const Breakpoint(start: 0, end: 450, name: MOBILE),
+                    const Breakpoint(start: 451, end: 800, name: TABLET),
+                    const Breakpoint(start: 801, end: 1920, name: DESKTOP),
+                    const Breakpoint(start: 1921, end: double.infinity, name: '4K'),
+                  ],
+                ),
+                // Check authentication and route accordingly
+                home:
+                 _getInitialScreen(),
+              );
+            },
           );
         },
       ),

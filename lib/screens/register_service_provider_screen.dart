@@ -3,7 +3,6 @@ import '../models/service_provider.dart';
 import '../services/service_provider_service.dart';
 import '../utils/responsive.dart';
 import '../theme/app_theme.dart';
-import '../utils/custom_page_route.dart';
 
 class RegisterServiceProviderScreen extends StatefulWidget {
   const RegisterServiceProviderScreen({super.key});
@@ -93,12 +92,12 @@ class _RegisterServiceProviderScreenState extends State<RegisterServiceProviderS
           icon: Icon(Icons.arrow_back, color: AppTheme.getTextPrimaryColor(context)),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           'Register Service Provider',
           style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 24,
-            color: Colors.black87,
+            color: AppTheme.getTextPrimaryColor(context),
           ),
         ),
       ),
@@ -249,7 +248,7 @@ class _RegisterServiceProviderScreenState extends State<RegisterServiceProviderS
       style: TextStyle(
         fontSize: isMobile ? 16 : 18,
         fontWeight: FontWeight.bold,
-        color: Colors.grey.shade800,
+        color: AppTheme.getTextPrimaryColor(context),
       ),
     );
   }
@@ -287,11 +286,11 @@ class _RegisterServiceProviderScreenState extends State<RegisterServiceProviderS
             decoration: BoxDecoration(
               color: isSelected 
                   ? color.withOpacity(0.2) 
-                  : Colors.grey.shade100,
+                  : AppTheme.getSurfaceColor(context),
               border: Border.all(
                 color: isSelected 
                     ? color 
-                    : Colors.grey.shade300,
+                    : AppTheme.getTextSecondaryColor(context).withOpacity(0.3),
                 width: isSelected ? 2 : 1,
               ),
               borderRadius: BorderRadius.circular(12),
@@ -302,7 +301,7 @@ class _RegisterServiceProviderScreenState extends State<RegisterServiceProviderS
                 Icon(
                   type['icon'] as IconData,
                   size: isMobile ? 20 : 24,
-                  color: isSelected ? color : Colors.grey.shade600,
+                  color: isSelected ? color : AppTheme.getTextSecondaryColor(context),
                 ),
                 SizedBox(width: isMobile ? 6 : 8),
                 Text(
@@ -310,7 +309,7 @@ class _RegisterServiceProviderScreenState extends State<RegisterServiceProviderS
                   style: TextStyle(
                     fontSize: isMobile ? 13 : 14,
                     fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                    color: isSelected ? color : Colors.grey.shade700,
+                    color: isSelected ? color : AppTheme.getTextPrimaryColor(context),
                   ),
                 ),
               ],

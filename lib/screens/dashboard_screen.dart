@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'dart:ui';
 import '../models/tenant.dart';
 import '../models/room.dart';
 import '../models/complaint.dart';
@@ -10,7 +9,6 @@ import '../widgets/modern_stat_card.dart';
 import '../widgets/modern_stat_mini_card.dart';
 import '../widgets/revenue_chart_card.dart';
 import '../widgets/modern_quick_action.dart';
-import '../widgets/hero_section.dart';
 import '../widgets/room_listing_card.dart';
 import '../widgets/room_status_card.dart';
 import '../widgets/complaint_card.dart';
@@ -36,7 +34,6 @@ import '../constants/app_assets.dart';
 import '../utils/custom_page_route.dart';
 import '../models/building.dart';
 import 'package:intl/intl.dart';
-import 'dart:io';
 
 class DashboardScreen extends StatefulWidget {
   final String? selectedBuildingId;
@@ -118,17 +115,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ApiService.fetchRoomsByOwnerId(ownerId),
         ApiService.fetchTenants(),
         ApiService.fetchPayments(),
+        ApiService.fetchComplaintsByOwnerId(ownerId), // Use new API method
       ]);
 
-      // Load complaints from ComplaintService (which merges API and Hive data)
-      final allComplaints = await ComplaintService.getAllComplaints();
+      // Parse all data
+      var allRooms = ApiService.parseRooms(results[0]);
+      debugPrint('📊 [Dashboard] Parsed ${allRooms.length} rooms from API');
+      var allTenants = ApiService.parseTenants(results[1]);
+      var allPayments = ApiService.parsePayments(results[2]);
+      var allComplaints = ApiService.parseApiComplaints(results[3]); // Use new parser
+      debugPrint('📊 [Dashboard] Parsed ${allComplaints.length} complaints from API');
 
       setState(() {
-        var allRooms = ApiService.parseRooms(results[0]);
-        debugPrint('📊 [Dashboard] Parsed ${allRooms.length} rooms from API');
-        var allTenants = ApiService.parseTenants(results[1]);
-        var allPayments = ApiService.parsePayments(results[2]);
-        
         // Filter by building if selected
         if (currentBuildingId != null && currentBuildingId!.isNotEmpty) {
           rooms = allRooms.where((r) => r.buildingId == currentBuildingId || r.buildingId.isEmpty).toList();
@@ -855,31 +853,32 @@ class _DashboardScreenState extends State<DashboardScreen> {
             //   },
             // ),
             
-            _buildActionCard(
-              icon: Icons.add_home_outlined,
-              title: 'Add Room',
-              subtitle: 'Create new room',
-              color: const Color(0xFF66BB6A),
-              isMobile: isMobile,
-              onTap: () {
-                _showBuildingSelectionDialog(
-                  context,
-                  onBuildingSelected: (buildingId) {
-                    Navigator.push(
-                      context,
-                      CustomPageRoute(
-                        child: AddRoomScreen(buildingId: buildingId),
-                        transition: CustomPageTransition.transform,
-                      ),
-                    ).then((result) {
-                      if (result != null) {
-                        loadDashboardData();
-                      }
-                    });
-                  },
-                );
-              },
-            ),
+            // _buildActionCard(
+            //   icon: Icons.add_home_outlined,
+            //   title: 'Add Room',
+            //   subtitle: 'Create new room',
+            //   color: const Color(0xFF66BB6A),
+            //   isMobile: isMobile,
+            //   onTap: () {
+            //     _showBuildingSelectionDialog(
+            //       context,
+            //       onBuildingSelected: (buildingId) {
+            //         Navigator.push(
+            //           context,
+            //           CustomPageRoute(
+            //             child: AddRoomScreen(buildingId: buildingId),
+            //             transition: CustomPageTransition.transform,
+            //           ),
+            //         ).then((result) {
+            //           if (result != null) {
+            //             loadDashboardData();
+            //           }
+            //         });
+            //       },
+            //     );
+            //   },
+            // ),
+           
             _buildActionCard(
               icon: Icons.report_problem_outlined,
               title: 'Complaints',
@@ -2761,35 +2760,40 @@ class _AutoScrollingTickerState extends State<_AutoScrollingTicker>
   }
 
   void _startScrolling() {
-    if (!mounted) return;
+    if (!mounted || widget.complaints.isEmpty) return;
     
-    // Calculate total scroll distance
-    final itemWidth = 220.0 + 80.0; // item width + margins
-    final totalWidth = widget.complaints.length * itemWidth;
-    
-    _animation = Tween<double>(
-      begin: 0.0,
-      end: totalWidth / 2, // Scroll to halfway point for seamless loop
-    ).animate(CurvedAnimation(
-      parent: _controller,
-      curve: Curves.linear,
-    ));
+    // Wait for the widget to be fully built
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (!mounted) return;
+      
+      // Calculate total scroll distance
+      final itemWidth = 220.0 + 80.0; // item width + margins
+      final totalWidth = widget.complaints.length * itemWidth;
+      
+      _animation = Tween<double>(
+        begin: 0.0,
+        end: totalWidth / 2, // Scroll to halfway point for seamless loop
+      ).animate(CurvedAnimation(
+        parent: _controller,
+        curve: Curves.linear,
+      ));
 
-    _animation.addListener(() {
-      if (_scrollController.hasClients) {
-        _scrollController.jumpTo(_animation.value);
-      }
+      _animation.addListener(() {
+        if (_scrollController.hasClients && mounted) {
+          _scrollController.jumpTo(_animation.value);
+        }
+      });
+
+      _animation.addStatusListener((status) {
+        if (status == AnimationStatus.completed && mounted) {
+          // Reset to beginning for seamless loop
+          _controller.reset();
+          _controller.forward();
+        }
+      });
+
+      _controller.forward();
     });
-
-    _animation.addStatusListener((status) {
-      if (status == AnimationStatus.completed) {
-        // Reset to beginning for seamless loop
-        _controller.reset();
-        _controller.forward();
-      }
-    });
-
-    _controller.forward();
   }
 
   @override
@@ -2811,82 +2815,95 @@ class _AutoScrollingTickerState extends State<_AutoScrollingTicker>
         children: widget.complaints.asMap().entries.map((entry) {
           final complaint = entry.value;
           
-          return Container(
-            width: 220,
-            margin: const EdgeInsets.symmetric(horizontal: 40),
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            decoration: BoxDecoration(
-              border: Border(
-                left: BorderSide(
-                  color: const Color(0xFF6366F1).withOpacity(0.3),
-                  width: 2,
+          return GestureDetector(
+            onTap: () {
+              // Navigate to complaint detail screen
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ComplaintDetailScreen(
+                    complaint: complaint,
+                  ),
+                ),
+              );
+            },
+            child: Container(
+              width: 220,
+              margin: const EdgeInsets.symmetric(horizontal: 40),
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              decoration: BoxDecoration(
+                border: Border(
+                  left: BorderSide(
+                    color: const Color(0xFF6366F1).withOpacity(0.3),
+                    width: 2,
+                  ),
                 ),
               ),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.only(left: 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 8,
-                        height: 8,
-                        decoration: BoxDecoration(
-                          color: complaint.priority == 'high' 
-                              ? const Color(0xFFEF4444)
-                              : complaint.priority == 'urgent'
-                                  ? const Color(0xFFEF4444)
-                                  : const Color(0xFFF59E0B),
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          complaint.title,
-                          style: TextStyle(
-                            color: AppTheme.getTextPrimaryColor(context),
-                            fontSize: widget.isMobile ? 12 : 14,
-                            fontWeight: FontWeight.bold,
+              child: Padding(
+                padding: const EdgeInsets.only(left: 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            color: complaint.priority == 'high' 
+                                ? const Color(0xFFEF4444)
+                                : complaint.priority == 'urgent'
+                                    ? const Color(0xFFEF4444)
+                                    : const Color(0xFFF59E0B),
+                            shape: BoxShape.circle,
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Raised by: ${complaint.tenantName} • Rm ${complaint.roomNumber}',
-                    style: TextStyle(
-                      color: const Color(0xFF6366F1), // Indigo color for tenant name
-                      fontSize: widget.isMobile ? 10 : 12,
-                      fontWeight: FontWeight.w600,
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            complaint.title,
+                            style: TextStyle(
+                              color: AppTheme.getTextPrimaryColor(context),
+                              fontSize: widget.isMobile ? 12 : 14,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.calendar_today,
-                        size: 10,
-                        color: AppTheme.getTextSecondaryColor(context),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Raised by: ${complaint.tenantName} • Rm ${complaint.roomNumber}',
+                      style: TextStyle(
+                        color: const Color(0xFF6366F1), // Indigo color for tenant name
+                        fontSize: widget.isMobile ? 10 : 12,
+                        fontWeight: FontWeight.w600,
                       ),
-                      const SizedBox(width: 4),
-                      Text(
-                        dateFormat.format(complaint.createdAt),
-                        style: TextStyle(
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.calendar_today,
+                          size: 10,
                           color: AppTheme.getTextSecondaryColor(context),
-                          fontSize: widget.isMobile ? 8 : 10,
-                          fontWeight: FontWeight.w500,
                         ),
-                      ),
-                    ],
-                  ),
-                ],
+                        const SizedBox(width: 4),
+                        Text(
+                          dateFormat.format(complaint.createdAt),
+                          style: TextStyle(
+                            color: AppTheme.getTextSecondaryColor(context),
+                            fontSize: widget.isMobile ? 8 : 10,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           );

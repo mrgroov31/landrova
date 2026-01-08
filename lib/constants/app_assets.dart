@@ -1,5 +1,6 @@
 /// App Assets - URIs for images and Lottie animations
 /// Replace these with your actual image/Lottie URIs
+library;
 
 class AppAssets {
   // Lottie Animation URIs

@@ -34,9 +34,9 @@ class _AddRoomScreenState extends State<AddRoomScreen> {
   String _roomType = 'rented'; // pg, rented, leased
   String _status = 'vacant'; // vacant, occupied, maintenance
   bool _isLoading = false;
-  List<File> _roomImages = [];
+  final List<File> _roomImages = [];
   final ImagePicker _imagePicker = ImagePicker();
-  List<String> _amenities = [];
+  final List<String> _amenities = [];
   List<Building> _buildings = [];
 
   @override
@@ -178,13 +178,13 @@ class _AddRoomScreenState extends State<AddRoomScreen> {
         final roomHash = roomNumber.hashCode;
         for (int i = 0; i < _roomImages.length; i++) {
           final imageId = (roomHash.abs() % 1000) + i + 1;
-          imageUrls.add('https://picsum.photos/seed/room${roomNumber}-$imageId/800/600');
+          imageUrls.add('https://picsum.photos/seed/room$roomNumber-$imageId/800/600');
         }
       } else {
         // At least one placeholder image
         final roomHash = roomNumber.hashCode;
         final imageId = (roomHash.abs() % 1000) + 1;
-        imageUrls.add('https://picsum.photos/seed/room${roomNumber}-$imageId/800/600');
+        imageUrls.add('https://picsum.photos/seed/room$roomNumber-$imageId/800/600');
       }
 
       // Prepare room payload
@@ -279,7 +279,7 @@ class _AddRoomScreenState extends State<AddRoomScreen> {
               _buildSectionTitle('Building', isMobile),
               SizedBox(height: isMobile ? 12 : 16),
               DropdownButtonFormField<String>(
-                value: _selectedBuildingId,
+                initialValue: _selectedBuildingId,
                 decoration: InputDecoration(
                   labelText: 'Select Building',
                   hintText: 'Choose a building',

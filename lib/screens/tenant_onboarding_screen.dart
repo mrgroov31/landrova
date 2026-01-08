@@ -3,7 +3,6 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import '../models/tenant.dart';
 import '../services/tenant_service.dart';
-import '../services/invitation_service.dart';
 import '../services/api_service.dart';
 import '../services/auth_service.dart';
 import '../utils/responsive.dart';
@@ -336,6 +335,7 @@ class _TenantOnboardingScreenState extends State<TenantOnboardingScreen> {
         depositPaid: depositPaid,
         occupation: _occupationController.text.trim().isEmpty ? null : _occupationController.text.trim(),
         invitationToken: widget.invitationToken,
+        roomNumber: _roomNumberController.text.trim(), // Add room number
       );
 
       debugPrint('✅ [ONBOARDING] API call successful!');

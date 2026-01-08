@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:own_house/models/room.dart';
 import '../models/api_tenant.dart';
-import '../models/building.dart';
 import '../services/api_service.dart';
 import '../services/auth_service.dart';
 import '../utils/responsive.dart';
@@ -198,13 +197,13 @@ class _TenantsScreenState extends State<TenantsScreen> {
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.people_outline, size: 64, color: Colors.grey.shade300),
+                                Icon(Icons.people_outline, size: 64, color: AppTheme.getTextSecondaryColor(context).withOpacity(0.5)),
                                 const SizedBox(height: 16),
                                 Text(
                                   'No tenants found',
                                   style: TextStyle(
                                     fontSize: 18,
-                                    color: Colors.grey.shade600,
+                                    color: AppTheme.getTextSecondaryColor(context),
                                   ),
                                 ),
                                 const SizedBox(height: 8),
@@ -212,7 +211,7 @@ class _TenantsScreenState extends State<TenantsScreen> {
                                   'Invite tenants to get started',
                                   style: TextStyle(
                                     fontSize: 14,
-                                    color: Colors.grey.shade500,
+                                    color: AppTheme.getTextSecondaryColor(context),
                                   ),
                                 ),
                               ],
@@ -306,7 +305,7 @@ class _TenantsScreenState extends State<TenantsScreen> {
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: isMobile ? 16 : 18,
-                            color: Colors.grey.shade800,
+                            color: AppTheme.getTextPrimaryColor(context),
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -314,7 +313,7 @@ class _TenantsScreenState extends State<TenantsScreen> {
                           tenant.typeDisplayName,
                           style: TextStyle(
                             fontSize: isMobile ? 13 : 14,
-                            color: Colors.grey.shade600,
+                            color: AppTheme.getTextSecondaryColor(context),
                           ),
                         ),
                       ],
@@ -508,7 +507,7 @@ class _TenantsScreenState extends State<TenantsScreen> {
           label,
           style: TextStyle(
             fontSize: isMobile ? 12 : 13,
-            color: Colors.grey.shade600,
+            color: AppTheme.getTextSecondaryColor(context),
           ),
         ),
       ],
@@ -521,7 +520,7 @@ class _TenantsScreenState extends State<TenantsScreen> {
         Icon(
           icon,
           size: 16,
-          color: Colors.grey.shade600,
+          color: AppTheme.getTextSecondaryColor(context),
         ),
         const SizedBox(width: 6),
         Expanded(
@@ -529,7 +528,7 @@ class _TenantsScreenState extends State<TenantsScreen> {
             text,
             style: TextStyle(
               fontSize: isMobile ? 13 : 14,
-              color: Colors.grey.shade700,
+              color: AppTheme.getTextSecondaryColor(context),
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,

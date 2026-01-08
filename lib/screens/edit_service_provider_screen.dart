@@ -3,7 +3,6 @@ import '../models/service_provider.dart';
 import '../services/service_provider_service.dart';
 import '../utils/responsive.dart';
 import '../theme/app_theme.dart';
-import '../utils/custom_page_route.dart';
 
 class EditServiceProviderScreen extends StatefulWidget {
   final ServiceProvider provider;

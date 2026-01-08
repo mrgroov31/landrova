@@ -108,7 +108,7 @@ class _RoomsScreenState extends State<RoomsScreen> {
       }
     } catch (e) {
       debugPrint('❌ [RoomsScreen] Error loading rooms: $e');
-      throw e; // Re-throw to be handled by loadData
+      rethrow; // Re-throw to be handled by loadData
     }
   }
 

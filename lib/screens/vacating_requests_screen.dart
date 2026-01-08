@@ -5,8 +5,6 @@ import '../services/vacating_request_service.dart';
 import '../services/auth_service.dart';
 import '../utils/responsive.dart';
 import '../theme/app_theme.dart';
-import '../services/api_service.dart';
-import '../models/room.dart';
 
 class VacatingRequestsScreen extends StatefulWidget {
   const VacatingRequestsScreen({super.key});
@@ -191,12 +189,12 @@ class _VacatingRequestsScreenState extends State<VacatingRequestsScreen> {
           icon: Icon(Icons.arrow_back, color: AppTheme.getTextPrimaryColor(context)),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           'Vacating Requests',
           style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 24,
-            color: Colors.black87,
+            color: AppTheme.getTextPrimaryColor(context),
           ),
         ),
       ),
@@ -229,13 +227,13 @@ class _VacatingRequestsScreenState extends State<VacatingRequestsScreen> {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.inbox_outlined, size: 64, color: Colors.grey.shade300),
+                            Icon(Icons.inbox_outlined, size: 64, color: AppTheme.getTextSecondaryColor(context).withOpacity(0.5)),
                             const SizedBox(height: 16),
                             Text(
                               'No vacating requests',
                               style: TextStyle(
                                 fontSize: 18,
-                                color: Colors.grey.shade600,
+                                color: AppTheme.getTextSecondaryColor(context),
                               ),
                             ),
                           ],
@@ -306,19 +304,19 @@ class _VacatingRequestsScreenState extends State<VacatingRequestsScreen> {
                         style: TextStyle(
                           fontSize: isMobile ? 18 : 20,
                           fontWeight: FontWeight.bold,
-                          color: Colors.grey.shade900,
+                          color: AppTheme.getTextPrimaryColor(context),
                         ),
                       ),
                       const SizedBox(height: 4),
                       Row(
                         children: [
-                          Icon(Icons.room, size: 16, color: Colors.grey.shade600),
+                          Icon(Icons.room, size: 16, color: AppTheme.getTextSecondaryColor(context)),
                           const SizedBox(width: 4),
                           Text(
                             'Room ${request.roomNumber}',
                             style: TextStyle(
                               fontSize: isMobile ? 14 : 15,
-                              color: Colors.grey.shade600,
+                              color: AppTheme.getTextSecondaryColor(context),
                             ),
                           ),
                         ],
@@ -350,13 +348,13 @@ class _VacatingRequestsScreenState extends State<VacatingRequestsScreen> {
             // Vacating Date
             Row(
               children: [
-                Icon(Icons.calendar_today, size: 18, color: Colors.grey.shade600),
+                Icon(Icons.calendar_today, size: 18, color: AppTheme.getTextSecondaryColor(context)),
                 const SizedBox(width: 8),
                 Text(
                   'Vacating Date: ${dateFormat.format(request.vacatingDate)}',
                   style: TextStyle(
                     fontSize: isMobile ? 14 : 15,
-                    color: Colors.grey.shade700,
+                    color: AppTheme.getTextSecondaryColor(context),
                   ),
                 ),
               ],
@@ -370,7 +368,7 @@ class _VacatingRequestsScreenState extends State<VacatingRequestsScreen> {
               style: TextStyle(
                 fontSize: isMobile ? 13 : 14,
                 fontWeight: FontWeight.w600,
-                color: Colors.grey.shade700,
+                color: AppTheme.getTextSecondaryColor(context),
               ),
             ),
             const SizedBox(height: 4),
@@ -378,7 +376,7 @@ class _VacatingRequestsScreenState extends State<VacatingRequestsScreen> {
               request.reason,
               style: TextStyle(
                 fontSize: isMobile ? 14 : 15,
-                color: Colors.grey.shade800,
+                color: AppTheme.getTextPrimaryColor(context),
                 height: 1.4,
               ),
             ),

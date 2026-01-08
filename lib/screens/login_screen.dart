@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import '../services/auth_service.dart';
-import '../models/user.dart';
 import '../utils/responsive.dart';
 import '../theme/app_theme.dart';
 import 'owner_login_screen.dart';

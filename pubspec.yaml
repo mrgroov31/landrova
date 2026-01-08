@@ -110,6 +110,7 @@ flutter:
 
   # To add assets to your application, add an assets section, like this:
   assets:
+    - assets/images/onboarding/
     - lib/data/mock_responses/rooms.json
     - lib/data/mock_responses/tenants.json
     - lib/data/mock_responses/complaints.json

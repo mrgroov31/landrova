@@ -27,7 +27,7 @@ class CurvedBottomNavBar extends StatelessWidget {
             painter: CurvedPainter(),
           ),
           // Navigation items
-          Container(
+          SizedBox(
             width: MediaQuery.of(context).size.width - 20,
             height: 85,
             child: Row(
@@ -42,7 +42,7 @@ class CurvedBottomNavBar extends StatelessWidget {
                   child: GestureDetector(
                     onTap: () => onTap(index),
                     behavior: HitTestBehavior.opaque,
-                    child: Container(
+                    child: SizedBox(
                       height: 85,
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,

@@ -14,6 +14,12 @@ class Complaint {
   String? assignedTo;
   String? serviceProviderId; // ID of assigned service provider
   final List<String> images;
+  
+  // New fields for API integration
+  final String? roomId;
+  final String? buildingId;
+  final String? contactPreference;
+  final bool? urgentContact;
 
   Complaint({
     required this.id,
@@ -31,6 +37,10 @@ class Complaint {
     this.assignedTo,
     this.serviceProviderId,
     this.images = const [],
+    this.roomId,
+    this.buildingId,
+    this.contactPreference,
+    this.urgentContact,
   });
 
   factory Complaint.fromJson(Map<String, dynamic> json) {
@@ -54,6 +64,10 @@ class Complaint {
       images: json['images'] != null
           ? List<String>.from(json['images'])
           : [],
+      roomId: json['roomId']?.toString(),
+      buildingId: json['buildingId']?.toString(),
+      contactPreference: json['contactPreference']?.toString(),
+      urgentContact: json['urgentContact'] as bool?,
     );
   }
 
@@ -74,6 +88,26 @@ class Complaint {
       'assignedTo': assignedTo,
       'serviceProviderId': serviceProviderId,
       'images': images,
+      'roomId': roomId,
+      'buildingId': buildingId,
+      'contactPreference': contactPreference,
+      'urgentContact': urgentContact,
+    };
+  }
+
+  // Helper method to create API payload for complaint creation
+  Map<String, dynamic> toApiPayload() {
+    return {
+      'title': title,
+      'description': description,
+      'roomId': roomId,
+      'buildingId': buildingId,
+      'tenantId': tenantId,
+      'category': category,
+      'priority': priority,
+      'images': images,
+      'contactPreference': contactPreference ?? 'phone',
+      'urgentContact': urgentContact ?? false,
     };
   }
   

@@ -8,6 +8,7 @@ import '../utils/responsive.dart';
 import '../theme/app_theme.dart';
 import '../utils/custom_page_route.dart';
 import 'invite_tenant_screen.dart';
+import 'manage_room_occupants_screen.dart';
 import 'package:intl/intl.dart';
 
 class RoomDetailScreen extends StatefulWidget {
@@ -29,10 +30,12 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
   bool isLoading = true;
   PageController? _imagePageController;
   int _currentImageIndex = 0;
+  late Room currentRoom; // Track current room state
 
   @override
   void initState() {
     super.initState();
+    currentRoom = widget.room; // Initialize with the passed room
     _imagePageController = PageController();
     _loadRoomData();
   }
@@ -50,7 +53,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
 
     try {
       // Load building information
-      if (widget.room.buildingId.isNotEmpty) {
+      if (currentRoom.buildingId.isNotEmpty) {
         try {
           final ownerId = AuthService.getOwnerId();
           final buildingsResponse = await ApiService.fetchBuildingsByOwnerId(ownerId);
@@ -58,9 +61,9 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
           debugPrint("$buildingsResponse buildingsbuildingsbuildingsbuildings");
 
           final foundBuilding = buildings.firstWhere(
-            (b) => b.id == widget.room.buildingId,
+            (b) => b.id == currentRoom.buildingId,
             orElse: () => Building(
-              id: widget.room.buildingId,
+              id: currentRoom.buildingId,
               name: widget.buildingName ?? 'Building',
               address: '',
               totalFloors: 1,
@@ -89,10 +92,10 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
   }
 
   Color getStatusColor() {
-    if (widget.room.hasTenant || widget.room.isOccupied) {
+    if (currentRoom.hasTenant || currentRoom.isOccupied) {
       return Colors.green;
     }
-    switch (widget.room.status) {
+    switch (currentRoom.status) {
       case 'occupied':
         return Colors.green;
       case 'vacant':
@@ -105,10 +108,10 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
   }
 
   String getStatusText() {
-    if (widget.room.hasTenant || widget.room.isOccupied) {
+    if (currentRoom.hasTenant || currentRoom.isOccupied) {
       return 'Occupied';
     }
-    switch (widget.room.status) {
+    switch (currentRoom.status) {
       case 'occupied':
         return 'Occupied';
       case 'vacant':
@@ -116,24 +119,30 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
       case 'maintenance':
         return 'Under Maintenance';
       default:
-        return widget.room.status;
+        return currentRoom.status;
     }
   }
 
   String _getRoomImageUrl(int index) {
-    if (widget.room.images.isNotEmpty && index < widget.room.images.length) {
-      return widget.room.images[index];
+    if (currentRoom.images.isNotEmpty && index < currentRoom.images.length) {
+      return currentRoom.images[index];
     }
-    final roomHash = widget.room.number.hashCode;
+    final roomHash = currentRoom.number.hashCode;
     final imageId = (roomHash.abs() % 1000) + index + 1;
-    return 'https://picsum.photos/seed/room${imageId}/800/600';
+    return 'https://picsum.photos/seed/room$imageId/800/600';
+  }
+
+  void _onRoomUpdated(Room updatedRoom) {
+    setState(() {
+      currentRoom = updatedRoom;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     final isMobile = Responsive.isMobile(context);
-    final images = widget.room.images.isNotEmpty 
-        ? widget.room.images 
+    final images = currentRoom.images.isNotEmpty 
+        ? currentRoom.images 
         : [_getRoomImageUrl(0)]; // At least one image
 
     return Scaffold(
@@ -148,7 +157,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
             backgroundColor: AppTheme.primaryColor,
             flexibleSpace: FlexibleSpaceBar(
               title: Text(
-                'House ${widget.room.number}',
+                'House ${currentRoom.number}',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: isMobile ? 18 : 20,
@@ -299,7 +308,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                               crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
                                 Text(
-                                  '₹${widget.room.rent.toStringAsFixed(0)}',
+                                  '₹${currentRoom.rent.toStringAsFixed(0)}',
                                   style: TextStyle(
                                     fontSize: isMobile ? 24 : 28,
                                     fontWeight: FontWeight.bold,
@@ -325,14 +334,17 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                       // Building Info Card
                       if (building != null) _buildBuildingInfoCard(isMobile),
 
+                      // Occupancy Management Card
+                      _buildOccupancyManagementCard(isMobile),
+
                       // Tenant Info Card (if occupied)
-                      if (widget.room.hasTenant) 
+                      if (currentRoom.hasTenant) 
                         _buildTenantInfoCard(isMobile)
-                      else if (!widget.room.hasTenant && widget.room.status == 'vacant')
+                      else if (!currentRoom.hasTenant && currentRoom.status == 'vacant')
                         _buildVacantRoomActions(isMobile),
 
                       // Amenities Card
-                      if (widget.room.amenities.isNotEmpty)
+                      if (currentRoom.amenities.isNotEmpty)
                         _buildAmenitiesCard(isMobile),
 
                       SizedBox(height: isMobile ? 16 : 24),
@@ -379,14 +391,14 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
             ],
           ),
           SizedBox(height: isMobile ? 16 : 20),
-          _buildDetailRow('Room Type', widget.room.typeDisplayName, isMobile),
-          _buildDetailRow('Status', widget.room.occupancyStatus, isMobile),
-          _buildDetailRow('Capacity', '${widget.room.currentOccupancy}/${widget.room.capacity} people', isMobile),
-          if (widget.room.floor != null)
-            _buildDetailRow('Floor', widget.room.floor.toString(), isMobile),
-          if (widget.room.area != null)
-            _buildDetailRow('Area', widget.room.area!, isMobile),
-          if (widget.room.description != null && widget.room.description!.isNotEmpty) ...[
+          _buildDetailRow('Room Type', currentRoom.typeDisplayName, isMobile),
+          _buildDetailRow('Status', currentRoom.occupancyStatus, isMobile),
+          _buildDetailRow('Capacity', '${currentRoom.currentOccupancy}/${currentRoom.capacity} people', isMobile),
+          if (currentRoom.floor != null)
+            _buildDetailRow('Floor', currentRoom.floor.toString(), isMobile),
+          if (currentRoom.area != null)
+            _buildDetailRow('Area', currentRoom.area!, isMobile),
+          if (currentRoom.description != null && currentRoom.description!.isNotEmpty) ...[
             SizedBox(height: isMobile ? 12 : 16),
             Text(
               'Description',
@@ -398,7 +410,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
             ),
             SizedBox(height: 4),
             Text(
-              widget.room.description!,
+              currentRoom.description!,
               style: TextStyle(
                 fontSize: isMobile ? 13 : 15,
                 color: AppTheme.getTextSecondaryColor(context),
@@ -464,8 +476,198 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
     );
   }
 
+  Widget _buildOccupancyManagementCard(bool isMobile) {
+    final availableSpots = currentRoom.capacity - currentRoom.currentOccupancy;
+    
+    return Container(
+      margin: EdgeInsets.only(
+        top: isMobile ? 16 : 20,
+        left: isMobile ? 16 : 24,
+        right: isMobile ? 16 : 24,
+      ),
+      padding: EdgeInsets.all(isMobile ? 16 : 20),
+      decoration: BoxDecoration(
+        color: AppTheme.getCardColor(context),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Colors.black.withOpacity(0.3)
+                : Colors.grey.shade200,
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.people, color: AppTheme.primaryColor, size: isMobile ? 20 : 24),
+              SizedBox(width: isMobile ? 8 : 12),
+              Text(
+                'Occupancy Management',
+                style: TextStyle(
+                  fontSize: isMobile ? 18 : 20,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.getTextPrimaryColor(context),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: isMobile ? 16 : 20),
+          
+          // Occupancy Stats
+          Row(
+            children: [
+              Expanded(
+                child: _buildOccupancyStat(
+                  'Total Capacity',
+                  currentRoom.capacity.toString(),
+                  Icons.people_outline,
+                  Colors.blue,
+                  isMobile,
+                ),
+              ),
+              SizedBox(width: isMobile ? 12 : 16),
+              Expanded(
+                child: _buildOccupancyStat(
+                  'Current Occupancy',
+                  currentRoom.currentOccupancy.toString(),
+                  Icons.person,
+                  currentRoom.currentOccupancy > 0 ? Colors.green : Colors.grey,
+                  isMobile,
+                ),
+              ),
+              SizedBox(width: isMobile ? 12 : 16),
+              Expanded(
+                child: _buildOccupancyStat(
+                  'Available',
+                  availableSpots.toString(),
+                  Icons.person_add_outlined,
+                  availableSpots > 0 ? Colors.orange : Colors.red,
+                  isMobile,
+                ),
+              ),
+            ],
+          ),
+          
+          SizedBox(height: isMobile ? 16 : 20),
+          
+          // Progress Bar
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Occupancy Rate',
+                    style: TextStyle(
+                      fontSize: isMobile ? 13 : 14,
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.getTextSecondaryColor(context),
+                    ),
+                  ),
+                  Text(
+                    '${((currentRoom.currentOccupancy / currentRoom.capacity) * 100).toInt()}%',
+                    style: TextStyle(
+                      fontSize: isMobile ? 13 : 14,
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.primaryColor,
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 8),
+              LinearProgressIndicator(
+                value: currentRoom.currentOccupancy / currentRoom.capacity,
+                backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  currentRoom.currentOccupancy == currentRoom.capacity
+                      ? Colors.red
+                      : currentRoom.currentOccupancy > (currentRoom.capacity * 0.8)
+                          ? Colors.orange
+                          : AppTheme.primaryColor,
+                ),
+                minHeight: 8,
+              ),
+            ],
+          ),
+          
+          SizedBox(height: isMobile ? 16 : 20),
+          
+          // Action Button
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  CustomPageRoute(
+                    child: ManageRoomOccupantsScreen(
+                      room: currentRoom,
+                      onRoomUpdated: _onRoomUpdated,
+                    ),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.manage_accounts),
+              label: const Text('Manage Occupants'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primaryColor,
+                foregroundColor: Colors.white,
+                padding: EdgeInsets.symmetric(vertical: isMobile ? 12 : 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOccupancyStat(String label, String value, IconData icon, Color color, bool isMobile) {
+    return Container(
+      padding: EdgeInsets.all(isMobile ? 12 : 16),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withOpacity(0.3)),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: color, size: isMobile ? 20 : 24),
+          SizedBox(height: isMobile ? 6 : 8),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: isMobile ? 18 : 20,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+          SizedBox(height: 2),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: isMobile ? 10 : 11,
+              color: AppTheme.getTextSecondaryColor(context),
+            ),
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildTenantInfoCard(bool isMobile) {
-    final tenant = widget.room.tenant!;
+    final tenant = currentRoom.tenant!;
     final dateFormat = DateFormat('MMM dd, yyyy');
     
     return Container(
@@ -828,7 +1030,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                       context,
                       CustomPageRoute(
                         child: InviteTenantScreen(
-                          selectedBuildingId: widget.room.buildingId,
+                          selectedBuildingId: currentRoom.buildingId,
                         ),
                       ),
                     );

@@ -65,17 +65,17 @@ class _ServiceProvidersListScreenState extends State<ServiceProvidersListScreen>
           icon: Icon(Icons.arrow_back, color: AppTheme.getTextPrimaryColor(context)),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           'Service Providers',
           style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 24,
-            color: Colors.black87,
+            color: AppTheme.getTextPrimaryColor(context),
           ),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.search, color: Colors.black87),
+            icon: Icon(Icons.search, color: AppTheme.getTextPrimaryColor(context)),
             onPressed: () {},
             tooltip: 'Search',
           ),
@@ -136,17 +136,13 @@ class _ServiceProvidersListScreenState extends State<ServiceProvidersListScreen>
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(
-                                  Icons.handyman_outlined,
-                                  size: 64,
-                                  color: Colors.grey.shade300,
-                                ),
+                                Icon(Icons.people_outline, size: 64, color: AppTheme.getTextSecondaryColor(context).withOpacity(0.5)),
                                 const SizedBox(height: 16),
                                 Text(
                                   'No service providers found',
                                   style: TextStyle(
                                     fontSize: 18,
-                                    color: Colors.grey.shade600,
+                                    color: AppTheme.getTextSecondaryColor(context),
                                   ),
                                 ),
                                 const SizedBox(height: 8),
@@ -154,7 +150,7 @@ class _ServiceProvidersListScreenState extends State<ServiceProvidersListScreen>
                                   'Register a service provider to get started',
                                   style: TextStyle(
                                     fontSize: 14,
-                                    color: Colors.grey.shade500,
+                                    color: AppTheme.getTextSecondaryColor(context),
                                   ),
                                 ),
                                 const SizedBox(height: 24),
@@ -247,15 +243,17 @@ class _ServiceProvidersListScreenState extends State<ServiceProvidersListScreen>
     return Container(
       margin: EdgeInsets.only(bottom: isMobile ? 12 : 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.getCardColor(context),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: Colors.grey.shade200,
+          color: AppTheme.getTextSecondaryColor(context).withOpacity(0.2),
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Colors.black.withOpacity(0.3)
+                : Colors.black.withOpacity(0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -297,7 +295,7 @@ class _ServiceProvidersListScreenState extends State<ServiceProvidersListScreen>
                         style: TextStyle(
                           fontSize: isMobile ? 16 : 18,
                           fontWeight: FontWeight.bold,
-                          color: Colors.grey.shade900,
+                          color: AppTheme.getTextPrimaryColor(context),
                         ),
                       ),
                       SizedBox(height: 4),
@@ -305,7 +303,7 @@ class _ServiceProvidersListScreenState extends State<ServiceProvidersListScreen>
                         provider.serviceTypeDisplayName,
                         style: TextStyle(
                           fontSize: isMobile ? 13 : 14,
-                          color: Colors.grey.shade600,
+                          color: AppTheme.getTextSecondaryColor(context),
                         ),
                       ),
                       SizedBox(height: 8),
@@ -322,7 +320,7 @@ class _ServiceProvidersListScreenState extends State<ServiceProvidersListScreen>
                             style: TextStyle(
                               fontSize: isMobile ? 13 : 14,
                               fontWeight: FontWeight.w600,
-                              color: Colors.grey.shade900,
+                              color: AppTheme.getTextPrimaryColor(context),
                             ),
                           ),
                           SizedBox(width: 8),
@@ -330,7 +328,7 @@ class _ServiceProvidersListScreenState extends State<ServiceProvidersListScreen>
                             '• ${provider.totalJobs} jobs',
                             style: TextStyle(
                               fontSize: isMobile ? 12 : 13,
-                              color: Colors.grey.shade600,
+                              color: AppTheme.getTextSecondaryColor(context),
                             ),
                           ),
                           if (provider.isAvailable) ...[
@@ -338,10 +336,14 @@ class _ServiceProvidersListScreenState extends State<ServiceProvidersListScreen>
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                               decoration: BoxDecoration(
-                                color: Colors.green.shade50,
+                                color: Theme.of(context).brightness == Brightness.dark
+                                    ? Colors.green.withOpacity(0.2)
+                                    : Colors.green.shade50,
                                 borderRadius: BorderRadius.circular(4),
                                 border: Border.all(
-                                  color: Colors.green.shade200,
+                                  color: Theme.of(context).brightness == Brightness.dark
+                                      ? Colors.green.withOpacity(0.4)
+                                      : Colors.green.shade200,
                                   width: 1,
                                 ),
                               ),
@@ -364,7 +366,7 @@ class _ServiceProvidersListScreenState extends State<ServiceProvidersListScreen>
                             Icon(
                               Icons.location_on,
                               size: 14,
-                              color: Colors.grey.shade600,
+                              color: AppTheme.getTextSecondaryColor(context),
                             ),
                             SizedBox(width: 4),
                             Expanded(
@@ -372,7 +374,7 @@ class _ServiceProvidersListScreenState extends State<ServiceProvidersListScreen>
                                 provider.address!,
                                 style: TextStyle(
                                   fontSize: isMobile ? 12 : 13,
-                                  color: Colors.grey.shade600,
+                                  color: AppTheme.getTextSecondaryColor(context),
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
@@ -409,7 +411,7 @@ class _ServiceProvidersListScreenState extends State<ServiceProvidersListScreen>
                     IconButton(
                       icon: Icon(
                         Icons.more_vert,
-                        color: Colors.grey.shade600,
+                        color: AppTheme.getTextSecondaryColor(context),
                       ),
                       onPressed: () {
                         _showProviderOptions(provider);
@@ -433,8 +435,8 @@ class _ServiceProvidersListScreenState extends State<ServiceProvidersListScreen>
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
         height: MediaQuery.of(context).size.height * 0.7,
-        decoration: const BoxDecoration(
-          color: Colors.white,
+        decoration: BoxDecoration(
+          color: AppTheme.getCardColor(context),
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
         padding: const EdgeInsets.all(24),
@@ -463,9 +465,10 @@ class _ServiceProvidersListScreenState extends State<ServiceProvidersListScreen>
                     children: [
                       Text(
                         provider.name,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
+                          color: AppTheme.getTextPrimaryColor(context),
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -473,7 +476,7 @@ class _ServiceProvidersListScreenState extends State<ServiceProvidersListScreen>
                         provider.serviceTypeDisplayName,
                         style: TextStyle(
                           fontSize: 14,
-                          color: Colors.grey.shade600,
+                          color: AppTheme.getTextSecondaryColor(context),
                         ),
                       ),
                     ],
@@ -502,9 +505,10 @@ class _ServiceProvidersListScreenState extends State<ServiceProvidersListScreen>
                 const SizedBox(width: 8),
                 Text(
                   '${provider.rating}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
+                    color: AppTheme.getTextPrimaryColor(context),
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -512,18 +516,19 @@ class _ServiceProvidersListScreenState extends State<ServiceProvidersListScreen>
                   '• ${provider.totalJobs} completed jobs',
                   style: TextStyle(
                     fontSize: 14,
-                    color: Colors.grey.shade600,
+                    color: AppTheme.getTextSecondaryColor(context),
                   ),
                 ),
               ],
             ),
             if (provider.specialties.isNotEmpty) ...[
               const SizedBox(height: 24),
-              const Text(
+              Text(
                 'Specialties',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
+                  color: AppTheme.getTextPrimaryColor(context),
                 ),
               ),
               const SizedBox(height: 12),
@@ -579,7 +584,7 @@ class _ServiceProvidersListScreenState extends State<ServiceProvidersListScreen>
   Widget _buildDetailRow(IconData icon, String label, String value) {
     return Row(
       children: [
-        Icon(icon, size: 20, color: Colors.grey.shade600),
+        Icon(icon, size: 20, color: AppTheme.getTextSecondaryColor(context)),
         const SizedBox(width: 12),
         Expanded(
           child: Column(
@@ -589,15 +594,16 @@ class _ServiceProvidersListScreenState extends State<ServiceProvidersListScreen>
                 label,
                 style: TextStyle(
                   fontSize: 12,
-                  color: Colors.grey.shade600,
+                  color: AppTheme.getTextSecondaryColor(context),
                 ),
               ),
               const SizedBox(height: 4),
               Text(
                 value,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w500,
+                  color: AppTheme.getTextPrimaryColor(context),
                 ),
               ),
             ],
@@ -625,8 +631,8 @@ class _ServiceProvidersListScreenState extends State<ServiceProvidersListScreen>
       context: context,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
+        decoration: BoxDecoration(
+          color: AppTheme.getCardColor(context),
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
         padding: const EdgeInsets.symmetric(vertical: 8),

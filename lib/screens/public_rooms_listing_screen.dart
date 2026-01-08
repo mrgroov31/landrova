@@ -1,14 +1,9 @@
 import 'package:flutter/material.dart';
 import '../models/room.dart';
 import '../services/api_service.dart';
-import '../services/auth_service.dart';
-import '../widgets/room_listing_card.dart';
 import '../utils/responsive.dart';
 import '../theme/app_theme.dart';
 import 'unified_login_screen.dart';
-import 'rooms_screen.dart';
-import 'dashboard_screen.dart';
-import 'tenant_dashboard_screen.dart';
 
 class PublicRoomsListingScreen extends StatefulWidget {
   const PublicRoomsListingScreen({super.key});

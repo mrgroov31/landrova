@@ -186,7 +186,7 @@ class _TenantDashboardScreenState extends State<TenantDashboardScreen> {
                       children: [
                         // Main Room Card or Find Rooms Card
                         if (hasRoom)
-                          _buildRoomCard(context, isMobile, user, roomNumber!)
+                          _buildRoomCard(context, isMobile, user, roomNumber)
                         else
                           _buildFindRoomsCard(context, isMobile, user),
 
