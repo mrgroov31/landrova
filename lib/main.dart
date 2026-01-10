@@ -6,6 +6,8 @@ import 'package:responsive_framework/responsive_framework.dart';
 import 'package:provider/provider.dart';
 import 'theme/app_theme.dart';
 import 'services/theme_service.dart';
+import 'services/preloader_service.dart';
+import 'services/hive_api_service.dart';
 import 'screens/tenant_onboarding_screen.dart';
 import 'screens/splash_screen.dart';
 import 'models/service_provider_adapter.dart';
@@ -17,8 +19,12 @@ import 'services/invitation_service.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
+  debugPrint('🚀 [MAIN] Starting Own House app with Hive optimization...');
+  final appStopwatch = Stopwatch()..start();
+  
   // Initialize Hive
   await Hive.initFlutter();
+  debugPrint('✅ [MAIN] Hive initialized');
   
   // Register adapters
   if (!Hive.isAdapterRegistered(0)) {
@@ -40,9 +46,22 @@ void main() async {
   assert(Hive.isAdapterRegistered(2), 'TenantAdapter not registered');
   assert(Hive.isAdapterRegistered(4), 'VacatingRequestAdapter not registered');
   
+  debugPrint('✅ [MAIN] All Hive adapters registered');
+  
   // Initialize theme service
   final themeService = ThemeService();
   await themeService.loadTheme();
+  debugPrint('✅ [MAIN] Theme service initialized');
+  
+  // Initialize Hive API service for ultra-fast caching
+  await HiveApiService.init();
+  debugPrint('✅ [MAIN] Hive API service initialized');
+  
+  // Initialize performance optimizations
+  await PreloaderService.initialize();
+  debugPrint('✅ [MAIN] Preloader service initialized');
+  
+  debugPrint('🎉 [MAIN] App initialization completed in ${appStopwatch.elapsedMilliseconds}ms');
   
   runApp(MyApp(themeService: themeService));
 }

@@ -1,0 +1,63 @@
+{
+  "name": "Arjun Electrician",
+  "serviceType": "electrician",
+  "phone": "+91 9876543220",
+  "email": "arjun.electrician@gmail.com",
+  "address": "Sector 18, Noida, UP",
+  "city": "Noida",
+  "state": "Uttar Pradesh",
+  "pincode": "201301",
+  "specialties": [
+    "House Wiring",
+    "Electrical Repairs",
+    "Switch Installation",
+    "Fan Installation"
+  ],
+  "experience": "6 years",
+  "priceRange": {
+    "min": 250,
+    "max": 1200,
+    "currency": "INR"
+  },
+  "workingHours": {
+    "start": "09:00",
+    "end": "18:00",
+    "workingDays": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+  },
+  "emergencyAvailable": true,
+  "languages": ["Hindi", "English"],
+  "documents": {
+    "aadharCard": {
+      "number": "1234-5678-9012",
+      "imageUrl": "https://example.com/documents/aadhar_123.jpg"
+    },
+    "panCard": {
+      "number": "ABCDE1234F",
+      "imageUrl": "https://example.com/documents/pan_123.jpg"
+    },
+    "tradeLicense": {
+      "number": "TL123456789",
+      "imageUrl": "https://example.com/documents/trade_123.jpg",
+      "expiryDate": "2025-12-31"
+    }
+  },
+  "profileImage": "https://example.com/profiles/arjun_123.jpg",
+  "bankDetails": {
+    "accountNumber": "1234567890",
+    "ifscCode": "SBIN0001234",
+    "accountHolderName": "Arjun Kumar",
+    "bankName": "State Bank of India"
+  },
+  "references": [
+    {
+      "name": "Rajesh Sharma",
+      "phone": "+91 9876543221",
+      "relation": "Previous Client"
+    },
+    {
+      "name": "Sunil Gupta",
+      "phone": "+91 9876543222",
+      "relation": "Business Partner"
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "filters": {
+    "serviceType": "electrician",
+    "city": "noida",
+    "availability": "available",
+    "rating": {
+      "min": 4.0,
+      "max": 5.0
+    },
+    "priceRange": {
+      "min": 200,
+      "max": 1500,
+      "currency": "INR"
+    },
+    "experience": {
+      "min": 5,
+      "unit": "years"
+    },
+    "emergencyAvailable": true,
+    "languages": ["Hindi", "English"],
+    "specialties": ["House Wiring", "Electrical Repairs"],
+    "verified": true
+  },
+  "location": {
+    "latitude": 28.5355,
+    "longitude": 77.3910,
+    "radius": 10,
+    "unit": "km"
+  },
+  "sortBy": "rating",
+  "sortOrder": "desc",
+  "page": 1,
+  "limit": 10,
+  "searchQuery": "electrical repair"
+}

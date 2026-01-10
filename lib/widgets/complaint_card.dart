@@ -285,7 +285,7 @@ class ComplaintCard extends StatelessWidget {
                 
                 SizedBox(height: isMobile ? 12 : 16),
                 
-                // Date
+                // Date and Assignment Status
                 Row(
                   children: [
                     Icon(
@@ -301,6 +301,41 @@ class ComplaintCard extends StatelessWidget {
                         color: AppTheme.getTextSecondaryColor(context),
                       ),
                     ),
+                    // Show assignment indicator if service provider is assigned
+                    if (complaint.serviceProviderId != null && complaint.serviceProviderId!.isNotEmpty) ...[
+                      const SizedBox(width: 12),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(
+                            color: Colors.blue.withOpacity(0.5),
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.assignment_ind,
+                              size: 12,
+                              color: Colors.blue.shade700,
+                            ),
+                            const SizedBox(width: 2),
+                            Text(
+                              'ASSIGNED',
+                              style: TextStyle(
+                                fontSize: 9,
+                                color: Colors.blue.shade700,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ],

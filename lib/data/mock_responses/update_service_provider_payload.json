@@ -1,0 +1,39 @@
+{
+  "id": "sp_001",
+  "name": "Rajesh Kumar",
+  "phone": "+91 9876543210",
+  "email": "rajesh.electrician@gmail.com",
+  "address": "Sector 15, Noida, UP",
+  "city": "Noida",
+  "state": "Uttar Pradesh",
+  "pincode": "201301",
+  "specialties": [
+    "House Wiring",
+    "Electrical Repairs",
+    "Switch Installation",
+    "Fan Installation",
+    "Light Fixtures",
+    "Smart Home Setup"
+  ],
+  "experience": "9 years",
+  "priceRange": {
+    "min": 250,
+    "max": 1800,
+    "currency": "INR"
+  },
+  "workingHours": {
+    "start": "08:30",
+    "end": "19:00",
+    "workingDays": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+  },
+  "emergencyAvailable": true,
+  "languages": ["Hindi", "English", "Punjabi"],
+  "isAvailable": true,
+  "profileImage": "https://example.com/profiles/rajesh_updated.jpg",
+  "bankDetails": {
+    "accountNumber": "9876543210",
+    "ifscCode": "HDFC0001234",
+    "accountHolderName": "Rajesh Kumar",
+    "bankName": "HDFC Bank"
+  }
+}

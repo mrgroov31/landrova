@@ -8,6 +8,7 @@ import '../models/api_tenant.dart';
 import '../models/complaint.dart';
 import '../models/payment.dart';
 import '../models/building.dart';
+import '../models/service_provider.dart';
 import 'dart:developer';
 
 class ApiService {
@@ -74,7 +75,7 @@ class ApiService {
     }
   }
 
-  // Parse responses to models
+  // Parse rooms from API response
   static List<Room> parseRooms(Map<String, dynamic> response) {
     debugPrint('🔍 [PARSE] Parsing rooms from response: ${response.keys}');
     
@@ -116,8 +117,19 @@ class ApiService {
       final List<Room> parsedRooms = [];
       for (int i = 0; i < roomsData.length; i++) {
         try {
-          final roomJson = roomsData[i] as Map<String, dynamic>;
-          final room = Room.fromJson(roomJson);
+          final roomJson = roomsData[i];
+          // Ensure we have a proper Map<String, dynamic>
+          final Map<String, dynamic> roomMap;
+          if (roomJson is Map<String, dynamic>) {
+            roomMap = roomJson;
+          } else if (roomJson is Map) {
+            roomMap = Map<String, dynamic>.from(roomJson);
+          } else {
+            debugPrint('❌ [PARSE] Room ${i + 1} is not a Map: ${roomJson.runtimeType}');
+            continue;
+          }
+          
+          final room = Room.fromJson(roomMap);
           parsedRooms.add(room);
           debugPrint('✅ [PARSE] Successfully parsed room ${i + 1}: ${room.number}');
         } catch (e, stackTrace) {
@@ -836,6 +848,533 @@ class ApiService {
     }
     
     return [];
+  }
+
+  // ===== SERVICE PROVIDER API METHODS =====
+
+  // Fetch all service providers
+  static Future<Map<String, dynamic>> fetchServiceProviders({
+    String? serviceType,
+    String? city,
+    String? availability,
+    double? minRating,
+    double? maxRating,
+    int? minPrice,
+    int? maxPrice,
+    bool? emergencyAvailable,
+    bool? verified,
+    String? sortBy = 'rating',
+    String? sortOrder = 'desc',
+    int page = 1,
+    int limit = 10,
+  }) async {
+    try {
+      // Build query parameters
+      final queryParams = <String, String>{
+        'page': page.toString(),
+        'limit': limit.toString(),
+        'sortBy': sortBy ?? 'rating',
+        'sortOrder': sortOrder ?? 'desc',
+      };
+
+      if (serviceType != null) queryParams['serviceType'] = serviceType;
+      if (city != null) queryParams['city'] = city;
+      if (availability != null) queryParams['availability'] = availability;
+      if (minRating != null) queryParams['minRating'] = minRating.toString();
+      if (maxRating != null) queryParams['maxRating'] = maxRating.toString();
+      if (minPrice != null) queryParams['minPrice'] = minPrice.toString();
+      if (maxPrice != null) queryParams['maxPrice'] = maxPrice.toString();
+      if (emergencyAvailable != null) queryParams['emergencyAvailable'] = emergencyAvailable.toString();
+      if (verified != null) queryParams['verified'] = verified.toString();
+
+      final uri = Uri.https('www.leranothrive.com', '/api/service-providers', queryParams);
+      
+      debugPrint('🔧 [API] Fetching service providers');
+      debugPrint('🌐 [API] URL: $uri');
+      debugPrint('📤 [API] Method: GET');
+      debugPrint('📤 [API] Headers: {accept: */*}');
+      
+      final response = await http.get(
+        uri,
+        headers: {
+          'accept': '*/*',
+        },
+      );
+
+      debugPrint('📥 [API] Response Status Code: ${response.statusCode}');
+      debugPrint('📥 [API] Response Headers: ${response.headers}');
+      log('📥 [API] Response Body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final decodedResponse = json.decode(response.body);
+        debugPrint('✅ [API] Successfully fetched service providers');
+        return decodedResponse;
+      } else {
+        debugPrint('❌ [API] Failed to fetch service providers: ${response.statusCode}');
+        debugPrint('❌ [API] Error Body: ${response.body}');
+        throw Exception('Failed to fetch service providers: ${response.statusCode} - ${response.body}');
+      }
+    } catch (e) {
+      debugPrint('💥 [API] Exception while fetching service providers: $e');
+      throw Exception('Error fetching service providers: $e');
+    }
+  }
+
+  // Create a new service provider
+  static Future<Map<String, dynamic>> createServiceProvider({
+    required String name,
+    required String serviceType,
+    required String phone,
+    required String email,
+    required String address,
+    required String city,
+    required String state,
+    required String pincode,
+    required List<String> specialties,
+    required String experience,
+    required Map<String, dynamic> priceRange,
+    required Map<String, dynamic> workingHours,
+    required bool emergencyAvailable,
+    required List<String> languages,
+    Map<String, dynamic>? documents,
+    String? profileImage,
+    Map<String, dynamic>? bankDetails,
+    List<Map<String, dynamic>>? references,
+  }) async {
+    try {
+      final url = Uri.parse('https://www.leranothrive.com/api/service-providers');
+      
+      final payload = {
+        'name': name,
+        'serviceType': serviceType,
+        'phone': phone,
+        'email': email,
+        'address': address,
+        'city': city,
+        'state': state,
+        'pincode': pincode,
+        'specialties': specialties,
+        'experience': experience,
+        'priceRange': priceRange,
+        'workingHours': workingHours,
+        'emergencyAvailable': emergencyAvailable,
+        'languages': languages,
+        'isAvailable': true,
+        'isVerified': false,
+      };
+
+      // Add optional fields if provided
+      if (documents != null) payload['documents'] = documents;
+      if (profileImage != null) payload['profileImage'] = profileImage;
+      if (bankDetails != null) payload['bankDetails'] = bankDetails;
+      if (references != null) payload['references'] = references;
+
+      debugPrint('');
+      debugPrint('🚀 ===== SERVICE PROVIDER CREATION API CALL START =====');
+      debugPrint('🔧 [API] Creating service provider: $name');
+      debugPrint('🌐 [API] URL: $url');
+      debugPrint('📤 [API] Method: POST');
+      debugPrint('📤 [API] Headers: {Content-Type: application/json}');
+      debugPrint('📤 [API] Request Payload:');
+      debugPrint('📤 [API] ${json.encode(payload)}');
+      debugPrint('');
+
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: json.encode(payload),
+      );
+
+      debugPrint('📥 ===== SERVICE PROVIDER CREATION API RESPONSE =====');
+      debugPrint('📥 [API] Response Status Code: ${response.statusCode}');
+      debugPrint('📥 [API] Response Headers: ${response.headers}');
+      debugPrint('📥 [API] Response Body: ${response.body}');
+      debugPrint('');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final decodedResponse = json.decode(response.body);
+        debugPrint('✅ [API] SUCCESS: Service provider created successfully!');
+        debugPrint('✅ [API] Provider Name: $name');
+        debugPrint('🚀 ===== SERVICE PROVIDER CREATION API CALL END =====');
+        debugPrint('');
+        return decodedResponse;
+      } else {
+        debugPrint('❌ [API] FAILED: Service provider creation failed!');
+        debugPrint('❌ [API] Status Code: ${response.statusCode}');
+        debugPrint('❌ [API] Error Body: ${response.body}');
+        debugPrint('🚀 ===== SERVICE PROVIDER CREATION API CALL END =====');
+        debugPrint('');
+        throw Exception('Failed to create service provider: ${response.statusCode} - ${response.body}');
+      }
+    } catch (e) {
+      debugPrint('💥 [API] EXCEPTION: Service provider creation failed with exception!');
+      debugPrint('💥 [API] Exception Details: $e');
+      debugPrint('🚀 ===== SERVICE PROVIDER CREATION API CALL END =====');
+      debugPrint('');
+      throw Exception('Error creating service provider: $e');
+    }
+  }
+
+  // Update an existing service provider
+  static Future<Map<String, dynamic>> updateServiceProvider({
+    required String id,
+    String? name,
+    String? phone,
+    String? email,
+    String? address,
+    String? city,
+    String? state,
+    String? pincode,
+    List<String>? specialties,
+    String? experience,
+    Map<String, dynamic>? priceRange,
+    Map<String, dynamic>? workingHours,
+    bool? emergencyAvailable,
+    List<String>? languages,
+    bool? isAvailable,
+    String? profileImage,
+    Map<String, dynamic>? bankDetails,
+  }) async {
+    try {
+      final url = Uri.parse('https://www.leranothrive.com/api/service-providers/$id');
+      
+      final payload = <String, dynamic>{};
+      
+      // Add only non-null fields to payload
+      if (name != null) payload['name'] = name;
+      if (phone != null) payload['phone'] = phone;
+      if (email != null) payload['email'] = email;
+      if (address != null) payload['address'] = address;
+      if (city != null) payload['city'] = city;
+      if (state != null) payload['state'] = state;
+      if (pincode != null) payload['pincode'] = pincode;
+      if (specialties != null) payload['specialties'] = specialties;
+      if (experience != null) payload['experience'] = experience;
+      if (priceRange != null) payload['priceRange'] = priceRange;
+      if (workingHours != null) payload['workingHours'] = workingHours;
+      if (emergencyAvailable != null) payload['emergencyAvailable'] = emergencyAvailable;
+      if (languages != null) payload['languages'] = languages;
+      if (isAvailable != null) payload['isAvailable'] = isAvailable;
+      if (profileImage != null) payload['profileImage'] = profileImage;
+      if (bankDetails != null) payload['bankDetails'] = bankDetails;
+
+      debugPrint('');
+      debugPrint('🚀 ===== SERVICE PROVIDER UPDATE API CALL START =====');
+      debugPrint('🔧 [API] Updating service provider: $id');
+      debugPrint('🌐 [API] URL: $url');
+      debugPrint('📤 [API] Method: PUT');
+      debugPrint('📤 [API] Headers: {Content-Type: application/json}');
+      debugPrint('📤 [API] Request Payload: ${json.encode(payload)}');
+      debugPrint('');
+
+      final response = await http.put(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: json.encode(payload),
+      );
+
+      debugPrint('📥 ===== SERVICE PROVIDER UPDATE API RESPONSE =====');
+      debugPrint('📥 [API] Response Status Code: ${response.statusCode}');
+      debugPrint('📥 [API] Response Body: ${response.body}');
+      debugPrint('');
+
+      if (response.statusCode == 200) {
+        final decodedResponse = json.decode(response.body);
+        debugPrint('✅ [API] SUCCESS: Service provider updated successfully!');
+        debugPrint('🚀 ===== SERVICE PROVIDER UPDATE API CALL END =====');
+        debugPrint('');
+        return decodedResponse;
+      } else {
+        debugPrint('❌ [API] FAILED: Service provider update failed!');
+        debugPrint('❌ [API] Status Code: ${response.statusCode}');
+        debugPrint('❌ [API] Error Body: ${response.body}');
+        debugPrint('🚀 ===== SERVICE PROVIDER UPDATE API CALL END =====');
+        debugPrint('');
+        throw Exception('Failed to update service provider: ${response.statusCode} - ${response.body}');
+      }
+    } catch (e) {
+      debugPrint('💥 [API] EXCEPTION: Service provider update failed with exception!');
+      debugPrint('💥 [API] Exception Details: $e');
+      debugPrint('🚀 ===== SERVICE PROVIDER UPDATE API CALL END =====');
+      debugPrint('');
+      throw Exception('Error updating service provider: $e');
+    }
+  }
+
+  // Book a service provider
+  static Future<Map<String, dynamic>> bookServiceProvider({
+    required String serviceProviderId,
+    required String customerId,
+    required String buildingId,
+    required String roomId,
+    required String serviceType,
+    required String jobTitle,
+    required String jobDescription,
+    required String priority,
+    required String scheduledDate,
+    required String scheduledTime,
+    required int estimatedDuration,
+    required Map<String, dynamic> location,
+    required List<String> requirements,
+    String? specialInstructions,
+    Map<String, dynamic>? budgetRange,
+    String paymentMethod = 'cash',
+    bool emergencyJob = false,
+    List<String> images = const [],
+    String? customerNotes,
+  }) async {
+    try {
+      final url = Uri.parse('https://www.leranothrive.com/api/service-providers/$serviceProviderId/book');
+      
+      final payload = {
+        'serviceProviderId': serviceProviderId,
+        'customerId': customerId,
+        'buildingId': buildingId,
+        'roomId': roomId,
+        'serviceType': serviceType,
+        'jobTitle': jobTitle,
+        'jobDescription': jobDescription,
+        'priority': priority,
+        'scheduledDate': scheduledDate,
+        'scheduledTime': scheduledTime,
+        'estimatedDuration': estimatedDuration,
+        'location': location,
+        'requirements': requirements,
+        'paymentMethod': paymentMethod,
+        'emergencyJob': emergencyJob,
+        'images': images,
+      };
+
+      // Add optional fields
+      if (specialInstructions != null) payload['specialInstructions'] = specialInstructions;
+      if (budgetRange != null) payload['budgetRange'] = budgetRange;
+      if (customerNotes != null) payload['customerNotes'] = customerNotes;
+
+      debugPrint('');
+      debugPrint('🚀 ===== SERVICE PROVIDER BOOKING API CALL START =====');
+      debugPrint('📅 [API] Booking service provider: $serviceProviderId');
+      debugPrint('🌐 [API] URL: $url');
+      debugPrint('📤 [API] Method: POST');
+      debugPrint('📤 [API] Headers: {Content-Type: application/json}');
+      debugPrint('📤 [API] Request Payload: ${json.encode(payload)}');
+      debugPrint('');
+
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: json.encode(payload),
+      );
+
+      debugPrint('📥 ===== SERVICE PROVIDER BOOKING API RESPONSE =====');
+      debugPrint('📥 [API] Response Status Code: ${response.statusCode}');
+      debugPrint('📥 [API] Response Body: ${response.body}');
+      debugPrint('');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final decodedResponse = json.decode(response.body);
+        debugPrint('✅ [API] SUCCESS: Service provider booked successfully!');
+        debugPrint('🚀 ===== SERVICE PROVIDER BOOKING API CALL END =====');
+        debugPrint('');
+        return decodedResponse;
+      } else {
+        debugPrint('❌ [API] FAILED: Service provider booking failed!');
+        debugPrint('❌ [API] Status Code: ${response.statusCode}');
+        debugPrint('❌ [API] Error Body: ${response.body}');
+        debugPrint('🚀 ===== SERVICE PROVIDER BOOKING API CALL END =====');
+        debugPrint('');
+        throw Exception('Failed to book service provider: ${response.statusCode} - ${response.body}');
+      }
+    } catch (e) {
+      debugPrint('💥 [API] EXCEPTION: Service provider booking failed with exception!');
+      debugPrint('💥 [API] Exception Details: $e');
+      debugPrint('🚀 ===== SERVICE PROVIDER BOOKING API CALL END =====');
+      debugPrint('');
+      throw Exception('Error booking service provider: $e');
+    }
+  }
+
+  // Search service providers with filters
+  static Future<Map<String, dynamic>> searchServiceProviders({
+    required Map<String, dynamic> filters,
+    Map<String, dynamic>? location,
+    String sortBy = 'rating',
+    String sortOrder = 'desc',
+    int page = 1,
+    int limit = 10,
+    String? searchQuery,
+  }) async {
+    try {
+      final url = Uri.parse('https://www.leranothrive.com/api/service-providers/search');
+      
+      final payload = {
+        'filters': filters,
+        'sortBy': sortBy,
+        'sortOrder': sortOrder,
+        'page': page,
+        'limit': limit,
+      };
+
+      if (location != null) payload['location'] = location;
+      if (searchQuery != null) payload['searchQuery'] = searchQuery;
+
+      debugPrint('');
+      debugPrint('🚀 ===== SERVICE PROVIDER SEARCH API CALL START =====');
+      debugPrint('🔍 [API] Searching service providers');
+      debugPrint('🌐 [API] URL: $url');
+      debugPrint('📤 [API] Method: POST');
+      debugPrint('📤 [API] Headers: {Content-Type: application/json}');
+      debugPrint('📤 [API] Request Payload: ${json.encode(payload)}');
+      debugPrint('');
+
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: json.encode(payload),
+      );
+
+      debugPrint('📥 ===== SERVICE PROVIDER SEARCH API RESPONSE =====');
+      debugPrint('📥 [API] Response Status Code: ${response.statusCode}');
+      debugPrint('📥 [API] Response Body: ${response.body}');
+      debugPrint('');
+
+      if (response.statusCode == 200) {
+        final decodedResponse = json.decode(response.body);
+        debugPrint('✅ [API] SUCCESS: Service providers search completed!');
+        debugPrint('🚀 ===== SERVICE PROVIDER SEARCH API CALL END =====');
+        debugPrint('');
+        return decodedResponse;
+      } else {
+        debugPrint('❌ [API] FAILED: Service providers search failed!');
+        debugPrint('❌ [API] Status Code: ${response.statusCode}');
+        debugPrint('❌ [API] Error Body: ${response.body}');
+        debugPrint('🚀 ===== SERVICE PROVIDER SEARCH API CALL END =====');
+        debugPrint('');
+        throw Exception('Failed to search service providers: ${response.statusCode} - ${response.body}');
+      }
+    } catch (e) {
+      debugPrint('💥 [API] EXCEPTION: Service providers search failed with exception!');
+      debugPrint('💥 [API] Exception Details: $e');
+      debugPrint('🚀 ===== SERVICE PROVIDER SEARCH API CALL END =====');
+      debugPrint('');
+      throw Exception('Error searching service providers: $e');
+    }
+  }
+
+  // Get service provider reviews
+  static Future<Map<String, dynamic>> getServiceProviderReviews({
+    required String serviceProviderId,
+    int page = 1,
+    int limit = 5,
+  }) async {
+    try {
+      final uri = Uri.https('leranothrive.com', '/api/service-providers/$serviceProviderId/reviews', {
+        'page': page.toString(),
+        'limit': limit.toString(),
+      });
+      
+      debugPrint('⭐ [API] Fetching reviews for service provider: $serviceProviderId');
+      debugPrint('🌐 [API] URL: $uri');
+      debugPrint('📤 [API] Method: GET');
+      
+      final response = await http.get(
+        uri,
+        headers: {
+          'accept': '*/*',
+        },
+      );
+
+      debugPrint('📥 [API] Response Status Code: ${response.statusCode}');
+      debugPrint('📥 [API] Response Body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final decodedResponse = json.decode(response.body);
+        debugPrint('✅ [API] Successfully fetched service provider reviews');
+        return decodedResponse;
+      } else {
+        debugPrint('❌ [API] Failed to fetch reviews: ${response.statusCode}');
+        debugPrint('❌ [API] Error Body: ${response.body}');
+        throw Exception('Failed to fetch reviews: ${response.statusCode} - ${response.body}');
+      }
+    } catch (e) {
+      debugPrint('💥 [API] Exception while fetching reviews: $e');
+      throw Exception('Error fetching reviews: $e');
+    }
+  }
+
+  // Parse service providers from API response
+  static List<ServiceProvider> parseServiceProviders(Map<String, dynamic> response) {
+    debugPrint('🔍 [PARSE] Parsing service providers from response: ${response.keys}');
+    
+    try {
+      if (response['success'] == true && response['data'] != null) {
+        final dataMap = response['data'] as Map<String, dynamic>;
+        List<dynamic> providersData = [];
+        
+        if (dataMap['serviceProviders'] != null) {
+          providersData = dataMap['serviceProviders'] as List<dynamic>;
+          debugPrint('🔍 [PARSE] Found ${providersData.length} service providers');
+        } else if (response['data'] is List) {
+          // Direct array format
+          providersData = response['data'] as List<dynamic>;
+          debugPrint('🔍 [PARSE] Data is a List, found ${providersData.length} service providers');
+        }
+        
+        debugPrint('✅ [PARSE] Total service providers to parse: ${providersData.length}');
+        
+        // Parse each service provider with error handling
+        final List<ServiceProvider> parsedProviders = [];
+        for (int i = 0; i < providersData.length; i++) {
+          try {
+            final providerJson = providersData[i] as Map<String, dynamic>;
+            final provider = ServiceProvider.fromJson(providerJson);
+            parsedProviders.add(provider);
+            debugPrint('✅ [PARSE] Successfully parsed service provider ${i + 1}: ${provider.name}');
+          } catch (e, stackTrace) {
+            debugPrint('❌ [PARSE] Error parsing service provider ${i + 1}: $e');
+            debugPrint('❌ [PARSE] Stack trace: $stackTrace');
+            debugPrint('❌ [PARSE] Provider data: ${providersData[i]}');
+          }
+        }
+        
+        debugPrint('✅ [PARSE] Successfully parsed ${parsedProviders.length} out of ${providersData.length} service providers');
+        return parsedProviders;
+      }
+    } catch (e, stackTrace) {
+      debugPrint('💥 [PARSE] Fatal error parsing service providers: $e');
+      debugPrint('💥 [PARSE] Stack trace: $stackTrace');
+    }
+    
+    return [];
+  }
+
+  // Load mock service providers data (fallback)
+  static Future<Map<String, dynamic>> fetchMockServiceProviders() async {
+    try {
+      final String response = await rootBundle.loadString('lib/data/mock_responses/service_providers.json');
+      return json.decode(response);
+    } catch (e) {
+      debugPrint('❌ [API] Failed to load mock service providers: $e');
+      return {
+        'success': true,
+        'data': {
+          'serviceProviders': [],
+          'pagination': {
+            'currentPage': 1,
+            'totalPages': 0,
+            'totalItems': 0,
+            'itemsPerPage': 10
+          }
+        }
+      };
+    }
   }
 }
 

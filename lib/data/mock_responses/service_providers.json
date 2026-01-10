@@ -1,0 +1,416 @@
+{
+  "success": true,
+  "message": "Service providers retrieved successfully",
+  "data": {
+    "serviceProviders": [
+      {
+        "id": "sp_001",
+        "name": "Rajesh Kumar",
+        "serviceType": "electrician",
+        "phone": "+91 9876543210",
+        "email": "rajesh.electrician@gmail.com",
+        "rating": 4.8,
+        "totalJobs": 156,
+        "completedJobs": 148,
+        "address": "Sector 15, Noida, UP",
+        "city": "Noida",
+        "state": "Uttar Pradesh",
+        "pincode": "201301",
+        "specialties": [
+          "House Wiring",
+          "Electrical Repairs",
+          "Switch Installation",
+          "Fan Installation",
+          "Light Fixtures"
+        ],
+        "isAvailable": true,
+        "isVerified": true,
+        "experience": "8 years",
+        "priceRange": {
+          "min": 200,
+          "max": 1500,
+          "currency": "INR"
+        },
+        "workingHours": {
+          "start": "09:00",
+          "end": "18:00",
+          "workingDays": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+        },
+        "image": "https://picsum.photos/seed/sp001/300/300",
+        "documents": {
+          "aadharCard": "verified",
+          "panCard": "verified",
+          "tradeLicense": "verified"
+        },
+        "reviews": [
+          {
+            "id": "rev_001",
+            "customerName": "Amit Sharma",
+            "rating": 5,
+            "comment": "Excellent work! Fixed all electrical issues quickly.",
+            "date": "2024-01-15T10:30:00Z",
+            "jobType": "Electrical Repair"
+          },
+          {
+            "id": "rev_002",
+            "customerName": "Priya Singh",
+            "rating": 4,
+            "comment": "Good service, arrived on time.",
+            "date": "2024-01-10T14:20:00Z",
+            "jobType": "Fan Installation"
+          }
+        ],
+        "emergencyAvailable": true,
+        "languages": ["Hindi", "English"],
+        "joinedDate": "2022-03-15T00:00:00Z",
+        "lastActive": "2024-01-20T16:45:00Z"
+      },
+      {
+        "id": "sp_002",
+        "name": "Mohammed Ali",
+        "serviceType": "plumber",
+        "phone": "+91 9876543211",
+        "email": "ali.plumber@gmail.com",
+        "rating": 4.6,
+        "totalJobs": 89,
+        "completedJobs": 85,
+        "address": "Koramangala, Bangalore, KA",
+        "city": "Bangalore",
+        "state": "Karnataka",
+        "pincode": "560034",
+        "specialties": [
+          "Pipe Repair",
+          "Bathroom Fitting",
+          "Water Heater Installation",
+          "Drain Cleaning",
+          "Leak Fixing"
+        ],
+        "isAvailable": true,
+        "isVerified": true,
+        "experience": "5 years",
+        "priceRange": {
+          "min": 300,
+          "max": 2000,
+          "currency": "INR"
+        },
+        "workingHours": {
+          "start": "08:00",
+          "end": "19:00",
+          "workingDays": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+        },
+        "image": "https://picsum.photos/seed/sp002/300/300",
+        "documents": {
+          "aadharCard": "verified",
+          "panCard": "verified",
+          "tradeLicense": "pending"
+        },
+        "reviews": [
+          {
+            "id": "rev_003",
+            "customerName": "Sunita Reddy",
+            "rating": 5,
+            "comment": "Fixed the leakage perfectly. Very professional.",
+            "date": "2024-01-18T11:15:00Z",
+            "jobType": "Leak Fixing"
+          }
+        ],
+        "emergencyAvailable": true,
+        "languages": ["Hindi", "English", "Kannada"],
+        "joinedDate": "2023-01-20T00:00:00Z",
+        "lastActive": "2024-01-20T18:30:00Z"
+      },
+      {
+        "id": "sp_003",
+        "name": "Suresh Carpenter",
+        "serviceType": "carpenter",
+        "phone": "+91 9876543212",
+        "email": "suresh.carpenter@gmail.com",
+        "rating": 4.9,
+        "totalJobs": 234,
+        "completedJobs": 230,
+        "address": "Andheri West, Mumbai, MH",
+        "city": "Mumbai",
+        "state": "Maharashtra",
+        "pincode": "400058",
+        "specialties": [
+          "Furniture Repair",
+          "Cabinet Installation",
+          "Door Fitting",
+          "Custom Furniture",
+          "Wood Polishing"
+        ],
+        "isAvailable": false,
+        "isVerified": true,
+        "experience": "12 years",
+        "priceRange": {
+          "min": 500,
+          "max": 5000,
+          "currency": "INR"
+        },
+        "workingHours": {
+          "start": "09:00",
+          "end": "17:00",
+          "workingDays": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+        },
+        "image": "https://picsum.photos/seed/sp003/300/300",
+        "documents": {
+          "aadharCard": "verified",
+          "panCard": "verified",
+          "tradeLicense": "verified"
+        },
+        "reviews": [
+          {
+            "id": "rev_004",
+            "customerName": "Ravi Patel",
+            "rating": 5,
+            "comment": "Amazing craftsmanship! Built custom wardrobe exactly as requested.",
+            "date": "2024-01-12T09:45:00Z",
+            "jobType": "Custom Furniture"
+          }
+        ],
+        "emergencyAvailable": false,
+        "languages": ["Hindi", "English", "Marathi"],
+        "joinedDate": "2021-08-10T00:00:00Z",
+        "lastActive": "2024-01-19T15:20:00Z"
+      },
+      {
+        "id": "sp_004",
+        "name": "Deepak Painter",
+        "serviceType": "painter",
+        "phone": "+91 9876543213",
+        "email": "deepak.painter@gmail.com",
+        "rating": 4.4,
+        "totalJobs": 67,
+        "completedJobs": 64,
+        "address": "Sector 22, Gurgaon, HR",
+        "city": "Gurgaon",
+        "state": "Haryana",
+        "pincode": "122015",
+        "specialties": [
+          "Interior Painting",
+          "Exterior Painting",
+          "Wall Texture",
+          "Waterproofing",
+          "Color Consultation"
+        ],
+        "isAvailable": true,
+        "isVerified": true,
+        "experience": "6 years",
+        "priceRange": {
+          "min": 15,
+          "max": 50,
+          "currency": "INR",
+          "unit": "per sq ft"
+        },
+        "workingHours": {
+          "start": "08:30",
+          "end": "18:30",
+          "workingDays": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+        },
+        "image": "https://picsum.photos/seed/sp004/300/300",
+        "documents": {
+          "aadharCard": "verified",
+          "panCard": "verified",
+          "tradeLicense": "verified"
+        },
+        "reviews": [
+          {
+            "id": "rev_005",
+            "customerName": "Neha Gupta",
+            "rating": 4,
+            "comment": "Good painting work, but took longer than expected.",
+            "date": "2024-01-08T16:30:00Z",
+            "jobType": "Interior Painting"
+          }
+        ],
+        "emergencyAvailable": false,
+        "languages": ["Hindi", "English"],
+        "joinedDate": "2023-05-15T00:00:00Z",
+        "lastActive": "2024-01-20T12:15:00Z"
+      },
+      {
+        "id": "sp_005",
+        "name": "Vikram AC Services",
+        "serviceType": "ac_repair",
+        "phone": "+91 9876543214",
+        "email": "vikram.ac@gmail.com",
+        "rating": 4.7,
+        "totalJobs": 145,
+        "completedJobs": 140,
+        "address": "Whitefield, Bangalore, KA",
+        "city": "Bangalore",
+        "state": "Karnataka",
+        "pincode": "560066",
+        "specialties": [
+          "AC Installation",
+          "AC Repair",
+          "AC Servicing",
+          "Gas Refilling",
+          "Compressor Repair"
+        ],
+        "isAvailable": true,
+        "isVerified": true,
+        "experience": "9 years",
+        "priceRange": {
+          "min": 400,
+          "max": 3000,
+          "currency": "INR"
+        },
+        "workingHours": {
+          "start": "09:00",
+          "end": "20:00",
+          "workingDays": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+        },
+        "image": "https://picsum.photos/seed/sp005/300/300",
+        "documents": {
+          "aadharCard": "verified",
+          "panCard": "verified",
+          "tradeLicense": "verified"
+        },
+        "reviews": [
+          {
+            "id": "rev_006",
+            "customerName": "Kiran Kumar",
+            "rating": 5,
+            "comment": "Quick service! AC is working perfectly now.",
+            "date": "2024-01-17T13:20:00Z",
+            "jobType": "AC Repair"
+          }
+        ],
+        "emergencyAvailable": true,
+        "languages": ["Hindi", "English", "Kannada", "Tamil"],
+        "joinedDate": "2022-11-05T00:00:00Z",
+        "lastActive": "2024-01-20T19:45:00Z"
+      },
+      {
+        "id": "sp_006",
+        "name": "Clean Pro Services",
+        "serviceType": "cleaning",
+        "phone": "+91 9876543215",
+        "email": "cleanpro@gmail.com",
+        "rating": 4.5,
+        "totalJobs": 78,
+        "completedJobs": 75,
+        "address": "Bandra East, Mumbai, MH",
+        "city": "Mumbai",
+        "state": "Maharashtra",
+        "pincode": "400051",
+        "specialties": [
+          "Deep Cleaning",
+          "Regular Cleaning",
+          "Carpet Cleaning",
+          "Sofa Cleaning",
+          "Kitchen Cleaning"
+        ],
+        "isAvailable": true,
+        "isVerified": true,
+        "experience": "4 years",
+        "priceRange": {
+          "min": 500,
+          "max": 2500,
+          "currency": "INR"
+        },
+        "workingHours": {
+          "start": "08:00",
+          "end": "18:00",
+          "workingDays": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+        },
+        "image": "https://picsum.photos/seed/sp006/300/300",
+        "documents": {
+          "aadharCard": "verified",
+          "panCard": "verified",
+          "tradeLicense": "verified"
+        },
+        "reviews": [
+          {
+            "id": "rev_007",
+            "customerName": "Anjali Mehta",
+            "rating": 4,
+            "comment": "Thorough cleaning service. House looks spotless!",
+            "date": "2024-01-14T10:00:00Z",
+            "jobType": "Deep Cleaning"
+          }
+        ],
+        "emergencyAvailable": false,
+        "languages": ["Hindi", "English", "Marathi"],
+        "joinedDate": "2023-08-20T00:00:00Z",
+        "lastActive": "2024-01-20T14:30:00Z"
+      }
+    ],
+    "pagination": {
+      "currentPage": 1,
+      "totalPages": 1,
+      "totalItems": 6,
+      "itemsPerPage": 10
+    },
+    "filters": {
+      "serviceTypes": [
+        {
+          "key": "electrician",
+          "label": "Electrician",
+          "count": 1
+        },
+        {
+          "key": "plumber",
+          "label": "Plumber",
+          "count": 1
+        },
+        {
+          "key": "carpenter",
+          "label": "Carpenter",
+          "count": 1
+        },
+        {
+          "key": "painter",
+          "label": "Painter",
+          "count": 1
+        },
+        {
+          "key": "ac_repair",
+          "label": "AC Repair",
+          "count": 1
+        },
+        {
+          "key": "cleaning",
+          "label": "Cleaning Service",
+          "count": 1
+        }
+      ],
+      "cities": [
+        {
+          "key": "noida",
+          "label": "Noida",
+          "count": 1
+        },
+        {
+          "key": "bangalore",
+          "label": "Bangalore",
+          "count": 2
+        },
+        {
+          "key": "mumbai",
+          "label": "Mumbai",
+          "count": 2
+        },
+        {
+          "key": "gurgaon",
+          "label": "Gurgaon",
+          "count": 1
+        }
+      ],
+      "availability": [
+        {
+          "key": "available",
+          "label": "Available Now",
+          "count": 5
+        },
+        {
+          "key": "busy",
+          "label": "Busy",
+          "count": 1
+        }
+      ]
+    }
+  },
+  "timestamp": "2024-01-20T20:00:00Z"
+}

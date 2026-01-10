@@ -1,0 +1,106 @@
+{
+  "success": true,
+  "message": "Service providers found successfully",
+  "data": {
+    "serviceProviders": [
+      {
+        "id": "sp_001",
+        "name": "Rajesh Kumar",
+        "serviceType": "electrician",
+        "phone": "+91 9876543210",
+        "email": "rajesh.electrician@gmail.com",
+        "rating": 4.8,
+        "totalJobs": 156,
+        "completedJobs": 148,
+        "address": "Sector 15, Noida, UP",
+        "city": "Noida",
+        "state": "Uttar Pradesh",
+        "distance": 2.5,
+        "distanceUnit": "km",
+        "specialties": [
+          "House Wiring",
+          "Electrical Repairs",
+          "Switch Installation",
+          "Fan Installation",
+          "Light Fixtures"
+        ],
+        "isAvailable": true,
+        "isVerified": true,
+        "experience": "8 years",
+        "priceRange": {
+          "min": 200,
+          "max": 1500,
+          "currency": "INR"
+        },
+        "image": "https://picsum.photos/seed/sp001/300/300",
+        "emergencyAvailable": true,
+        "languages": ["Hindi", "English"],
+        "responseTime": "Usually responds within 30 minutes",
+        "nextAvailableSlot": "2024-01-21T09:00:00Z",
+        "matchScore": 95
+      }
+    ],
+    "searchMetadata": {
+      "query": "electrical repair",
+      "filtersApplied": {
+        "serviceType": "electrician",
+        "city": "noida",
+        "rating": "4.0+",
+        "emergencyAvailable": true,
+        "verified": true
+      },
+      "totalResults": 1,
+      "searchRadius": "10 km",
+      "searchCenter": {
+        "latitude": 28.5355,
+        "longitude": 77.3910
+      }
+    },
+    "pagination": {
+      "currentPage": 1,
+      "totalPages": 1,
+      "totalItems": 1,
+      "itemsPerPage": 10,
+      "hasNextPage": false,
+      "hasPreviousPage": false
+    },
+    "suggestions": {
+      "alternativeServiceTypes": [
+        {
+          "serviceType": "appliance_repair",
+          "label": "Appliance Repair",
+          "count": 3,
+          "reason": "Also handles electrical appliances"
+        }
+      ],
+      "nearbyLocations": [
+        {
+          "city": "Gurgaon",
+          "distance": 25,
+          "count": 2,
+          "distanceUnit": "km"
+        },
+        {
+          "city": "Delhi",
+          "distance": 30,
+          "count": 5,
+          "distanceUnit": "km"
+        }
+      ],
+      "relaxedFilters": {
+        "rating": {
+          "suggested": 3.5,
+          "additionalResults": 3
+        },
+        "priceRange": {
+          "suggested": {
+            "min": 200,
+            "max": 2000
+          },
+          "additionalResults": 2
+        }
+      }
+    }
+  },
+  "timestamp": "2024-01-20T21:00:00Z"
+}

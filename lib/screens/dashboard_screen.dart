@@ -4,6 +4,8 @@ import '../models/room.dart';
 import '../models/complaint.dart';
 import '../models/payment.dart';
 import '../services/api_service.dart';
+import '../services/optimized_api_service.dart';
+import '../services/hive_api_service.dart';
 import '../services/complaint_service.dart';
 import '../widgets/modern_stat_card.dart';
 import '../widgets/modern_stat_mini_card.dart';
@@ -12,6 +14,9 @@ import '../widgets/modern_quick_action.dart';
 import '../widgets/room_listing_card.dart';
 import '../widgets/room_status_card.dart';
 import '../widgets/complaint_card.dart';
+import '../widgets/performance_indicator.dart';
+import '../widgets/skeleton_widgets.dart';
+import '../widgets/enhanced_skeleton_loader.dart';
 import '../utils/responsive.dart';
 import '../theme/app_theme.dart';
 import 'rooms_screen.dart';
@@ -97,6 +102,102 @@ class _DashboardScreenState extends State<DashboardScreen> {
         isLoading = true;
       });
 
+      final ownerId = AuthService.getOwnerId();
+      
+      // Use Hive API service for ultra-fast loading with persistent caching
+      final dashboardData = await HiveApiService.getDashboardData(ownerId);
+      
+      // Extract data from Hive response
+      var allRooms = (dashboardData['rooms'] as List<Room>?) ?? [];
+      var allTenants = (dashboardData['tenants'] as List<Tenant>?) ?? [];
+      var allComplaints = (dashboardData['complaints'] as List<Complaint>?) ?? [];
+      var allPayments = (dashboardData['payments'] as List<Payment>?) ?? [];
+      var allBuildings = (dashboardData['buildings'] as List<Building>?) ?? [];
+
+      debugPrint('📊 [Dashboard] Loaded ${allRooms.length} rooms, ${allTenants.length} tenants, ${allComplaints.length} complaints from Hive');
+
+      setState(() {
+        _buildings = allBuildings;
+        
+        // Filter by building if selected
+        if (currentBuildingId != null && currentBuildingId!.isNotEmpty) {
+          rooms = allRooms.where((r) => r.buildingId == currentBuildingId || r.buildingId.isEmpty).toList();
+          // If no rooms found with buildingId, show all rooms (fallback)
+          if (rooms.isEmpty) {
+            rooms = allRooms;
+          }
+          // Filter tenants, complaints, and payments based on room numbers in selected building
+          final roomNumbers = rooms.map((r) => r.number).toSet();
+          tenants = allTenants.where((t) => roomNumbers.contains(t.roomNumber)).toList();
+          complaints = allComplaints.where((c) => roomNumbers.contains(c.roomNumber)).toList();
+          payments = allPayments.where((p) => roomNumbers.contains(p.roomNumber)).toList();
+        } else {
+          // No building selected - show all data
+          rooms = allRooms;
+          tenants = allTenants;
+          complaints = allComplaints;
+          payments = allPayments;
+        }
+        isLoading = false;
+      });
+      
+      // Preload service providers in background for faster access later
+      HiveApiService.getServiceProviders();
+      
+    } catch (e) {
+      // If Hive API fails, fallback to optimized API
+      debugPrint('⚠️ [Dashboard] Hive API failed, falling back to optimized API: $e');
+      await _loadDashboardDataOptimizedFallback();
+    }
+  }
+
+  // Fallback method using optimized API service
+  Future<void> _loadDashboardDataOptimizedFallback() async {
+    try {
+      final ownerId = AuthService.getOwnerId();
+      
+      // Use optimized API service as fallback
+      final dashboardData = await OptimizedApiService.loadDashboardDataOptimized(ownerId);
+      
+      // Extract data from optimized response
+      var allRooms = (dashboardData['rooms'] as List<Room>?) ?? [];
+      var allTenants = (dashboardData['tenants'] as List<Tenant>?) ?? [];
+      var allComplaints = (dashboardData['complaints'] as List<Complaint>?) ?? [];
+      var allPayments = (dashboardData['payments'] as List<Payment>?) ?? [];
+      var allBuildings = (dashboardData['buildings'] as List<Building>?) ?? [];
+
+      setState(() {
+        _buildings = allBuildings;
+        
+        // Filter by building if selected
+        if (currentBuildingId != null && currentBuildingId!.isNotEmpty) {
+          rooms = allRooms.where((r) => r.buildingId == currentBuildingId || r.buildingId.isEmpty).toList();
+          if (rooms.isEmpty) {
+            rooms = allRooms;
+          }
+          final roomNumbers = rooms.map((r) => r.number).toSet();
+          tenants = allTenants.where((t) => roomNumbers.contains(t.roomNumber)).toList();
+          complaints = allComplaints.where((c) => roomNumbers.contains(c.roomNumber)).toList();
+          payments = allPayments.where((p) => roomNumbers.contains(p.roomNumber)).toList();
+        } else {
+          rooms = allRooms;
+          tenants = allTenants;
+          complaints = allComplaints;
+          payments = allPayments;
+        }
+        isLoading = false;
+      });
+      
+    } catch (e) {
+      // Final fallback to original implementation
+      debugPrint('⚠️ [Dashboard] Optimized API also failed, falling back to original: $e');
+      await _loadDashboardDataFallback();
+    }
+  }
+
+  // Fallback method using original API calls
+  Future<void> _loadDashboardDataFallback() async {
+    try {
       // Load buildings for selection
       try {
         final ownerId = AuthService.getOwnerId();
@@ -232,41 +333,43 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final isMobile = Responsive.isMobile(context);
     final isTablet = Responsive.isTablet(context);
     
-    return Scaffold(
-      backgroundColor: AppTheme.getBackgroundColor(context),
-      drawer: _buildNavigationDrawer(isMobile),
-      floatingActionButton: _buildFloatingActionButton(),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.all(isMobile ? 16 : 24),
-          child: isLoading
-              ? const Center(
-                  child: CircularProgressIndicator(
-                    color: AppTheme.primaryColor,
-                  ),
-                )
-              : Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Header Section
-                    _buildModernHeader(isMobile),
-                    
-                    SizedBox(height: isMobile ? 24 : 32),
-                    
-                    // Unified Super Card (replacing both daily score and quick stats)
-                    _buildUnifiedSuperCard(isMobile),
-                    
-                    SizedBox(height: isMobile ? 24 : 32),
-                    
-                    // Activity Cards
-                    _buildActivityCards(isMobile),
-                    
-                    SizedBox(height: isMobile ? 24 : 32),
-                    
-                    // Recent Activity
-                    _buildRecentActivity(isMobile),
-                  ],
-                ),
+    return PerformanceIndicator(
+      showDebugInfo: true, // Set to false in production
+      child: Scaffold(
+        backgroundColor: AppTheme.getBackgroundColor(context),
+        drawer: _buildNavigationDrawer(isMobile),
+        floatingActionButton: _buildFloatingActionButton(),
+        body: SafeArea(
+          child: EnhancedSkeletonLoader(
+            isLoading: isLoading,
+            loadingMessage: 'Loading your dashboard...',
+            showHiveHint: true,
+            child: SingleChildScrollView(
+              padding: EdgeInsets.all(isMobile ? 16 : 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header Section
+                  _buildModernHeader(isMobile),
+                  
+                  SizedBox(height: isMobile ? 24 : 32),
+                  
+                  // Unified Super Card (replacing both daily score and quick stats)
+                  _buildUnifiedSuperCard(isMobile),
+                  
+                  SizedBox(height: isMobile ? 24 : 32),
+                  
+                  // Activity Cards
+                  _buildActivityCards(isMobile),
+                  
+                  SizedBox(height: isMobile ? 24 : 32),
+                  
+                  // Recent Activity
+                  _buildRecentActivity(isMobile),
+                ],
+              ),
+            ),
+          ),
         ),
       ),
     );

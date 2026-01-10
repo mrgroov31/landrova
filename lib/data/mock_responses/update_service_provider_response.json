@@ -1,0 +1,80 @@
+{
+  "success": true,
+  "message": "Service provider updated successfully",
+  "data": {
+    "serviceProvider": {
+      "id": "sp_001",
+      "name": "Rajesh Kumar",
+      "serviceType": "electrician",
+      "phone": "+91 9876543210",
+      "email": "rajesh.electrician@gmail.com",
+      "rating": 4.8,
+      "totalJobs": 156,
+      "completedJobs": 148,
+      "address": "Sector 15, Noida, UP",
+      "city": "Noida",
+      "state": "Uttar Pradesh",
+      "pincode": "201301",
+      "specialties": [
+        "House Wiring",
+        "Electrical Repairs",
+        "Switch Installation",
+        "Fan Installation",
+        "Light Fixtures",
+        "Smart Home Setup"
+      ],
+      "isAvailable": true,
+      "isVerified": true,
+      "experience": "9 years",
+      "priceRange": {
+        "min": 250,
+        "max": 1800,
+        "currency": "INR"
+      },
+      "workingHours": {
+        "start": "08:30",
+        "end": "19:00",
+        "workingDays": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+      },
+      "image": "https://example.com/profiles/rajesh_updated.jpg",
+      "documents": {
+        "aadharCard": "verified",
+        "panCard": "verified",
+        "tradeLicense": "verified"
+      },
+      "reviews": [
+        {
+          "id": "rev_001",
+          "customerName": "Amit Sharma",
+          "rating": 5,
+          "comment": "Excellent work! Fixed all electrical issues quickly.",
+          "date": "2024-01-15T10:30:00Z",
+          "jobType": "Electrical Repair"
+        },
+        {
+          "id": "rev_002",
+          "customerName": "Priya Singh",
+          "rating": 4,
+          "comment": "Good service, arrived on time.",
+          "date": "2024-01-10T14:20:00Z",
+          "jobType": "Fan Installation"
+        }
+      ],
+      "emergencyAvailable": true,
+      "languages": ["Hindi", "English", "Punjabi"],
+      "joinedDate": "2022-03-15T00:00:00Z",
+      "lastActive": "2024-01-20T20:30:00Z",
+      "updatedAt": "2024-01-20T20:30:00Z"
+    },
+    "changesApplied": [
+      "Experience updated from 8 years to 9 years",
+      "Price range maximum increased to ₹1800",
+      "Added Smart Home Setup to specialties",
+      "Working hours extended to 7:00 PM",
+      "Added Punjabi language",
+      "Profile image updated",
+      "Bank details updated"
+    ]
+  },
+  "timestamp": "2024-01-20T20:30:00Z"
+}

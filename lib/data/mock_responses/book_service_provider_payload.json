@@ -1,0 +1,43 @@
+{
+  "serviceProviderId": "sp_001",
+  "customerId": "cust_123",
+  "buildingId": "bld_001",
+  "roomId": "room_101",
+  "serviceType": "electrician",
+  "jobTitle": "Electrical Repair - Fan and Light Installation",
+  "jobDescription": "Need to install 2 ceiling fans and 4 LED lights in the living room and bedroom. Also need to check and repair some electrical switches that are not working properly.",
+  "priority": "medium",
+  "scheduledDate": "2024-01-25",
+  "scheduledTime": "10:00",
+  "estimatedDuration": 3,
+  "location": {
+    "buildingName": "Green Valley Apartments",
+    "roomNumber": "101",
+    "floor": 1,
+    "address": "Sector 15, Noida, UP",
+    "landmark": "Near City Mall",
+    "contactPerson": {
+      "name": "Amit Sharma",
+      "phone": "+91 9876543230"
+    }
+  },
+  "requirements": [
+    "2 ceiling fans (customer will provide)",
+    "4 LED lights (customer will provide)",
+    "Electrical tools and wiring materials",
+    "Safety equipment"
+  ],
+  "specialInstructions": "Please call before arriving. Building security requires visitor registration.",
+  "budgetRange": {
+    "min": 800,
+    "max": 1200,
+    "currency": "INR"
+  },
+  "paymentMethod": "cash",
+  "emergencyJob": false,
+  "images": [
+    "https://example.com/job_images/electrical_issue_1.jpg",
+    "https://example.com/job_images/electrical_issue_2.jpg"
+  ],
+  "customerNotes": "The main switch board is located in the kitchen. Some switches have been sparking, so please check them first for safety."
+}

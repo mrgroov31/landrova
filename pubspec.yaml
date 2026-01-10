@@ -81,6 +81,9 @@ dependencies:
   
   # Curved bottom navigation bar
   curved_navigation_bar: ^1.0.3
+  
+  # Shimmer loading effects
+  shimmer: ^3.0.0
 
 dev_dependencies:
   flutter_test:
@@ -124,6 +127,16 @@ flutter:
     - lib/data/mock_responses/tenant_registration_payload.json
     - lib/data/mock_responses/tenant_registration_payload_minimal.json
     - lib/data/mock_responses/tenant_registration_payload_multipart.json
+    - lib/data/mock_responses/service_providers.json
+    - lib/data/mock_responses/create_service_provider_payload.json
+    - lib/data/mock_responses/create_service_provider_response.json
+    - lib/data/mock_responses/update_service_provider_payload.json
+    - lib/data/mock_responses/update_service_provider_response.json
+    - lib/data/mock_responses/book_service_provider_payload.json
+    - lib/data/mock_responses/book_service_provider_response.json
+    - lib/data/mock_responses/search_service_providers_payload.json
+    - lib/data/mock_responses/search_service_providers_response.json
+    - lib/data/mock_responses/service_provider_reviews.json
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

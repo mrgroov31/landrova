@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
 import '../models/service_provider.dart';
 import '../services/service_provider_service.dart';
+import '../services/optimized_api_service.dart';
+import '../services/hive_api_service.dart';
+import '../widgets/performance_indicator.dart';
+import '../widgets/skeleton_widgets.dart';
+import '../widgets/enhanced_skeleton_loader.dart';
 import '../utils/responsive.dart';
 import '../theme/app_theme.dart';
 import '../utils/custom_page_route.dart';
 import 'register_service_provider_screen.dart';
 import 'edit_service_provider_screen.dart';
+import 'service_provider_detail_screen.dart';
 
 class ServiceProvidersListScreen extends StatefulWidget {
   const ServiceProvidersListScreen({super.key});
@@ -26,14 +32,16 @@ class _ServiceProvidersListScreenState extends State<ServiceProvidersListScreen>
     loadProviders();
   }
 
-  Future<void> loadProviders() async {
+  Future<void> loadProviders({bool forceRefresh = false}) async {
     try {
       setState(() {
         isLoading = true;
         error = null;
       });
 
-      final allProviders = await ServiceProviderService.getAllProviders();
+      // Use Hive API service for ultra-fast loading with persistent caching
+      // Force refresh will bypass cache and fetch from API
+      final allProviders = await HiveApiService.getServiceProviders(forceRefresh: forceRefresh);
       
       setState(() {
         providers = allProviders;
@@ -75,47 +83,54 @@ class _ServiceProvidersListScreenState extends State<ServiceProvidersListScreen>
         ),
         actions: [
           IconButton(
+            icon: Icon(Icons.refresh, color: AppTheme.getTextPrimaryColor(context)),
+            onPressed: () => loadProviders(forceRefresh: true),
+            tooltip: 'Refresh from API',
+          ),
+          IconButton(
             icon: Icon(Icons.search, color: AppTheme.getTextPrimaryColor(context)),
             onPressed: () {},
             tooltip: 'Search',
           ),
         ],
       ),
-      body: Column(
-        children: [
-          // Filter Chips
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  _buildFilterChip('All', 'all', isMobile),
-                  const SizedBox(width: 8),
-                  _buildFilterChip('Electrician', 'electrician', isMobile),
-                  const SizedBox(width: 8),
-                  _buildFilterChip('Plumber', 'plumber', isMobile),
-                  const SizedBox(width: 8),
-                  _buildFilterChip('Carpenter', 'carpenter', isMobile),
-                  const SizedBox(width: 8),
-                  _buildFilterChip('Painter', 'painter', isMobile),
-                  const SizedBox(width: 8),
-                  _buildFilterChip('AC Repair', 'ac_repair', isMobile),
-                  const SizedBox(width: 8),
-                  _buildFilterChip('Appliance', 'appliance_repair', isMobile),
-                  const SizedBox(width: 8),
-                  _buildFilterChip('Cleaning', 'cleaning', isMobile),
-                  const SizedBox(width: 8),
-                  _buildFilterChip('Handyman', 'handyman', isMobile),
-                ],
+      body: EnhancedSkeletonLoader(
+        isLoading: isLoading,
+        loadingMessage: 'Finding service providers...',
+        showHiveHint: true,
+        child: Column(
+          children: [
+            // Filter Chips
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    _buildFilterChip('All', 'all', isMobile),
+                    const SizedBox(width: 8),
+                    _buildFilterChip('Electrician', 'electrician', isMobile),
+                    const SizedBox(width: 8),
+                    _buildFilterChip('Plumber', 'plumber', isMobile),
+                    const SizedBox(width: 8),
+                    _buildFilterChip('Carpenter', 'carpenter', isMobile),
+                    const SizedBox(width: 8),
+                    _buildFilterChip('Painter', 'painter', isMobile),
+                    const SizedBox(width: 8),
+                    _buildFilterChip('AC Repair', 'ac_repair', isMobile),
+                    const SizedBox(width: 8),
+                    _buildFilterChip('Appliance', 'appliance_repair', isMobile),
+                    const SizedBox(width: 8),
+                    _buildFilterChip('Cleaning', 'cleaning', isMobile),
+                    const SizedBox(width: 8),
+                    _buildFilterChip('Handyman', 'handyman', isMobile),
+                  ],
+                ),
               ),
             ),
-          ),
-          // Providers List
-          Expanded(
-            child: isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : error != null
+            // Providers List
+            Expanded(
+              child: error != null
                     ? Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -162,7 +177,7 @@ class _ServiceProvidersListScreenState extends State<ServiceProvidersListScreen>
                                         child: const RegisterServiceProviderScreen(),
                                         transition: CustomPageTransition.transform,
                                       ),
-                                    ).then((_) => loadProviders());
+                                    ).then((_) => loadProviders(forceRefresh: true));
                                   },
                                   icon: const Icon(Icons.person_add),
                                   label: const Text('Register Provider'),
@@ -182,7 +197,7 @@ class _ServiceProvidersListScreenState extends State<ServiceProvidersListScreen>
                             ),
                           )
                         : RefreshIndicator(
-                            onRefresh: loadProviders,
+                            onRefresh: () => loadProviders(forceRefresh: true),
                             child: ListView.builder(
                               padding: EdgeInsets.all(isMobile ? 16 : 24),
                               itemCount: filteredProviders.length,
@@ -191,8 +206,9 @@ class _ServiceProvidersListScreenState extends State<ServiceProvidersListScreen>
                               },
                             ),
                           ),
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
@@ -429,154 +445,11 @@ class _ServiceProvidersListScreenState extends State<ServiceProvidersListScreen>
   }
 
   void _showProviderDetails(ServiceProvider provider) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        height: MediaQuery.of(context).size.height * 0.7,
-        decoration: BoxDecoration(
-          color: AppTheme.getCardColor(context),
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: 64,
-                  height: 64,
-                  decoration: BoxDecoration(
-                    color: AppTheme.primaryColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Icon(
-                    provider.serviceTypeIcon,
-                    size: 32,
-                    color: AppTheme.primaryColor,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        provider.name,
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.getTextPrimaryColor(context),
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        provider.serviceTypeDisplayName,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: AppTheme.getTextSecondaryColor(context),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: () => Navigator.pop(context),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-            if (provider.address != null) ...[
-              _buildDetailRow(Icons.location_on, 'Address', provider.address!),
-              const SizedBox(height: 16),
-            ],
-            _buildDetailRow(Icons.phone, 'Phone', provider.phone),
-            if (provider.email != null) ...[
-              const SizedBox(height: 16),
-              _buildDetailRow(Icons.email, 'Email', provider.email!),
-            ],
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Icon(Icons.star, color: Colors.amber, size: 20),
-                const SizedBox(width: 8),
-                Text(
-                  '${provider.rating}',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.getTextPrimaryColor(context),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Text(
-                  '• ${provider.totalJobs} completed jobs',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: AppTheme.getTextSecondaryColor(context),
-                  ),
-                ),
-              ],
-            ),
-            if (provider.specialties.isNotEmpty) ...[
-              const SizedBox(height: 24),
-              Text(
-                'Specialties',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.getTextPrimaryColor(context),
-                ),
-              ),
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: provider.specialties.map((specialty) {
-                  return Chip(
-                    label: Text(specialty),
-                    backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
-                  );
-                }).toList(),
-              ),
-            ],
-            const Spacer(),
-            SizedBox(
-              width: double.infinity,
-              height: 56,
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  _callProvider(provider);
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryColor,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.phone, color: Colors.white),
-                    SizedBox(width: 8),
-                    Text(
-                      'Call Now',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
+    Navigator.push(
+      context,
+      CustomPageRoute(
+        child: ServiceProviderDetailScreen(provider: provider),
+        transition: CustomPageTransition.transform,
       ),
     );
   }
@@ -698,15 +571,16 @@ class _ServiceProvidersListScreenState extends State<ServiceProvidersListScreen>
     );
 
     if (confirm == true) {
-      await ServiceProviderService.deleteProvider(provider.id);
+      // TODO: Implement delete API call
+      // await ServiceProviderService.deleteProvider(provider.id);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${provider.name} deleted successfully'),
-            backgroundColor: Colors.green,
+            content: Text('Delete functionality will be implemented with API'),
+            backgroundColor: Colors.orange,
           ),
         );
-        loadProviders();
+        // loadProviders();
       }
     }
   }

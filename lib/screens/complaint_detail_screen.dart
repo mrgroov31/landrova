@@ -54,24 +54,64 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen> {
   }
 
   Future<void> _loadProviders() async {
-    final providers = await ServiceProviderService.getSuggestedProviders(
-      complaintTitle: complaint.title,
-      complaintDescription: complaint.description,
-    );
-    if (mounted) {
+    try {
+      debugPrint('🔧 [COMPLAINT] Loading service providers for complaint: ${complaint.title}');
+      
       setState(() {
-        suggestedProviders = providers;
-        isLoadingProviders = false;
+        isLoadingProviders = true;
       });
+      
+      final providers = await ServiceProviderService.getSuggestedProviders(
+        complaintTitle: complaint.title,
+        complaintDescription: complaint.description,
+        serviceType: complaint.category, // Use category if available
+      );
+      
+      debugPrint('🔧 [COMPLAINT] Found ${providers.length} suggested providers');
+      
+      if (mounted) {
+        setState(() {
+          suggestedProviders = providers;
+          isLoadingProviders = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('❌ [COMPLAINT] Failed to load providers: $e');
+      if (mounted) {
+        setState(() {
+          suggestedProviders = [];
+          isLoadingProviders = false;
+        });
+      }
     }
   }
 
   Future<void> _loadAssignedProvider() async {
-    if (complaint.serviceProviderId != null) {
-      final provider = await ServiceProviderService.getProviderById(complaint.serviceProviderId!);
+    try {
+      if (complaint.serviceProviderId != null && complaint.serviceProviderId!.isNotEmpty) {
+        debugPrint('🔧 [COMPLAINT] Loading assigned provider: ${complaint.serviceProviderId}');
+        
+        final provider = await ServiceProviderService.getProviderById(complaint.serviceProviderId!);
+        
+        if (mounted) {
+          setState(() {
+            assignedProvider = provider;
+          });
+          
+          if (provider != null) {
+            debugPrint('✅ [COMPLAINT] Assigned provider loaded: ${provider.name}');
+          } else {
+            debugPrint('⚠️ [COMPLAINT] Assigned provider not found: ${complaint.serviceProviderId}');
+          }
+        }
+      } else {
+        debugPrint('ℹ️ [COMPLAINT] No service provider assigned to this complaint');
+      }
+    } catch (e) {
+      debugPrint('❌ [COMPLAINT] Failed to load assigned provider: $e');
       if (mounted) {
         setState(() {
-          assignedProvider = provider;
+          assignedProvider = null;
         });
       }
     }
@@ -303,7 +343,9 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen> {
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
-                                  'Assigned Service Provider',
+                                  isTenantLoggedIn 
+                                      ? 'Service Provider Assigned' 
+                                      : 'Assigned Service Provider',
                                   style: TextStyle(
                                     fontSize: isMobile ? 16 : 18,
                                     fontWeight: FontWeight.bold,
@@ -332,6 +374,17 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen> {
                                 ),
                             ],
                           ),
+                          if (isTenantLoggedIn) ...[
+                            const SizedBox(height: 8),
+                            Text(
+                              'A service provider has been assigned to resolve your complaint. You can contact them directly.',
+                              style: TextStyle(
+                                fontSize: isMobile ? 13 : 14,
+                                color: Colors.blue.shade600,
+                                fontStyle: FontStyle.italic,
+                              ),
+                            ),
+                          ],
                           const SizedBox(height: 16),
                           _buildServiceProviderCard(context, assignedProvider!, isMobile, isAssigned: true),
                         ],
@@ -339,7 +392,7 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen> {
                     ),
                   ],
                   
-                  // Service Providers Section - Only show if providers are found and not assigned
+                  // Service Providers Section - Show all available providers
                   if (!isLoadingProviders && 
                       suggestedProviders.isNotEmpty && 
                       assignedProvider == null &&
@@ -347,16 +400,103 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen> {
                       (complaint.status == 'pending' || complaint.status == 'assigned')) ...[
                     SizedBox(height: isMobile ? 32 : 40),
                     Text(
-                      'Suggested Service Providers',
+                      'Available Service Providers',
                       style: TextStyle(
                         fontSize: isMobile ? 20 : 24,
                         fontWeight: FontWeight.bold,
                         color: AppTheme.getTextPrimaryColor(context),
                       ),
                     ),
+                    SizedBox(height: isMobile ? 8 : 12),
+                    Text(
+                      'Choose from all available service providers to assign to this complaint:',
+                      style: TextStyle(
+                        fontSize: isMobile ? 14 : 16,
+                        color: AppTheme.getTextSecondaryColor(context),
+                      ),
+                    ),
                     SizedBox(height: isMobile ? 16 : 20),
                     ...suggestedProviders.map((provider) => 
                       _buildServiceProviderCard(context, provider, isMobile)
+                    ),
+                  ],
+                  
+                  // No providers message - Show when no providers are available
+                  if (!isLoadingProviders && 
+                      suggestedProviders.isEmpty && 
+                      assignedProvider == null &&
+                      isOwnerLoggedIn &&
+                      (complaint.status == 'pending' || complaint.status == 'assigned')) ...[
+                    SizedBox(height: isMobile ? 32 : 40),
+                    Container(
+                      padding: EdgeInsets.all(isMobile ? 16 : 20),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? Colors.orange.withOpacity(0.2)
+                            : Colors.orange.shade50,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? Colors.orange.withOpacity(0.4)
+                              : Colors.orange.shade200,
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(Icons.info_outline, color: Colors.orange.shade700),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'No Service Providers Available',
+                                  style: TextStyle(
+                                    fontSize: isMobile ? 16 : 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.orange.shade700,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            'No service providers are currently available from the API. Please check:',
+                            style: TextStyle(
+                              fontSize: isMobile ? 14 : 16,
+                              color: Colors.orange.shade600,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            '• API connection is working\n• Service providers are registered in the system\n• Try refreshing the complaint',
+                            style: TextStyle(
+                              fontSize: isMobile ? 13 : 14,
+                              color: Colors.orange.shade600,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton.icon(
+                              onPressed: () {
+                                // Reload providers
+                                _loadProviders();
+                              },
+                              icon: const Icon(Icons.refresh),
+                              label: const Text('Retry Loading Providers'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.orange.shade600,
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                   
@@ -574,8 +714,8 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen> {
                     ],
                   ),
                 ),
-                // Call Button (only show if not assigned or if owner)
-                if (!isAssigned || isOwnerLoggedIn)
+                // Call Button (always show for assigned providers, or show for owners when not assigned)
+                if (isAssigned || isOwnerLoggedIn)
                   IconButton(
                     icon: Container(
                       padding: const EdgeInsets.all(8),
@@ -806,10 +946,38 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen> {
 
   Future<void> _showAssignProviderDialog(BuildContext context) async {
     if (suggestedProviders.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('No service providers available. Please register one first.'),
-          backgroundColor: Colors.orange,
+      // Show dialog explaining no providers available from API
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Row(
+            children: [
+              Icon(Icons.info_outline, color: Colors.orange),
+              const SizedBox(width: 8),
+              const Text('No Providers Available'),
+            ],
+          ),
+          content: const Text(
+            'No service providers are available from the API. Please check your internet connection or try again later.'
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                // Retry loading providers
+                _loadProviders();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primaryColor,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Retry'),
+            ),
+          ],
         ),
       );
       return;
@@ -821,21 +989,43 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen> {
         title: const Text('Assign Service Provider'),
         content: SizedBox(
           width: double.maxFinite,
-          child: ListView.builder(
-            shrinkWrap: true,
-            itemCount: suggestedProviders.length,
-            itemBuilder: (context, index) {
-              final provider = suggestedProviders[index];
-              return ListTile(
-                leading: Icon(provider.serviceTypeIcon, color: AppTheme.primaryColor),
-                title: Text(provider.name),
-                subtitle: Text(provider.serviceTypeDisplayName),
-                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                onTap: () => Navigator.pop(context, provider),
-              );
-            },
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Select any service provider to assign to this complaint:',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: AppTheme.getTextSecondaryColor(context),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Flexible(
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: suggestedProviders.length,
+                  itemBuilder: (context, index) {
+                    final provider = suggestedProviders[index];
+                    return ListTile(
+                      leading: Icon(provider.serviceTypeIcon, color: AppTheme.primaryColor),
+                      title: Text(provider.name),
+                      subtitle: Text(provider.serviceTypeDisplayName),
+                      trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                      onTap: () => Navigator.pop(context, provider),
+                    );
+                  },
+                ),
+              ),
+            ],
           ),
         ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+        ],
       ),
     );
 
@@ -846,22 +1036,48 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen> {
 
   Future<void> _assignServiceProvider(BuildContext context, ServiceProvider provider) async {
     try {
-      // Update complaint
+      debugPrint('🔧 [COMPLAINT] Assigning service provider: ${provider.name} to complaint: ${complaint.title}');
+      
+      // Show loading indicator
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+      
+      // Update complaint with assignment
       complaint.assignServiceProvider(provider.id, provider.name);
       
       // Save to service
       await ComplaintService.updateComplaint(complaint);
+      
+      // Close loading dialog
+      if (mounted) {
+        Navigator.pop(context);
+      }
       
       if (mounted) {
         setState(() {
           assignedProvider = provider;
         });
         
+        debugPrint('✅ [COMPLAINT] Service provider assigned successfully');
+        
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${provider.name} assigned successfully!'),
+            content: Row(
+              children: [
+                const Icon(Icons.check_circle, color: Colors.white),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text('${provider.name} assigned successfully!\nTenant will be notified.'),
+                ),
+              ],
+            ),
             backgroundColor: Colors.green,
-            duration: const Duration(seconds: 1),
+            duration: const Duration(seconds: 3),
           ),
         );
         
@@ -869,11 +1085,25 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen> {
         Navigator.pop(context, true);
       }
     } catch (e) {
+      debugPrint('❌ [COMPLAINT] Failed to assign service provider: $e');
+      
+      // Close loading dialog if still open
       if (mounted) {
+        Navigator.pop(context);
+        
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error assigning provider: $e'),
+            content: Row(
+              children: [
+                const Icon(Icons.error, color: Colors.white),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text('Error assigning provider: $e'),
+                ),
+              ],
+            ),
             backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
           ),
         );
       }
@@ -940,16 +1170,72 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen> {
   }
 
   void _callProvider(BuildContext context, ServiceProvider provider) {
-    // In production, use url_launcher to make phone calls
-    // For now, show a snackbar
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Calling ${provider.name} at ${provider.phone}'),
-        action: SnackBarAction(
-          label: 'OK',
-          onPressed: () {},
+    // Show call confirmation dialog
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.phone, color: AppTheme.primaryColor),
+            const SizedBox(width: 8),
+            const Text('Call Service Provider'),
+          ],
         ),
-        duration: const Duration(seconds: 1),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Do you want to call ${provider.name}?'),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Icon(Icons.phone, size: 16, color: Colors.grey.shade600),
+                const SizedBox(width: 4),
+                Text(
+                  provider.phone,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.primaryColor,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton.icon(
+            onPressed: () {
+              Navigator.pop(context);
+              // In production, use url_launcher to make phone calls
+              // For now, show a snackbar with call simulation
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Row(
+                    children: [
+                      const Icon(Icons.phone, color: Colors.white),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text('Calling ${provider.name} at ${provider.phone}...'),
+                      ),
+                    ],
+                  ),
+                  backgroundColor: Colors.green,
+                  duration: const Duration(seconds: 2),
+                ),
+              );
+            },
+            icon: const Icon(Icons.phone),
+            label: const Text('Call Now'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primaryColor,
+              foregroundColor: Colors.white,
+            ),
+          ),
+        ],
       ),
     );
   }

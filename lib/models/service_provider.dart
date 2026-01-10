@@ -35,7 +35,7 @@ class ServiceProvider extends HiveObject {
       serviceType: json['serviceType'].toString(),
       phone: json['phone'].toString(),
       email: json['email']?.toString(),
-      rating: (json['rating'] as num?)?.toDouble() ?? 0.0,
+      rating: _parseDouble(json['rating']) ?? 0.0,
       totalJobs: json['totalJobs'] as int? ?? 0,
       address: json['address']?.toString(),
       specialties: json['specialties'] != null
@@ -44,6 +44,17 @@ class ServiceProvider extends HiveObject {
       isAvailable: json['isAvailable'] as bool? ?? true,
       image: json['image']?.toString(),
     );
+  }
+
+  // Helper method to parse double from various types
+  static double? _parseDouble(dynamic value) {
+    if (value == null) return null;
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    if (value is String) {
+      return double.tryParse(value);
+    }
+    return null;
   }
 
   Map<String, dynamic> toJson() {

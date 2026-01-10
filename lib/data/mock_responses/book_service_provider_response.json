@@ -1,0 +1,113 @@
+{
+  "success": true,
+  "message": "Service booking created successfully",
+  "data": {
+    "booking": {
+      "id": "booking_001",
+      "bookingNumber": "BK20240120001",
+      "serviceProviderId": "sp_001",
+      "customerId": "cust_123",
+      "buildingId": "bld_001",
+      "roomId": "room_101",
+      "serviceType": "electrician",
+      "jobTitle": "Electrical Repair - Fan and Light Installation",
+      "jobDescription": "Need to install 2 ceiling fans and 4 LED lights in the living room and bedroom. Also need to check and repair some electrical switches that are not working properly.",
+      "priority": "medium",
+      "status": "pending_confirmation",
+      "scheduledDate": "2024-01-25",
+      "scheduledTime": "10:00",
+      "estimatedDuration": 3,
+      "location": {
+        "buildingName": "Green Valley Apartments",
+        "roomNumber": "101",
+        "floor": 1,
+        "address": "Sector 15, Noida, UP",
+        "landmark": "Near City Mall",
+        "contactPerson": {
+          "name": "Amit Sharma",
+          "phone": "+91 9876543230"
+        }
+      },
+      "serviceProvider": {
+        "id": "sp_001",
+        "name": "Rajesh Kumar",
+        "phone": "+91 9876543210",
+        "rating": 4.8,
+        "image": "https://picsum.photos/seed/sp001/300/300"
+      },
+      "customer": {
+        "id": "cust_123",
+        "name": "Amit Sharma",
+        "phone": "+91 9876543230",
+        "email": "amit.sharma@gmail.com"
+      },
+      "requirements": [
+        "2 ceiling fans (customer will provide)",
+        "4 LED lights (customer will provide)",
+        "Electrical tools and wiring materials",
+        "Safety equipment"
+      ],
+      "specialInstructions": "Please call before arriving. Building security requires visitor registration.",
+      "budgetRange": {
+        "min": 800,
+        "max": 1200,
+        "currency": "INR"
+      },
+      "paymentMethod": "cash",
+      "emergencyJob": false,
+      "images": [
+        "https://example.com/job_images/electrical_issue_1.jpg",
+        "https://example.com/job_images/electrical_issue_2.jpg"
+      ],
+      "customerNotes": "The main switch board is located in the kitchen. Some switches have been sparking, so please check them first for safety.",
+      "createdAt": "2024-01-20T20:45:00Z",
+      "updatedAt": "2024-01-20T20:45:00Z",
+      "estimatedCost": {
+        "labor": 1000,
+        "materials": 200,
+        "total": 1200,
+        "currency": "INR"
+      },
+      "timeline": {
+        "bookingCreated": "2024-01-20T20:45:00Z",
+        "expectedConfirmation": "2024-01-21T09:00:00Z",
+        "scheduledStart": "2024-01-25T10:00:00Z",
+        "estimatedCompletion": "2024-01-25T13:00:00Z"
+      }
+    },
+    "nextSteps": [
+      {
+        "step": 1,
+        "title": "Awaiting Service Provider Confirmation",
+        "description": "Rajesh Kumar will confirm the booking within 2 hours",
+        "status": "pending",
+        "estimatedTime": "Within 2 hours"
+      },
+      {
+        "step": 2,
+        "title": "Job Preparation",
+        "description": "Service provider will prepare for the job",
+        "status": "pending",
+        "estimatedTime": "Before scheduled date"
+      },
+      {
+        "step": 3,
+        "title": "Service Execution",
+        "description": "Service will be performed as scheduled",
+        "status": "pending",
+        "estimatedTime": "Jan 25, 2024 at 10:00 AM"
+      }
+    ],
+    "notifications": {
+      "sms": {
+        "customer": "SMS sent to +91 9876543230",
+        "serviceProvider": "SMS sent to +91 9876543210"
+      },
+      "email": {
+        "customer": "Email sent to amit.sharma@gmail.com",
+        "serviceProvider": "Email sent to rajesh.electrician@gmail.com"
+      }
+    }
+  },
+  "timestamp": "2024-01-20T20:45:00Z"
+}

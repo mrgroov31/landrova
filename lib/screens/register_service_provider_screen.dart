@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/service_provider.dart';
 import '../services/service_provider_service.dart';
+import '../services/hive_api_service.dart';
 import '../utils/responsive.dart';
 import '../theme/app_theme.dart';
 
@@ -17,6 +18,9 @@ class _RegisterServiceProviderScreenState extends State<RegisterServiceProviderS
   final _phoneController = TextEditingController();
   final _emailController = TextEditingController();
   final _addressController = TextEditingController();
+  final _cityController = TextEditingController();
+  final _stateController = TextEditingController();
+  final _pincodeController = TextEditingController();
   final _specialtyController = TextEditingController();
   
   String _serviceType = 'electrician';
@@ -29,6 +33,9 @@ class _RegisterServiceProviderScreenState extends State<RegisterServiceProviderS
     _phoneController.dispose();
     _emailController.dispose();
     _addressController.dispose();
+    _cityController.dispose();
+    _stateController.dispose();
+    _pincodeController.dispose();
     _specialtyController.dispose();
     super.dispose();
   }
@@ -51,31 +58,54 @@ class _RegisterServiceProviderScreenState extends State<RegisterServiceProviderS
       name: _nameController.text.trim(),
       serviceType: _serviceType,
       phone: _phoneController.text.trim(),
-      email: _emailController.text.trim().isEmpty ? null : _emailController.text.trim(),
-      address: _addressController.text.trim().isEmpty ? null : _addressController.text.trim(),
+      email: _emailController.text.trim(),
+      address: '${_addressController.text.trim()}, ${_cityController.text.trim()}, ${_stateController.text.trim()} ${_pincodeController.text.trim()}',
       specialties: _specialties,
       rating: 0.0,
       totalJobs: 0,
       isAvailable: true,
     );
 
-    // Save to service
-    ServiceProviderService.addProvider(newProvider);
+    // Save to service using detailed fields
+    final success = await ServiceProviderService.addProviderWithDetails(
+      name: _nameController.text.trim(),
+      serviceType: _serviceType,
+      phone: _phoneController.text.trim(),
+      email: _emailController.text.trim(),
+      address: _addressController.text.trim(),
+      city: _cityController.text.trim(),
+      state: _stateController.text.trim(),
+      pincode: _pincodeController.text.trim(),
+      specialties: _specialties,
+    );
 
     setState(() {
       _isLoading = false;
     });
 
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('${newProvider.name} registered successfully!'),
-          backgroundColor: Colors.green,
-          duration: const Duration(seconds: 1),
-        ),
-      );
+      if (success) {
+        // Invalidate service providers cache to show the new provider immediately
+        await HiveApiService.invalidateCache('service_providers');
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${_nameController.text.trim()} registered successfully!'),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 2),
+          ),
+        );
 
-      Navigator.pop(context, newProvider);
+        Navigator.pop(context, true); // Return true to indicate success
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to register service provider. Please try again.'),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
     }
   }
 
@@ -167,13 +197,22 @@ class _RegisterServiceProviderScreenState extends State<RegisterServiceProviderS
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
                 decoration: InputDecoration(
-                  labelText: 'Email (Optional)',
+                  labelText: 'Email *',
                   hintText: 'e.g., provider@example.com',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                   prefixIcon: const Icon(Icons.email),
                 ),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Please enter email address';
+                  }
+                  if (!value.contains('@')) {
+                    return 'Please enter a valid email address';
+                  }
+                  return null;
+                },
               ),
               
               SizedBox(height: isMobile ? 16 : 20),
@@ -182,14 +221,92 @@ class _RegisterServiceProviderScreenState extends State<RegisterServiceProviderS
               TextFormField(
                 controller: _addressController,
                 decoration: InputDecoration(
-                  labelText: 'Address (Optional)',
-                  hintText: 'e.g., Near Main Street, Bangalore',
+                  labelText: 'Address *',
+                  hintText: 'e.g., Near Main Street',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                   prefixIcon: const Icon(Icons.location_on),
                 ),
                 maxLines: 2,
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Please enter address';
+                  }
+                  return null;
+                },
+              ),
+              
+              SizedBox(height: isMobile ? 16 : 20),
+              
+              // City
+              TextFormField(
+                controller: _cityController,
+                decoration: InputDecoration(
+                  labelText: 'City *',
+                  hintText: 'e.g., Bangalore',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  prefixIcon: const Icon(Icons.location_city),
+                ),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Please enter city';
+                  }
+                  return null;
+                },
+              ),
+              
+              SizedBox(height: isMobile ? 16 : 20),
+              
+              // State and Pincode Row
+              Row(
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller: _stateController,
+                      decoration: InputDecoration(
+                        labelText: 'State *',
+                        hintText: 'e.g., Karnataka',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        prefixIcon: const Icon(Icons.map),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Please enter state';
+                        }
+                        return null;
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: TextFormField(
+                      controller: _pincodeController,
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(
+                        labelText: 'Pincode *',
+                        hintText: 'e.g., 560001',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        prefixIcon: const Icon(Icons.pin_drop),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Please enter pincode';
+                        }
+                        if (value.trim().length != 6) {
+                          return 'Pincode must be 6 digits';
+                        }
+                        return null;
+                      },
+                    ),
+                  ),
+                ],
               ),
               
               SizedBox(height: isMobile ? 24 : 28),

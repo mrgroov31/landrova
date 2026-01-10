@@ -1,0 +1,170 @@
+{
+  "success": true,
+  "message": "Service provider reviews retrieved successfully",
+  "data": {
+    "serviceProviderId": "sp_001",
+    "serviceProviderName": "Rajesh Kumar",
+    "overallRating": 4.8,
+    "totalReviews": 45,
+    "ratingDistribution": {
+      "5": 32,
+      "4": 8,
+      "3": 3,
+      "2": 1,
+      "1": 1
+    },
+    "averageRatings": {
+      "quality": 4.9,
+      "punctuality": 4.7,
+      "professionalism": 4.8,
+      "pricing": 4.6,
+      "communication": 4.8
+    },
+    "reviews": [
+      {
+        "id": "rev_001",
+        "bookingId": "booking_045",
+        "customerId": "cust_123",
+        "customerName": "Amit Sharma",
+        "rating": 5,
+        "comment": "Excellent work! Rajesh fixed all electrical issues quickly and professionally. He arrived on time and completed the job within the estimated time. Highly recommended!",
+        "jobType": "Electrical Repair",
+        "serviceDate": "2024-01-15T10:30:00Z",
+        "reviewDate": "2024-01-15T16:45:00Z",
+        "ratings": {
+          "quality": 5,
+          "punctuality": 5,
+          "professionalism": 5,
+          "pricing": 4,
+          "communication": 5
+        },
+        "images": [
+          "https://example.com/review_images/before_repair.jpg",
+          "https://example.com/review_images/after_repair.jpg"
+        ],
+        "verified": true,
+        "helpful": 12,
+        "serviceProviderResponse": {
+          "response": "Thank you Amit ji for the wonderful review! It was a pleasure working with you.",
+          "responseDate": "2024-01-15T18:00:00Z"
+        }
+      },
+      {
+        "id": "rev_002",
+        "bookingId": "booking_038",
+        "customerId": "cust_456",
+        "customerName": "Priya Singh",
+        "rating": 4,
+        "comment": "Good service, arrived on time. The fan installation was done properly. Only issue was that he didn't clean up completely after the work.",
+        "jobType": "Fan Installation",
+        "serviceDate": "2024-01-10T14:20:00Z",
+        "reviewDate": "2024-01-10T19:30:00Z",
+        "ratings": {
+          "quality": 4,
+          "punctuality": 5,
+          "professionalism": 4,
+          "pricing": 4,
+          "communication": 4
+        },
+        "verified": true,
+        "helpful": 8,
+        "serviceProviderResponse": {
+          "response": "Thank you for the feedback Priya ji. I will ensure better cleanup in future jobs.",
+          "responseDate": "2024-01-11T09:15:00Z"
+        }
+      },
+      {
+        "id": "rev_003",
+        "bookingId": "booking_032",
+        "customerId": "cust_789",
+        "customerName": "Rohit Gupta",
+        "rating": 5,
+        "comment": "Outstanding service! Rajesh not only fixed the electrical problem but also identified and resolved a potential safety hazard. Very knowledgeable and honest pricing.",
+        "jobType": "House Wiring",
+        "serviceDate": "2024-01-05T11:00:00Z",
+        "reviewDate": "2024-01-05T17:20:00Z",
+        "ratings": {
+          "quality": 5,
+          "punctuality": 5,
+          "professionalism": 5,
+          "pricing": 5,
+          "communication": 5
+        },
+        "verified": true,
+        "helpful": 15,
+        "serviceProviderResponse": {
+          "response": "Thank you Rohit ji! Safety is always my priority. Happy to help!",
+          "responseDate": "2024-01-05T20:30:00Z"
+        }
+      },
+      {
+        "id": "rev_004",
+        "bookingId": "booking_025",
+        "customerId": "cust_101",
+        "customerName": "Sunita Reddy",
+        "rating": 4,
+        "comment": "Professional work and fair pricing. Took a bit longer than expected but the quality was good.",
+        "jobType": "Switch Installation",
+        "serviceDate": "2023-12-28T15:30:00Z",
+        "reviewDate": "2023-12-28T20:45:00Z",
+        "ratings": {
+          "quality": 4,
+          "punctuality": 3,
+          "professionalism": 4,
+          "pricing": 5,
+          "communication": 4
+        },
+        "verified": true,
+        "helpful": 6
+      },
+      {
+        "id": "rev_005",
+        "bookingId": "booking_018",
+        "customerId": "cust_202",
+        "customerName": "Vikash Kumar",
+        "rating": 5,
+        "comment": "Emergency call at night and he came immediately. Fixed the power issue quickly. Great service!",
+        "jobType": "Emergency Electrical Repair",
+        "serviceDate": "2023-12-20T22:15:00Z",
+        "reviewDate": "2023-12-21T08:30:00Z",
+        "ratings": {
+          "quality": 5,
+          "punctuality": 5,
+          "professionalism": 5,
+          "pricing": 4,
+          "communication": 5
+        },
+        "verified": true,
+        "helpful": 20,
+        "serviceProviderResponse": {
+          "response": "Happy to help in emergency situations! Thank you for the review.",
+          "responseDate": "2023-12-21T10:00:00Z"
+        }
+      }
+    ],
+    "pagination": {
+      "currentPage": 1,
+      "totalPages": 9,
+      "totalItems": 45,
+      "itemsPerPage": 5,
+      "hasNextPage": true,
+      "hasPreviousPage": false
+    },
+    "reviewSummary": {
+      "mostMentionedPositives": [
+        "Professional work",
+        "On time arrival",
+        "Fair pricing",
+        "Quality service",
+        "Emergency availability"
+      ],
+      "mostMentionedNegatives": [
+        "Cleanup after work",
+        "Time estimation"
+      ],
+      "recommendationRate": 96,
+      "repeatCustomerRate": 78
+    }
+  },
+  "timestamp": "2024-01-20T21:15:00Z"
+}

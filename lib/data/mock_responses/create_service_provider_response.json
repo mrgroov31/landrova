@@ -1,0 +1,77 @@
+{
+  "success": true,
+  "message": "Service provider created successfully",
+  "data": {
+    "serviceProvider": {
+      "id": "sp_007",
+      "name": "Arjun Electrician",
+      "serviceType": "electrician",
+      "phone": "+91 9876543220",
+      "email": "arjun.electrician@gmail.com",
+      "rating": 0.0,
+      "totalJobs": 0,
+      "completedJobs": 0,
+      "address": "Sector 18, Noida, UP",
+      "city": "Noida",
+      "state": "Uttar Pradesh",
+      "pincode": "201301",
+      "specialties": [
+        "House Wiring",
+        "Electrical Repairs",
+        "Switch Installation",
+        "Fan Installation"
+      ],
+      "isAvailable": true,
+      "isVerified": false,
+      "verificationStatus": "pending",
+      "experience": "6 years",
+      "priceRange": {
+        "min": 250,
+        "max": 1200,
+        "currency": "INR"
+      },
+      "workingHours": {
+        "start": "09:00",
+        "end": "18:00",
+        "workingDays": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+      },
+      "image": "https://example.com/profiles/arjun_123.jpg",
+      "documents": {
+        "aadharCard": "pending",
+        "panCard": "pending",
+        "tradeLicense": "pending"
+      },
+      "reviews": [],
+      "emergencyAvailable": true,
+      "languages": ["Hindi", "English"],
+      "joinedDate": "2024-01-20T20:15:00Z",
+      "lastActive": "2024-01-20T20:15:00Z",
+      "status": "active",
+      "approvalStatus": "pending_verification"
+    },
+    "nextSteps": [
+      {
+        "step": 1,
+        "title": "Document Verification",
+        "description": "Your documents are being verified by our team",
+        "status": "pending",
+        "estimatedTime": "24-48 hours"
+      },
+      {
+        "step": 2,
+        "title": "Profile Review",
+        "description": "Our team will review your profile and specialties",
+        "status": "pending",
+        "estimatedTime": "2-3 business days"
+      },
+      {
+        "step": 3,
+        "title": "Account Activation",
+        "description": "Once verified, your account will be activated",
+        "status": "pending",
+        "estimatedTime": "After verification"
+      }
+    ]
+  },
+  "timestamp": "2024-01-20T20:15:00Z"
+}
