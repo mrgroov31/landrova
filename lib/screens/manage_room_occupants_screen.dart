@@ -7,6 +7,7 @@ import '../utils/responsive.dart';
 import '../services/api_service.dart';
 import '../services/auth_service.dart';
 import 'package:intl/intl.dart';
+import 'tenant_onboarding_form_screen.dart';
 
 class ManageRoomOccupantsScreen extends StatefulWidget {
   final Room room;
@@ -72,37 +73,91 @@ class _ManageRoomOccupantsScreenState extends State<ManageRoomOccupantsScreen> {
   }
 
   Future<void> _addOccupant() async {
-    final result = await showDialog<RoomOccupant>(
-      context: context,
-      builder: (context) => AddOccupantDialog(
-        roomCapacity: widget.room.capacity,
-        currentOccupancy: occupants.length,
-      ),
-    );
+    // Check if this is the first occupant (primary tenant)
+    final isFirstOccupant = occupants.isEmpty;
+    
+    if (isFirstOccupant) {
+      // Use comprehensive tenant onboarding form for first occupant
+      final result = await Navigator.push<RoomOccupant>(
+        context,
+        MaterialPageRoute(
+          builder: (context) => TenantOnboardingFormScreen(
+            roomNumber: widget.room.number,
+            roomId: widget.room.id,
+            buildingId: widget.room.buildingId,
+            monthlyRent: widget.room.rent,
+            isPrimaryTenant: true,
+          ),
+        ),
+      );
 
-    if (result != null) {
-      setState(() {
-        occupants.add(result);
-      });
-      await _saveOccupants();
+      if (result != null) {
+        setState(() {
+          occupants.add(result);
+        });
+        await _saveOccupants();
+      }
+    } else {
+      // Use simple dialog for additional occupants
+      final result = await showDialog<RoomOccupant>(
+        context: context,
+        builder: (context) => AddOccupantDialog(
+          roomCapacity: widget.room.capacity,
+          currentOccupancy: occupants.length,
+        ),
+      );
+
+      if (result != null) {
+        setState(() {
+          occupants.add(result);
+        });
+        await _saveOccupants();
+      }
     }
   }
 
   Future<void> _editOccupant(int index) async {
-    final result = await showDialog<RoomOccupant>(
-      context: context,
-      builder: (context) => AddOccupantDialog(
-        occupant: occupants[index],
-        roomCapacity: widget.room.capacity,
-        currentOccupancy: occupants.length,
-      ),
-    );
+    final occupant = occupants[index];
+    
+    if (occupant.isPrimaryTenant) {
+      // Use comprehensive tenant onboarding form for primary tenant
+      final result = await Navigator.push<RoomOccupant>(
+        context,
+        MaterialPageRoute(
+          builder: (context) => TenantOnboardingFormScreen(
+            roomNumber: widget.room.number,
+            roomId: widget.room.id,
+            buildingId: widget.room.buildingId,
+            monthlyRent: widget.room.rent,
+            isPrimaryTenant: true,
+            existingOccupant: occupant,
+          ),
+        ),
+      );
 
-    if (result != null) {
-      setState(() {
-        occupants[index] = result;
-      });
-      await _saveOccupants();
+      if (result != null) {
+        setState(() {
+          occupants[index] = result;
+        });
+        await _saveOccupants();
+      }
+    } else {
+      // Use simple dialog for additional occupants
+      final result = await showDialog<RoomOccupant>(
+        context: context,
+        builder: (context) => AddOccupantDialog(
+          occupant: occupants[index],
+          roomCapacity: widget.room.capacity,
+          currentOccupancy: occupants.length,
+        ),
+      );
+
+      if (result != null) {
+        setState(() {
+          occupants[index] = result;
+        });
+        await _saveOccupants();
+      }
     }
   }
 
@@ -289,7 +344,9 @@ class _ManageRoomOccupantsScreenState extends State<ManageRoomOccupantsScreen> {
               backgroundColor: AppTheme.primaryColor,
               foregroundColor: Colors.white,
               icon: const Icon(Icons.person_add),
-              label: Text(isMobile ? 'Add' : 'Add Occupant'),
+              label: Text(isMobile 
+                ? (occupants.isEmpty ? 'Add Primary' : 'Add') 
+                : (occupants.isEmpty ? 'Add Primary Tenant' : 'Add Occupant')),
             )
           : null,
     );
@@ -350,7 +407,28 @@ class _ManageRoomOccupantsScreenState extends State<ManageRoomOccupantsScreen> {
           ),
           SizedBox(height: isMobile ? 24 : 32),
           ElevatedButton.icon(
-            onPressed: _addOccupant,
+            onPressed: () async {
+              // Use comprehensive tenant onboarding form for first occupant
+              final result = await Navigator.push<RoomOccupant>(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => TenantOnboardingFormScreen(
+                    roomNumber: widget.room.number,
+                    roomId: widget.room.id,
+                    buildingId: widget.room.buildingId,
+                    monthlyRent: widget.room.rent,
+                    isPrimaryTenant: true,
+                  ),
+                ),
+              );
+
+              if (result != null) {
+                setState(() {
+                  occupants.add(result);
+                });
+                await _saveOccupants();
+              }
+            },
             icon: const Icon(Icons.person_add),
             label: const Text('Add First Occupant'),
             style: ElevatedButton.styleFrom(
@@ -422,7 +500,7 @@ class _ManageRoomOccupantsScreenState extends State<ManageRoomOccupantsScreen> {
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Text(
-                                'Primary',
+                                'Primary Tenant',
                                 style: TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w600,

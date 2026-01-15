@@ -17,6 +17,8 @@ import 'add_complaint_screen.dart';
 import 'vacating_request_form_screen.dart';
 import 'complaint_detail_screen.dart';
 import 'public_rooms_listing_screen.dart';
+import 'tenant_settings_screen.dart';
+import 'tenant_payment_screen.dart';
 
 class TenantDashboardScreen extends StatefulWidget {
   const TenantDashboardScreen({super.key});
@@ -130,7 +132,7 @@ class _TenantDashboardScreenState extends State<TenantDashboardScreen> {
     final hasRoom = roomNumber != null && roomNumber != 'N/A' && roomNumber.isNotEmpty;
 
     return Scaffold(
-      backgroundColor: Colors.grey.shade50,
+      backgroundColor: AppTheme.getBackgroundColor(context),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
           final result = await Navigator.push(
@@ -159,9 +161,22 @@ class _TenantDashboardScreenState extends State<TenantDashboardScreen> {
                   expandedHeight: 0,
                   floating: true,
                   pinned: true,
-                  backgroundColor: Colors.white,
+                  backgroundColor: AppTheme.getSurfaceColor(context),
+                  foregroundColor: AppTheme.getTextPrimaryColor(context),
                   elevation: 0,
                   actions: [
+                    IconButton(
+                      icon: Icon(Icons.settings, color: AppTheme.getTextPrimaryColor(context)),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const TenantSettingsScreen(),
+                          ),
+                        );
+                      },
+                      tooltip: 'Settings',
+                    ),
                     IconButton(
                       icon: const Icon(Icons.logout, color: Colors.red),
                       onPressed: () async {
@@ -173,6 +188,7 @@ class _TenantDashboardScreenState extends State<TenantDashboardScreen> {
                           );
                         }
                       },
+                      tooltip: 'Logout',
                     ),
                   ],
                 ),
@@ -550,11 +566,13 @@ class _TenantDashboardScreenState extends State<TenantDashboardScreen> {
     return Container(
       padding: EdgeInsets.all(isMobile ? 16 : 20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.getCardColor(context),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.shade200,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Colors.black.withOpacity(0.3)
+                : Colors.grey.shade200,
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -567,7 +585,7 @@ class _TenantDashboardScreenState extends State<TenantDashboardScreen> {
             title,
             style: TextStyle(
               fontSize: isMobile ? 12 : 13,
-              color: Colors.grey.shade600,
+              color: AppTheme.getTextSecondaryColor(context),
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -836,10 +854,10 @@ class _TenantDashboardScreenState extends State<TenantDashboardScreen> {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Payment feature coming soon'),
-                        backgroundColor: Colors.blue,
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const TenantPaymentScreen(),
                       ),
                     );
                   },
@@ -883,7 +901,7 @@ class _TenantDashboardScreenState extends State<TenantDashboardScreen> {
           style: TextStyle(
             fontSize: isMobile ? 18 : 20,
             fontWeight: FontWeight.bold,
-            color: Colors.grey.shade900,
+            color: AppTheme.getTextPrimaryColor(context),
           ),
         ),
         const SizedBox(height: 12),
@@ -943,10 +961,10 @@ class _TenantDashboardScreenState extends State<TenantDashboardScreen> {
               icon: Icons.payment,
               color: Colors.purple,
               onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Payment history coming soon'),
-                    backgroundColor: Colors.blue,
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const TenantPaymentScreen(),
                   ),
                 );
               },
@@ -972,12 +990,14 @@ class _TenantDashboardScreenState extends State<TenantDashboardScreen> {
       child: Container(
         padding: EdgeInsets.all(isMobile ? 16 : 18),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppTheme.getCardColor(context),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: color.withOpacity(0.3)),
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.shade200,
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? Colors.black.withOpacity(0.3)
+                  : Colors.grey.shade200,
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -999,7 +1019,7 @@ class _TenantDashboardScreenState extends State<TenantDashboardScreen> {
               title,
               style: TextStyle(
                 fontWeight: FontWeight.w600,
-                color: Colors.grey.shade900,
+                color: AppTheme.getTextPrimaryColor(context),
                 fontSize: isMobile ? 13 : 14,
               ),
               textAlign: TextAlign.center,
@@ -1018,18 +1038,18 @@ class _TenantDashboardScreenState extends State<TenantDashboardScreen> {
       return Container(
         padding: const EdgeInsets.all(40),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppTheme.getCardColor(context),
           borderRadius: BorderRadius.circular(16),
         ),
         child: Column(
           children: [
-            Icon(Icons.inbox_outlined, size: 64, color: Colors.grey.shade300),
+            Icon(Icons.inbox_outlined, size: 64, color: AppTheme.getTextSecondaryColor(context).withOpacity(0.5)),
             const SizedBox(height: 16),
             Text(
               'No complaints yet',
               style: TextStyle(
                 fontSize: 16,
-                color: Colors.grey.shade600,
+                color: AppTheme.getTextSecondaryColor(context),
               ),
             ),
             const SizedBox(height: 24),
@@ -1069,7 +1089,7 @@ class _TenantDashboardScreenState extends State<TenantDashboardScreen> {
               style: TextStyle(
                 fontSize: isMobile ? 18 : 20,
                 fontWeight: FontWeight.bold,
-                color: Colors.grey.shade900,
+                color: AppTheme.getTextPrimaryColor(context),
               ),
             ),
             TextButton.icon(
@@ -1106,12 +1126,14 @@ class _TenantDashboardScreenState extends State<TenantDashboardScreen> {
       margin: const EdgeInsets.only(bottom: 12),
       padding: EdgeInsets.all(isMobile ? 16 : 18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.getCardColor(context),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: AppTheme.getTextSecondaryColor(context).withOpacity(0.2)),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.shade100,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Colors.black.withOpacity(0.3)
+                : Colors.grey.shade100,
             blurRadius: 5,
             offset: const Offset(0, 2),
           ),
@@ -1161,7 +1183,7 @@ class _TenantDashboardScreenState extends State<TenantDashboardScreen> {
                     style: TextStyle(
                       fontSize: isMobile ? 16 : 17,
                       fontWeight: FontWeight.bold,
-                      color: Colors.grey.shade900,
+                      color: AppTheme.getTextPrimaryColor(context),
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -1169,7 +1191,7 @@ class _TenantDashboardScreenState extends State<TenantDashboardScreen> {
                     'Room ${complaint.roomNumber}',
                     style: TextStyle(
                       fontSize: isMobile ? 13 : 14,
-                      color: Colors.grey.shade600,
+                      color: AppTheme.getTextSecondaryColor(context),
                     ),
                   ),
                 ],
@@ -1209,7 +1231,7 @@ class _TenantDashboardScreenState extends State<TenantDashboardScreen> {
             // More Options
             Icon(
               Icons.more_vert,
-              color: Colors.grey.shade400,
+              color: AppTheme.getTextSecondaryColor(context),
               size: 20,
             ),
           ],

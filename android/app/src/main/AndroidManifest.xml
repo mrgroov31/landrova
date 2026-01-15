@@ -57,5 +57,36 @@
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
         </intent>
+        
+        <!-- UPI Payment Apps Query - Required for Android 11+ -->
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="upi" />
+        </intent>
+        
+        <!-- Specific UPI Apps -->
+        <package android:name="com.google.android.apps.nbu.paisa.user" />  <!-- Google Pay -->
+        <package android:name="com.phonepe.app" />                          <!-- PhonePe -->
+        <package android:name="net.one97.paytm" />                          <!-- Paytm -->
+        <package android:name="in.org.npci.upiapp" />                       <!-- BHIM -->
+        <package android:name="in.amazon.mShop.android.shopping" />         <!-- Amazon Pay -->
+        
+        <!-- UPI Intent Filters -->
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="tez" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="phonepe" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="paytmmp" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="bhim" />
+        </intent>
     </queries>
 </manifest>

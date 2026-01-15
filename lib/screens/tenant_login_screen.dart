@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../utils/responsive.dart';
+import '../theme/app_theme.dart';
 import 'tenant_dashboard_screen.dart';
 
 class TenantLoginScreen extends StatefulWidget {
@@ -65,20 +66,20 @@ class _TenantLoginScreenState extends State<TenantLoginScreen> {
     final isMobile = Responsive.isMobile(context);
     
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppTheme.getBackgroundColor(context),
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: Colors.white,
+        backgroundColor: AppTheme.getSurfaceColor(context),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black87),
+          icon: Icon(Icons.arrow_back, color: AppTheme.getTextPrimaryColor(context)),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           'Tenant Login',
           style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 24,
-            color: Colors.black87,
+            color: AppTheme.getTextPrimaryColor(context),
           ),
         ),
       ),
@@ -96,13 +97,13 @@ class _TenantLoginScreenState extends State<TenantLoginScreen> {
                 child: Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: Colors.green.withOpacity(0.1),
+                    color: AppTheme.primaryColor.withOpacity(0.1),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
                     Icons.person,
                     size: isMobile ? 60 : 80,
-                    color: Colors.green,
+                    color: AppTheme.primaryColor,
                   ),
                 ),
               ),
@@ -193,7 +194,7 @@ class _TenantLoginScreenState extends State<TenantLoginScreen> {
                 child: ElevatedButton(
                   onPressed: _isLoading ? null : _login,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
+                    backgroundColor: AppTheme.primaryColor,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -225,22 +226,22 @@ class _TenantLoginScreenState extends State<TenantLoginScreen> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade50,
+                  color: AppTheme.getCardColor(context),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.grey.shade200),
+                  border: Border.all(color: AppTheme.getTextSecondaryColor(context).withOpacity(0.2)),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.info_outline, size: 18, color: Colors.grey.shade700),
+                        Icon(Icons.info_outline, size: 18, color: AppTheme.getTextSecondaryColor(context)),
                         const SizedBox(width: 8),
                         Text(
                           'Demo Credentials',
                           style: TextStyle(
                             fontWeight: FontWeight.w600,
-                            color: Colors.grey.shade700,
+                            color: AppTheme.getTextSecondaryColor(context),
                             fontSize: isMobile ? 13 : 14,
                           ),
                         ),
@@ -250,7 +251,7 @@ class _TenantLoginScreenState extends State<TenantLoginScreen> {
                     Text(
                       'Use your registered tenant email',
                       style: TextStyle(
-                        color: Colors.grey.shade600,
+                        color: AppTheme.getTextSecondaryColor(context),
                         fontSize: isMobile ? 12 : 13,
                       ),
                     ),
@@ -258,7 +259,7 @@ class _TenantLoginScreenState extends State<TenantLoginScreen> {
                     Text(
                       'Password: tenant123',
                       style: TextStyle(
-                        color: Colors.grey.shade600,
+                        color: AppTheme.getTextSecondaryColor(context),
                         fontSize: isMobile ? 12 : 13,
                       ),
                     ),
@@ -266,7 +267,7 @@ class _TenantLoginScreenState extends State<TenantLoginScreen> {
                     Text(
                       'Example: rajesh@example.com / tenant123',
                       style: TextStyle(
-                        color: Colors.grey.shade500,
+                        color: AppTheme.getTextSecondaryColor(context).withOpacity(0.7),
                         fontSize: isMobile ? 11 : 12,
                         fontStyle: FontStyle.italic,
                       ),

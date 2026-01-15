@@ -7,6 +7,7 @@ class Payment {
   final DateTime dueDate;
   final DateTime? paidDate;
   final String status; // 'pending', 'paid', 'overdue'
+  final String type; // 'rent', 'deposit', 'maintenance', etc.
   final String? paymentMethod;
   final String? transactionId;
   final String month;
@@ -23,6 +24,7 @@ class Payment {
     required this.dueDate,
     this.paidDate,
     required this.status,
+    required this.type,
     this.paymentMethod,
     this.transactionId,
     required this.month,
@@ -43,6 +45,7 @@ class Payment {
           ? DateTime.parse(json['paidDate'].toString())
           : null,
       status: json['status'].toString(),
+      type: json['type']?.toString() ?? 'rent',
       paymentMethod: json['paymentMethod']?.toString(),
       transactionId: json['transactionId']?.toString(),
       month: json['month'].toString(),
@@ -62,6 +65,7 @@ class Payment {
       'dueDate': dueDate.toIso8601String(),
       'paidDate': paidDate?.toIso8601String(),
       'status': status,
+      'type': type,
       'paymentMethod': paymentMethod,
       'transactionId': transactionId,
       'month': month,

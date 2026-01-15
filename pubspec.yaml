@@ -84,6 +84,9 @@ dependencies:
   
   # Shimmer loading effects
   shimmer: ^3.0.0
+  
+  # Payment status tracking
+  crypto: ^3.0.3
 
 dev_dependencies:
   flutter_test:

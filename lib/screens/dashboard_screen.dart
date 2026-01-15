@@ -24,6 +24,7 @@ import 'tenants_screen.dart';
 import 'complaints_screen.dart';
 import 'complaint_detail_screen.dart';
 import 'payments_screen.dart';
+import 'record_payment_screen.dart';
 import 'buildings_screen.dart';
 import 'profile_screen.dart';
 import 'settings_screen.dart';
@@ -38,6 +39,8 @@ import '../services/auth_service.dart';
 import '../constants/app_assets.dart';
 import '../utils/custom_page_route.dart';
 import '../models/building.dart';
+import '../utils/payment_test_helper.dart';
+import '../screens/payment_test_screen.dart';
 import 'package:intl/intl.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -224,6 +227,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
       debugPrint('📊 [Dashboard] Parsed ${allRooms.length} rooms from API');
       var allTenants = ApiService.parseTenants(results[1]);
       var allPayments = ApiService.parsePayments(results[2]);
+      
+      // Log payment data for testing
+      PaymentTestHelper.logPaymentData(allPayments);
       var allComplaints = ApiService.parseApiComplaints(results[3]); // Use new parser
       debugPrint('📊 [Dashboard] Parsed ${allComplaints.length} complaints from API');
 
@@ -267,6 +273,107 @@ class _DashboardScreenState extends State<DashboardScreen> {
       // Debug print
       debugPrint('Error loading dashboard data: $e');
     }
+    
+    // Log revenue calculations for testing (after data is loaded)
+    if (!isLoading) {
+      // Add demo payments if no payments exist (for testing)
+      if (payments.isEmpty) {
+        debugPrint('📊 [Dashboard] No payments found, adding demo payments for testing...');
+        setState(() {
+          payments = _generateDemoPaymentsForOwner();
+        });
+        debugPrint('📊 [Dashboard] Generated ${payments.length} demo payments');
+      }
+      
+      final totalRevenue = getTotalRevenue();
+      final pendingRevenue = getPendingRevenue();
+      final monthlyRevenue = getMonthlyRevenue();
+      
+      PaymentTestHelper.logRevenueCalculation(totalRevenue, pendingRevenue, monthlyRevenue);
+    }
+  }
+
+  // Generate demo payments for owner dashboard testing
+  List<Payment> _generateDemoPaymentsForOwner() {
+    final now = DateTime.now();
+    final monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'];
+    
+    return [
+      Payment(
+        id: 'owner_demo_1',
+        tenantId: '1',
+        tenantName: 'Rajesh Kumar',
+        roomNumber: '101',
+        amount: 15000,
+        dueDate: DateTime(now.year, now.month, 1),
+        paidDate: DateTime(now.year, now.month, 2),
+        status: 'paid',
+        type: 'rent',
+        paymentMethod: 'upi',
+        transactionId: 'UPI123456789',
+        month: monthNames[now.month - 1],
+        year: now.year,
+        lateFee: 0,
+        notes: 'Monthly rent - paid on time',
+      ),
+      Payment(
+        id: 'owner_demo_2',
+        tenantId: '2',
+        tenantName: 'Priya Sharma',
+        roomNumber: '102',
+        amount: 12000,
+        dueDate: DateTime(now.year, now.month, 1),
+        status: 'pending',
+        type: 'rent',
+        month: monthNames[now.month - 1],
+        year: now.year,
+        lateFee: 0,
+        notes: 'Monthly rent - pending payment',
+      ),
+      Payment(
+        id: 'owner_demo_3',
+        tenantId: '3',
+        tenantName: 'Amit Patel',
+        roomNumber: '201',
+        amount: 18000,
+        dueDate: DateTime(now.year, now.month - 1, 1),
+        status: 'overdue',
+        type: 'rent',
+        month: monthNames[(now.month - 2 + 12) % 12],
+        year: now.month == 1 ? now.year - 1 : now.year,
+        lateFee: 500,
+        notes: 'Monthly rent - overdue with late fee',
+      ),
+      Payment(
+        id: 'owner_demo_4',
+        tenantId: '4',
+        tenantName: 'Sneha Reddy',
+        roomNumber: '202',
+        amount: 14000,
+        dueDate: DateTime(now.year, now.month, 1),
+        status: 'pending',
+        type: 'rent',
+        month: monthNames[now.month - 1],
+        year: now.year,
+        lateFee: 0,
+        notes: 'Monthly rent - pending payment',
+      ),
+      Payment(
+        id: 'owner_demo_5',
+        tenantId: '1',
+        tenantName: 'Rajesh Kumar',
+        roomNumber: '101',
+        amount: 2000,
+        dueDate: DateTime(now.year, now.month, 10),
+        status: 'pending',
+        type: 'maintenance',
+        month: monthNames[now.month - 1],
+        year: now.year,
+        lateFee: 0,
+        notes: 'Monthly maintenance fee',
+      ),
+    ];
   }
 
   int getTotalRooms() => rooms.isEmpty ? 0 : rooms.length;
@@ -312,20 +419,76 @@ class _DashboardScreenState extends State<DashboardScreen> {
   int getOverduePayments() => payments.isEmpty ? 0 : payments.where((p) => p.status == 'overdue').length;
   
   double getTotalRevenue() {
-    return payments
-        .where((p) => p.status == 'paid')
-        .fold(0.0, (sum, p) => sum + p.amount);
+    // Calculate total revenue from all paid payments
+    final paidPayments = payments.where((p) => p.status == 'paid').toList();
+    final totalRevenue = paidPayments.fold(0.0, (sum, p) => sum + p.amount);
+    
+    // Add any late fees
+    final lateFees = paidPayments.fold(0.0, (sum, p) => sum + p.lateFee);
+    
+    return totalRevenue + lateFees;
   }
 
   double getPendingRevenue() {
-    return payments
-        .where((p) => p.status == 'pending' || p.status == 'overdue')
-        .fold(0.0, (sum, p) => sum + p.amount);
+    // Calculate pending revenue from pending and overdue payments
+    final pendingPayments = payments.where((p) => p.status == 'pending' || p.status == 'overdue').toList();
+    final pendingAmount = pendingPayments.fold(0.0, (sum, p) => sum + p.amount);
+    
+    // Add potential late fees for overdue payments
+    final overdueFees = pendingPayments
+        .where((p) => p.status == 'overdue')
+        .fold(0.0, (sum, p) => sum + p.lateFee);
+    
+    return pendingAmount + overdueFees;
   }
 
   List<double> getMonthlyRevenue() {
-    // Mock monthly revenue data
-    return [45000, 52000, 48000, 55000, 60000, 58000];
+    // Calculate actual monthly revenue from payments data
+    final now = DateTime.now();
+    final monthlyRevenue = <double>[];
+    
+    for (int i = 5; i >= 0; i--) {
+      final targetMonth = DateTime(now.year, now.month - i, 1);
+      final monthPayments = payments.where((p) => 
+        p.status == 'paid' && 
+        p.paidDate != null &&
+        p.paidDate!.year == targetMonth.year &&
+        p.paidDate!.month == targetMonth.month
+      ).toList();
+      
+      final monthTotal = monthPayments.fold(0.0, (sum, p) => sum + p.amount + p.lateFee);
+      monthlyRevenue.add(monthTotal);
+    }
+    
+    // If no data available, return mock data for demonstration
+    if (monthlyRevenue.every((amount) => amount == 0)) {
+      return [45000, 52000, 48000, 55000, 60000, 58000];
+    }
+    
+    return monthlyRevenue;
+  }
+
+  // New method to get payment statistics
+  Map<String, dynamic> getPaymentStatistics() {
+    final totalPayments = payments.length;
+    final paidPayments = payments.where((p) => p.status == 'paid').length;
+    final pendingPayments = payments.where((p) => p.status == 'pending').length;
+    final overduePayments = payments.where((p) => p.status == 'overdue').length;
+    
+    final totalRevenue = getTotalRevenue();
+    final pendingRevenue = getPendingRevenue();
+    final collectionRate = totalPayments > 0 ? (paidPayments / totalPayments) * 100 : 0.0;
+    
+    return {
+      'totalPayments': totalPayments,
+      'paidPayments': paidPayments,
+      'pendingPayments': pendingPayments,
+      'overduePayments': overduePayments,
+      'totalRevenue': totalRevenue,
+      'pendingRevenue': pendingRevenue,
+      'collectionRate': collectionRate,
+      'averagePayment': totalPayments > 0 ? totalRevenue / paidPayments : 0.0,
+    };
   }
 
   @override
@@ -1142,6 +1305,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 );
               },
             ),
+            _buildActionCard(
+              icon: Icons.science_outlined,
+              title: 'Payment Test',
+              subtitle: 'Test integration',
+              color: const Color(0xFF9C27B0),
+              isMobile: isMobile,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  CustomPageRoute(
+                    child: const PaymentTestScreen(),
+                    transition: CustomPageTransition.transform,
+                  ),
+                );
+              },
+            ),
           ],
         ),
       ],
@@ -1894,7 +2073,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 Navigator.push(
                   context,
                   CustomPageRoute(
-                    child: const PaymentsScreen(heroTag: 'record_payment_button'),
+                    child: const RecordPaymentScreen(),
                     transition: CustomPageTransition.transform,
                   ),
                 );

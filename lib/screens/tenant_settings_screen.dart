@@ -3,10 +3,9 @@ import 'package:provider/provider.dart';
 import '../services/theme_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/responsive.dart';
-import 'owner_upi_management_screen.dart';
 
-class SettingsScreen extends StatelessWidget {
-  const SettingsScreen({super.key});
+class TenantSettingsScreen extends StatelessWidget {
+  const TenantSettingsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -36,6 +35,13 @@ class SettingsScreen extends StatelessWidget {
             _buildSectionHeader(context, 'App Settings', Icons.settings_outlined),
             SizedBox(height: isMobile ? 16 : 20),
             _buildAppSettings(context, isMobile),
+            
+            SizedBox(height: isMobile ? 32 : 40),
+            
+            // Tenant Specific Section
+            _buildSectionHeader(context, 'Tenant Settings', Icons.home_outlined),
+            SizedBox(height: isMobile ? 16 : 20),
+            _buildTenantSettings(context, isMobile),
             
             SizedBox(height: isMobile ? 32 : 40),
             
@@ -256,27 +262,10 @@ class SettingsScreen extends StatelessWidget {
         children: [
           _buildSettingsTile(
             context,
-            icon: Icons.account_balance_wallet_outlined,
-            title: 'UPI Payment Setup',
-            subtitle: 'Configure where tenant payments are received',
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const OwnerUpiManagementScreen(),
-                ),
-              );
-            },
-            isMobile: isMobile,
-          ),
-          _buildDivider(context),
-          _buildSettingsTile(
-            context,
             icon: Icons.notifications_outlined,
             title: 'Notifications',
             subtitle: 'Manage notification preferences',
             onTap: () {
-              // TODO: Navigate to notifications settings
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text('Notification settings coming soon!'),
@@ -292,7 +281,6 @@ class SettingsScreen extends StatelessWidget {
             title: 'Language',
             subtitle: 'English (US)',
             onTap: () {
-              // TODO: Navigate to language settings
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text('Language settings coming soon!'),
@@ -308,10 +296,94 @@ class SettingsScreen extends StatelessWidget {
             title: 'Privacy & Security',
             subtitle: 'Manage your privacy settings',
             onTap: () {
-              // TODO: Navigate to privacy settings
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text('Privacy settings coming soon!'),
+                ),
+              );
+            },
+            isMobile: isMobile,
+            isLast: true,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTenantSettings(BuildContext context, bool isMobile) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppTheme.getCardColor(context),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: Theme.of(context).brightness == Brightness.dark
+              ? Colors.white.withOpacity(0.1)
+              : Colors.grey.shade200,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          _buildSettingsTile(
+            context,
+            icon: Icons.home_outlined,
+            title: 'Room Information',
+            subtitle: 'View and update room details',
+            onTap: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Room information coming soon!'),
+                ),
+              );
+            },
+            isMobile: isMobile,
+          ),
+          _buildDivider(context),
+          _buildSettingsTile(
+            context,
+            icon: Icons.payment_outlined,
+            title: 'Payment Settings',
+            subtitle: 'Manage payment preferences',
+            onTap: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Payment settings coming soon!'),
+                ),
+              );
+            },
+            isMobile: isMobile,
+          ),
+          _buildDivider(context),
+          _buildSettingsTile(
+            context,
+            icon: Icons.report_problem_outlined,
+            title: 'Complaint Preferences',
+            subtitle: 'Set complaint notification preferences',
+            onTap: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Complaint preferences coming soon!'),
+                ),
+              );
+            },
+            isMobile: isMobile,
+          ),
+          _buildDivider(context),
+          _buildSettingsTile(
+            context,
+            icon: Icons.contact_support_outlined,
+            title: 'Emergency Contacts',
+            subtitle: 'Manage emergency contact information',
+            onTap: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Emergency contacts coming soon!'),
                 ),
               );
             },
@@ -358,7 +430,6 @@ class SettingsScreen extends StatelessWidget {
             title: 'Help & Support',
             subtitle: 'Get help and contact support',
             onTap: () {
-              // TODO: Navigate to help
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text('Help & Support coming soon!'),
@@ -374,7 +445,6 @@ class SettingsScreen extends StatelessWidget {
             title: 'Terms & Privacy',
             subtitle: 'Read our terms and privacy policy',
             onTap: () {
-              // TODO: Navigate to terms
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text('Terms & Privacy coming soon!'),
