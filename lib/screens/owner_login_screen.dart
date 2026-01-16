@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../utils/responsive.dart';
 import '../theme/app_theme.dart';
-import '../screens/dashboard_screen.dart';
+import '../screens/main_navigation_screen.dart';
 
 class OwnerLoginScreen extends StatefulWidget {
   const OwnerLoginScreen({super.key});
@@ -49,7 +49,7 @@ class _OwnerLoginScreenState extends State<OwnerLoginScreen> {
         Navigator.pop(context, true);
         // Navigate to dashboard
         Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (context) => const DashboardScreen()),
+          MaterialPageRoute(builder: (context) => const MainNavigationScreen()),
           (route) => false,
         );
       } else if (mounted) {

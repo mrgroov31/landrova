@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+ import 'package:flutter/material.dart';
 import '../models/tenant.dart';
 import '../models/room.dart';
 import '../models/complaint.dart';
@@ -26,6 +26,8 @@ import 'complaint_detail_screen.dart';
 import 'payments_screen.dart';
 import 'record_payment_screen.dart';
 import 'buildings_screen.dart';
+import 'add_building_screen.dart';
+import 'building_detail_screen.dart';
 import 'profile_screen.dart';
 import 'settings_screen.dart';
 import 'register_service_provider_screen.dart';
@@ -491,24 +493,31 @@ class _DashboardScreenState extends State<DashboardScreen> {
     };
   }
 
+  int _currentIndex = 0;
+  bool _isMenuOpen = false;
+
   @override
   Widget build(BuildContext context) {
     final isMobile = Responsive.isMobile(context);
     final isTablet = Responsive.isTablet(context);
     
     return PerformanceIndicator(
-      showDebugInfo: true, // Set to false in production
+      showDebugInfo: false, // Set to false in production
       child: Scaffold(
         backgroundColor: AppTheme.getBackgroundColor(context),
         drawer: _buildNavigationDrawer(isMobile),
-        floatingActionButton: _buildFloatingActionButton(),
         body: SafeArea(
           child: EnhancedSkeletonLoader(
             isLoading: isLoading,
             loadingMessage: 'Loading your dashboard...',
             showHiveHint: true,
             child: SingleChildScrollView(
-              padding: EdgeInsets.all(isMobile ? 16 : 24),
+              padding: EdgeInsets.only(
+                left: isMobile ? 16 : 24,
+                right: isMobile ? 16 : 24,
+                top: isMobile ? 16 : 24,
+                bottom: 120, // Extra padding for bottom nav
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -517,18 +526,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   
                   SizedBox(height: isMobile ? 24 : 32),
                   
-                  // Unified Super Card (replacing both daily score and quick stats)
-                  _buildUnifiedSuperCard(isMobile),
+                  // Financial Card (Portfolio Value)
+                  _buildFinancialCard(isMobile),
                   
                   SizedBox(height: isMobile ? 24 : 32),
                   
-                  // Activity Cards
-                  _buildActivityCards(isMobile),
+                  // Action Grid (PROS, TICKETS, VACATING)
+                  _buildActionGrid(isMobile),
                   
                   SizedBox(height: isMobile ? 24 : 32),
                   
-                  // Recent Activity
-                  _buildRecentActivity(isMobile),
+                  // Vacant Units Section
+                  _buildVacantUnitsSection(isMobile),
+                  
+                  SizedBox(height: isMobile ? 24 : 32),
+                  
+                  // Activity Feed
+                  _buildActivityFeed(isMobile),
                 ],
               ),
             ),
@@ -539,93 +553,46 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildModernHeader(bool isMobile) {
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Menu Button
-        Container(
-          width: isMobile ? 44 : 48,
-          height: isMobile ? 44 : 48,
-          decoration: BoxDecoration(
-            color: AppTheme.getTextPrimaryColor(context).withOpacity(0.1),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppTheme.getTextPrimaryColor(context).withOpacity(0.1)),
-          ),
-          child: IconButton(
-            icon: Icon(Icons.menu, color: AppTheme.getTextPrimaryColor(context), size: 20),
-            onPressed: () {
-              Scaffold.of(context).openDrawer();
-            },
-          ),
-        ),
-        
-        SizedBox(width: isMobile ? 12 : 16),
-        
-        // Welcome Text
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Welcome back,',
-                style: TextStyle(
-                  color: AppTheme.getTextSecondaryColor(context),
-                  fontSize: isMobile ? 14 : 16,
-                ),
-              ),
-              Text(
-                'Property Owner',
-                style: TextStyle(
-                  color: AppTheme.getTextPrimaryColor(context),
-                  fontSize: isMobile ? 18 : 22,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-        ),
-        
-        // Action Buttons
         Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            _buildHeaderButton(Icons.notifications_outlined, () {}),
-            SizedBox(width: isMobile ? 8 : 12),
-            _buildHeaderButton(Icons.settings_outlined, () {
-              Navigator.push(
-                context,
-                CustomPageRoute(
-                  child: const SettingsScreen(),
-                  transition: CustomPageTransition.transform,
-                ),
-              );
-            }),
-            SizedBox(width: isMobile ? 8 : 12),
-            // Profile Avatar
-            GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  CustomPageRoute(
-                    child: const ProfileScreen(),
-                    transition: CustomPageTransition.transform,
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'DASHBOARD',
+                  style: TextStyle(
+                    color: AppTheme.getTextPrimaryColor(context),
+                    fontSize: isMobile ? 28 : 32,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: -0.5,
                   ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Overview of your holdings',
+                  style: TextStyle(
+                    color: AppTheme.getTextSecondaryColor(context),
+                    fontSize: isMobile ? 14 : 16,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              ],
+            ),
+            IconButton(
+              icon: Icon(
+                Icons.notifications_outlined,
+                color: AppTheme.getTextPrimaryColor(context),
+                size: 28,
+              ),
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Notifications coming soon!')),
                 );
               },
-              child: Container(
-                width: isMobile ? 44 : 48,
-                height: isMobile ? 44 : 48,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: const LinearGradient(
-                    colors: [AppTheme.accentColor, Color(0xFFFF8F00)],
-                  ),
-                  border: Border.all(color: AppTheme.getTextPrimaryColor(context).withOpacity(0.2), width: 2),
-                ),
-                child: const Icon(
-                  Icons.person,
-                  color: Colors.white,
-                  size: 20,
-                ),
-              ),
             ),
           ],
         ),
@@ -2835,17 +2802,1052 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildFloatingActionButton() {
-    return FloatingActionButton.extended(
-      onPressed: () {
-        _showQuickActionDialog();
+  // New Modern UI Components
+  Widget _buildFinancialCard(bool isMobile) {
+    final totalRevenue = getTotalRevenue();
+    final pendingRevenue = getPendingRevenue();
+    final totalRooms = getTotalRooms();
+    final targetGoal = 100000.0; // You can make this dynamic
+    final progress = totalRevenue / targetGoal;
+    final progressPercentage = (progress * 100).clamp(0, 100).toInt();
+    
+    // Format number with commas
+    String formatCurrency(double amount) {
+      return amount.toStringAsFixed(0).replaceAllMapped(
+        RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+        (Match m) => '${m[1]},',
+      );
+    }
+    
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: isMobile ? 0 : 20),
+      padding: EdgeInsets.all(isMobile ? 24 : 28),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: Theme.of(context).brightness == Brightness.dark
+              ? [const Color(0xFF1E293B), const Color(0xFF334155), const Color(0xFF475569)]
+              : [const Color(0xFF0F172A), const Color(0xFF1E3A8A), const Color(0xFF312E81)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(40),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF1E3A8A).withOpacity(0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        'PORTFOLIO VALUE',
+                        style: TextStyle(
+                          color: Colors.blueAccent,
+                          fontSize: isMobile ? 10 : 12,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 1.5,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: Colors.green.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          '+12.5%',
+                          style: TextStyle(
+                            color: Colors.greenAccent,
+                            fontSize: isMobile ? 10 : 11,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '₹${formatCurrency(totalRevenue)}',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: isMobile ? 36 : 42,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  Text(
+                    'Net collected this month',
+                    style: TextStyle(
+                      color: Colors.white54,
+                      fontSize: isMobile ? 12 : 13,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(
+                width: isMobile ? 70 : 80,
+                height: isMobile ? 70 : 80,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    SizedBox(
+                      width: isMobile ? 70 : 80,
+                      height: isMobile ? 70 : 80,
+                      child: CircularProgressIndicator(
+                        value: progress > 1.0 ? 1.0 : progress,
+                        color: Colors.white,
+                        backgroundColor: Colors.white24,
+                        strokeWidth: 6,
+                      ),
+                    ),
+                    Text(
+                      '$progressPercentage%',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: isMobile ? 16 : 18,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: isMobile ? 28 : 32),
+          Row(
+            children: [
+              _buildMiniStat(
+                'TARGET GOAL',
+                '₹${formatCurrency(targetGoal)}',
+                Icons.track_changes,
+                Colors.blue,
+                isMobile,
+              ),
+              const SizedBox(width: 12),
+              _buildMiniStat(
+                'OUTSTANDING',
+                '₹${formatCurrency(pendingRevenue)}',
+                Icons.timer_outlined,
+                Colors.redAccent,
+                isMobile,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMiniStat(String label, String value, IconData icon, Color color, bool isMobile) {
+    return Expanded(
+      child: Container(
+        padding: EdgeInsets.all(isMobile ? 16 : 18),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: Colors.white.withOpacity(0.1)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, color: color.withOpacity(0.8), size: isMobile ? 18 : 20),
+            SizedBox(height: isMobile ? 8 : 10),
+            Text(
+              label,
+              style: TextStyle(
+                color: Colors.white54,
+                fontSize: isMobile ? 9 : 10,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            Text(
+              value,
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: isMobile ? 16 : 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionGrid(bool isMobile) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: isMobile ? 0 : 20),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          _buildActionButton(
+            'PROS',
+            Icons.engineering,
+            Colors.blue,
+            isMobile,
+            onTap: () {
+              Navigator.push(
+                context,
+                CustomPageRoute(
+                  child: const ServiceProvidersListScreen(),
+                  transition: CustomPageTransition.transform,
+                ),
+              );
+            },
+          ),
+          _buildActionButton(
+            'TICKETS',
+            Icons.build,
+            Colors.orange,
+            isMobile,
+            badge: getPendingComplaints().toString(),
+            onTap: () {
+              Navigator.push(
+                context,
+                CustomPageRoute(
+                  child: const ComplaintsScreen(),
+                  transition: CustomPageTransition.transform,
+                ),
+              );
+            },
+          ),
+          _buildActionButton(
+            'VACATING',
+            Icons.exit_to_app,
+            Colors.purple,
+            isMobile,
+            onTap: () {
+              Navigator.push(
+                context,
+                CustomPageRoute(
+                  child: const VacatingRequestsScreen(),
+                  transition: CustomPageTransition.transform,
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionButton(
+    String label,
+    IconData icon,
+    Color color,
+    bool isMobile, {
+    String? badge,
+    VoidCallback? onTap,
+  }) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 4),
+          padding: EdgeInsets.symmetric(vertical: isMobile ? 20 : 24),
+          decoration: BoxDecoration(
+            color: AppTheme.getCardColor(context),
+            borderRadius: BorderRadius.circular(28),
+            border: Border.all(color: AppTheme.getTextSecondaryColor(context).withOpacity(0.1)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.02),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: color.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(icon, color: color, size: isMobile ? 24 : 26),
+                  ),
+                  if (badge != null && badge != '0')
+                    Positioned(
+                      right: -5,
+                      top: -5,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Text(
+                          badge,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: isMobile ? 8 : 9,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              SizedBox(height: isMobile ? 8 : 10),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: isMobile ? 10 : 11,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 0.5,
+                  color: AppTheme.getTextPrimaryColor(context),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildVacantUnitsSection(bool isMobile) {
+    // Show ALL buildings in horizontal scroll
+    final availableBuildings = _buildings; // Show all buildings, not just 3
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: EdgeInsets.fromLTRB(isMobile ? 0 : 24, 0, isMobile ? 0 : 24, 16),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'OUR PROPERTIES',
+                style: TextStyle(
+                  fontSize: isMobile ? 12 : 13,
+                  fontWeight: FontWeight.w900,
+                  color: AppTheme.getTextSecondaryColor(context),
+                  letterSpacing: 1.2,
+                ),
+              ),
+              Text(
+                '${_buildings.length} BUILDINGS',
+                style: TextStyle(
+                  fontSize: isMobile ? 10 : 11,
+                  color: Colors.orange,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        ),
+        SizedBox(
+          height: isMobile ? 220 : 240,
+          child: availableBuildings.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'No buildings yet',
+                        style: TextStyle(
+                          color: AppTheme.getTextSecondaryColor(context),
+                          fontSize: isMobile ? 14 : 16,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            CustomPageRoute(
+                              child: const AddBuildingScreen(),
+                              transition: CustomPageTransition.transform,
+                            ),
+                          ).then((result) {
+                            if (result != null) {
+                              loadDashboardData();
+                            }
+                          });
+                        },
+                        icon: const Icon(Icons.add),
+                        label: const Text('Add Your First Building'),
+                      ),
+                    ],
+                  ),
+                )
+              : ListView(
+                  scrollDirection: Axis.horizontal,
+                  padding: EdgeInsets.symmetric(horizontal: isMobile ? 0 : 20),
+                  children: [
+                    // Show all buildings
+                    ...availableBuildings.map((building) {
+                      // Calculate building stats
+                      final buildingRooms = rooms.where((r) => r.buildingId == building.id).toList();
+                      final occupiedCount = buildingRooms.where((r) => r.hasTenant || r.isOccupied).length;
+                      final totalRooms = buildingRooms.length;
+                      
+                      return _buildBuildingCard(
+                        building.name,
+                        building.address,
+                        '$occupiedCount/$totalRooms Occupied',
+                        isMobile,
+                        onTap: () {
+                          // Navigate to building detail screen
+                          Navigator.push(
+                            context,
+                            CustomPageRoute(
+                              child: BuildingDetailScreen(building: building),
+                              transition: CustomPageTransition.transform,
+                            ),
+                          );
+                        },
+                      );
+                    }),
+                    // Add Building card at the end (always shown)
+                    _buildAddBuildingCard(isMobile),
+                  ],
+                ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBuildingCard(
+    String buildingName,
+    String address,
+    String occupancyInfo,
+    bool isMobile, {
+    VoidCallback? onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: isMobile ? 260 : 280,
+        margin: const EdgeInsets.only(right: 16),
+        decoration: BoxDecoration(
+          color: AppTheme.getCardColor(context),
+          borderRadius: BorderRadius.circular(40),
+          border: Border.all(color: AppTheme.getTextSecondaryColor(context).withOpacity(0.1)),
+        ),
+        child: Column(
+          children: [
+            ClipRRect(
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(40)),
+              child: Container(
+                height: isMobile ? 110 : 120,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.blueGrey.shade800
+                    : Colors.blueGrey.shade100,
+                child: Center(
+                  child: Icon(
+                    Icons.apartment,
+                    size: isMobile ? 36 : 40,
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? Colors.blueGrey.shade400
+                        : Colors.blueGrey,
+                  ),
+                ),
+              ),
+            ),
+            Padding(
+              padding: EdgeInsets.all(isMobile ? 18 : 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    buildingName,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: isMobile ? 17 : 18,
+                      color: AppTheme.getTextPrimaryColor(context),
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    address.toUpperCase(),
+                    style: TextStyle(
+                      fontSize: isMobile ? 9 : 10,
+                      color: AppTheme.getTextSecondaryColor(context),
+                      fontWeight: FontWeight.bold,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        occupancyInfo,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w900,
+                          fontSize: isMobile ? 13 : 14,
+                          color: Colors.blueAccent,
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.green.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          'VIEW',
+                          style: TextStyle(
+                            fontSize: isMobile ? 8 : 9,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.green,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAddBuildingCard(bool isMobile) {
+    return GestureDetector(
+      onTap: () {
+        // Navigate directly to Add Building form
+        Navigator.push(
+          context,
+          CustomPageRoute(
+            child: const AddBuildingScreen(),
+            transition: CustomPageTransition.transform,
+          ),
+        ).then((result) {
+          if (result != null) {
+            loadDashboardData();
+          }
+        });
       },
-      backgroundColor: AppTheme.primaryColor,
-      foregroundColor: Colors.white,
-      icon: const Icon(Icons.add),
-      label: const Text(
-        'Quick Add',
-        style: TextStyle(fontWeight: FontWeight.bold),
+      child: Container(
+        width: isMobile ? 130 : 140,
+        decoration: BoxDecoration(
+          border: Border.all(
+            color: AppTheme.getTextSecondaryColor(context).withOpacity(0.3),
+            style: BorderStyle.solid,
+          ),
+          borderRadius: BorderRadius.circular(40),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.add_circle_outline,
+              color: AppTheme.getTextSecondaryColor(context),
+              size: isMobile ? 30 : 32,
+            ),
+            SizedBox(height: isMobile ? 6 : 8),
+            Text(
+              'ADD BUILDING',
+              style: TextStyle(
+                fontSize: isMobile ? 10 : 11,
+                fontWeight: FontWeight.w900,
+                color: AppTheme.getTextSecondaryColor(context),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildUnitCard(
+    String unit,
+    String property,
+    String price,
+    bool isMobile, {
+    VoidCallback? onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: isMobile ? 260 : 280,
+        margin: const EdgeInsets.only(right: 16),
+        decoration: BoxDecoration(
+          color: AppTheme.getCardColor(context),
+          borderRadius: BorderRadius.circular(40),
+          border: Border.all(color: AppTheme.getTextSecondaryColor(context).withOpacity(0.1)),
+        ),
+        child: Column(
+          children: [
+            ClipRRect(
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(40)),
+              child: Container(
+                height: isMobile ? 110 : 120,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.blueGrey.shade800
+                    : Colors.blueGrey.shade100,
+                child: Center(
+                  child: Icon(
+                    Icons.apartment,
+                    size: isMobile ? 36 : 40,
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? Colors.blueGrey.shade400
+                        : Colors.blueGrey,
+                  ),
+                ),
+              ),
+            ),
+            Padding(
+              padding: EdgeInsets.all(isMobile ? 18 : 20),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Unit $unit',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w900,
+                          fontSize: isMobile ? 17 : 18,
+                          color: AppTheme.getTextPrimaryColor(context),
+                        ),
+                      ),
+                      Text(
+                        property.toUpperCase(),
+                        style: TextStyle(
+                          fontSize: isMobile ? 9 : 10,
+                          color: AppTheme.getTextSecondaryColor(context),
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        price,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w900,
+                          fontSize: isMobile ? 17 : 18,
+                          color: Colors.blueAccent,
+                        ),
+                      ),
+                      Text(
+                        'EXPECTED',
+                        style: TextStyle(
+                          fontSize: isMobile ? 8 : 9,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.getTextSecondaryColor(context),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAddUnitCard(bool isMobile) {
+    return GestureDetector(
+      onTap: () {
+        _showBuildingSelectionDialog(
+          context,
+          onBuildingSelected: (buildingId) {
+            Navigator.push(
+              context,
+              CustomPageRoute(
+                child: AddRoomScreen(buildingId: buildingId),
+                transition: CustomPageTransition.transform,
+              ),
+            ).then((result) {
+              if (result != null) {
+                loadDashboardData();
+              }
+            });
+          },
+        );
+      },
+      child: Container(
+        width: isMobile ? 130 : 140,
+        decoration: BoxDecoration(
+          border: Border.all(
+            color: AppTheme.getTextSecondaryColor(context).withOpacity(0.3),
+            style: BorderStyle.solid,
+          ),
+          borderRadius: BorderRadius.circular(40),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.add_circle_outline,
+              color: AppTheme.getTextSecondaryColor(context),
+              size: isMobile ? 30 : 32,
+            ),
+            SizedBox(height: isMobile ? 6 : 8),
+            Text(
+              'ADD UNIT',
+              style: TextStyle(
+                fontSize: isMobile ? 10 : 11,
+                fontWeight: FontWeight.w900,
+                color: AppTheme.getTextSecondaryColor(context),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActivityFeed(bool isMobile) {
+    final recentPayments = payments.take(2).toList();
+    final recentComplaints = complaints.take(2).toList();
+    
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: isMobile ? 0 : 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'FEED',
+            style: TextStyle(
+              fontSize: isMobile ? 12 : 13,
+              fontWeight: FontWeight.w900,
+              color: AppTheme.getTextSecondaryColor(context),
+              letterSpacing: 1.2,
+            ),
+          ),
+          SizedBox(height: isMobile ? 14 : 16),
+          if (recentPayments.isNotEmpty)
+            ...recentPayments.map((payment) => _ActivityTile(
+                  title: 'Rent Received',
+                  subtitle: 'Room ${payment.roomNumber} - ${payment.tenantName}',
+                  amount: '+₹${payment.amount.toStringAsFixed(0)}',
+                  icon: Icons.check_circle,
+                  color: Colors.green,
+                  isMobile: isMobile,
+                  onTap: () {
+                    // Navigate to payment detail or payments screen
+                    Navigator.push(
+                      context,
+                      CustomPageRoute(
+                        child: const PaymentsScreen(),
+                        transition: CustomPageTransition.transform,
+                      ),
+                    );
+                  },
+                )),
+          if (recentComplaints.isNotEmpty)
+            ...recentComplaints.map((complaint) => _ActivityTile(
+                  title: complaint.title,
+                  subtitle: 'Room ${complaint.roomNumber} - ${complaint.priority.toUpperCase()}',
+                  amount: complaint.priority.toUpperCase(),
+                  icon: Icons.warning_amber,
+                  color: Colors.orange,
+                  isMobile: isMobile,
+                  onTap: () {
+                    // Navigate to complaint detail screen
+                    Navigator.push(
+                      context,
+                      CustomPageRoute(
+                        child: ComplaintDetailScreen(complaint: complaint),
+                        transition: CustomPageTransition.transform,
+                      ),
+                    );
+                  },
+                )),
+          if (recentPayments.isEmpty && recentComplaints.isEmpty)
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Text(
+                  'No recent activity',
+                  style: TextStyle(
+                    color: AppTheme.getTextSecondaryColor(context),
+                    fontSize: isMobile ? 14 : 16,
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBlurOverlay() {
+    return GestureDetector(
+      onTap: () => setState(() => _isMenuOpen = false),
+      child: Container(
+        color: Colors.black.withOpacity(0.4),
+      ),
+    );
+  }
+
+  Widget _buildFloatingMenu() {
+    if (!_isMenuOpen) return const SizedBox.shrink();
+    
+    return Positioned(
+      bottom: 100,
+      right: 24,
+      child: Container(
+        width: 220,
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: AppTheme.getCardColor(context),
+          borderRadius: BorderRadius.circular(32),
+          boxShadow: const [
+            BoxShadow(color: Colors.black26, blurRadius: 20),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildMenuOption(Icons.add_business, 'Add Building', Colors.blue, () {
+              setState(() => _isMenuOpen = false);
+              Navigator.push(
+                context,
+                CustomPageRoute(
+                  child: const BuildingsScreen(),
+                  transition: CustomPageTransition.transform,
+                ),
+              );
+            }),
+            _buildMenuOption(Icons.add_home, 'Add Room', Colors.green, () {
+              setState(() => _isMenuOpen = false);
+              _showBuildingSelectionDialog(
+                context,
+                onBuildingSelected: (buildingId) {
+                  Navigator.push(
+                    context,
+                    CustomPageRoute(
+                      child: AddRoomScreen(buildingId: buildingId),
+                      transition: CustomPageTransition.transform,
+                    ),
+                  ).then((result) {
+                    if (result != null) {
+                      loadDashboardData();
+                    }
+                  });
+                },
+              );
+            }),
+            _buildMenuOption(Icons.person_add, 'Add Tenant', Colors.purple, () {
+              setState(() => _isMenuOpen = false);
+              _showBuildingSelectionDialog(
+                context,
+                onBuildingSelected: (buildingId) {
+                  Navigator.push(
+                    context,
+                    CustomPageRoute(
+                      child: InviteTenantScreen(selectedBuildingId: buildingId),
+                      transition: CustomPageTransition.transform,
+                    ),
+                  ).then((result) {
+                    if (result == true) {
+                      loadDashboardData();
+                    }
+                  });
+                },
+              );
+            }),
+            _buildMenuOption(Icons.report_problem, 'Complaints', Colors.orange, () {
+              setState(() => _isMenuOpen = false);
+              Navigator.push(
+                context,
+                CustomPageRoute(
+                  child: const ComplaintsScreen(),
+                  transition: CustomPageTransition.transform,
+                ),
+              );
+            }),
+            _buildMenuOption(Icons.payment, 'Payments', Colors.indigo, () {
+              setState(() => _isMenuOpen = false);
+              Navigator.push(
+                context,
+                CustomPageRoute(
+                  child: const PaymentsScreen(),
+                  transition: CustomPageTransition.transform,
+                ),
+              );
+            }),
+            _buildMenuOption(Icons.handyman, 'Service Providers', Colors.teal, () {
+              setState(() => _isMenuOpen = false);
+              Navigator.push(
+                context,
+                CustomPageRoute(
+                  child: const ServiceProvidersListScreen(),
+                  transition: CustomPageTransition.transform,
+                ),
+              );
+            }),
+            _buildMenuOption(Icons.exit_to_app, 'Vacating Requests', Colors.red, () {
+              setState(() => _isMenuOpen = false);
+              Navigator.push(
+                context,
+                CustomPageRoute(
+                  child: const VacatingRequestsScreen(),
+                  transition: CustomPageTransition.transform,
+                ),
+              );
+            }),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMenuOption(IconData icon, String label, Color color, VoidCallback onTap) {
+    return ListTile(
+      leading: Icon(icon, color: color, size: 20),
+      title: Text(
+        label,
+        style: TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+          color: AppTheme.getTextPrimaryColor(context),
+        ),
+      ),
+      onTap: onTap,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+      dense: true,
+    );
+  }
+
+  Widget _buildBottomNav() {
+    return Container(
+      height: 80,
+      decoration: BoxDecoration(
+        color: AppTheme.getCardColor(context),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          _buildNavItem(Icons.home, 'HOME', 0),
+          _buildNavItem(Icons.apartment, 'PROPERTIES', 1),
+          _buildNavItem(Icons.people, 'PEOPLE', 2),
+          _buildNavItem(Icons.account_balance_wallet, 'FINANCE', 3),
+          _buildNavItem(Icons.settings, 'ME', 4),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNavItem(IconData icon, String label, int index) {
+    bool active = _currentIndex == index;
+    return GestureDetector(
+      onTap: () {
+        setState(() => _currentIndex = index);
+        // Navigate based on index
+        switch (index) {
+          case 0:
+            // Already on home
+            break;
+          case 1:
+            // Navigate to Buildings screen (Properties)
+            Navigator.push(
+              context,
+              CustomPageRoute(
+                child: const BuildingsScreen(),
+                transition: CustomPageTransition.transform,
+              ),
+            );
+            break;
+          case 2:
+            Navigator.push(
+              context,
+              CustomPageRoute(
+                child: const TenantsScreen(),
+                transition: CustomPageTransition.transform,
+              ),
+            );
+            break;
+          case 3:
+            Navigator.push(
+              context,
+              CustomPageRoute(
+                child: const PaymentsScreen(),
+                transition: CustomPageTransition.transform,
+              ),
+            );
+            break;
+          case 4:
+            Navigator.push(
+              context,
+              CustomPageRoute(
+                child: const SettingsScreen(),
+                transition: CustomPageTransition.transform,
+              ),
+            );
+            break;
+        }
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              color: active 
+                  ? AppTheme.primaryColor 
+                  : AppTheme.getTextSecondaryColor(context).withOpacity(0.5),
+              size: 26,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: active 
+                    ? AppTheme.primaryColor 
+                    : AppTheme.getTextSecondaryColor(context).withOpacity(0.5),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMainFAB() {
+    return FloatingActionButton(
+      onPressed: () => setState(() => _isMenuOpen = !_isMenuOpen),
+      backgroundColor: Theme.of(context).brightness == Brightness.dark
+          ? AppTheme.primaryColor
+          : Colors.black,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      child: AnimatedRotation(
+        duration: const Duration(milliseconds: 300),
+        turns: _isMenuOpen ? 0.375 : 0,
+        child: const Icon(Icons.add, color: Colors.white, size: 32),
       ),
     );
   }
@@ -3190,6 +4192,85 @@ class _AutoScrollingTickerState extends State<_AutoScrollingTicker>
             ),
           );
         }).toList(),
+      ),
+    );
+  }
+}
+
+// Activity Tile Widget
+class _ActivityTile extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final String amount;
+  final IconData icon;
+  final Color color;
+  final bool isMobile;
+  final VoidCallback? onTap;
+
+  const _ActivityTile({
+    required this.title,
+    required this.subtitle,
+    required this.amount,
+    required this.icon,
+    required this.color,
+    required this.isMobile,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: EdgeInsets.only(bottom: isMobile ? 10 : 12),
+        padding: EdgeInsets.all(isMobile ? 14 : 16),
+        decoration: BoxDecoration(
+          color: AppTheme.getCardColor(context),
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Icon(icon, color: color, size: isMobile ? 18 : 20),
+            ),
+            SizedBox(width: isMobile ? 14 : 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: isMobile ? 13 : 14,
+                      color: AppTheme.getTextPrimaryColor(context),
+                    ),
+                  ),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      color: AppTheme.getTextSecondaryColor(context),
+                      fontSize: isMobile ? 11 : 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Text(
+              amount,
+              style: TextStyle(
+                fontWeight: FontWeight.w900,
+                color: color,
+                fontSize: isMobile ? 13 : 14,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

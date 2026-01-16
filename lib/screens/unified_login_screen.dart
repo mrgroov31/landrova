@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../utils/responsive.dart';
 import '../theme/app_theme.dart';
-import 'dashboard_screen.dart';
+import 'main_navigation_screen.dart';
 import 'tenant_dashboard_screen.dart';
 
 class UnifiedLoginScreen extends StatefulWidget {
@@ -104,7 +104,7 @@ class _UnifiedLoginScreenState extends State<UnifiedLoginScreen> {
           // Navigate based on user role
           if (user.isOwner) {
             Navigator.of(context).pushAndRemoveUntil(
-              MaterialPageRoute(builder: (context) => const DashboardScreen()),
+              MaterialPageRoute(builder: (context) => const MainNavigationScreen()),
               (route) => false,
             );
           } else if (user.isTenant) {

@@ -4,7 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../services/auth_service.dart';
 import 'advanced_onboarding_screen.dart';
 import 'unified_login_screen.dart';
-import 'dashboard_screen.dart';
+import 'main_navigation_screen.dart';
 import 'tenant_dashboard_screen.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -61,7 +61,7 @@ class _SplashScreenState extends State<SplashScreen>
     if (AuthService.isLoggedIn) {
       final user = AuthService.currentUser;
       if (user?.isOwner == true) {
-        _navigateToScreen(const DashboardScreen());
+        _navigateToScreen(const MainNavigationScreen());
         return;
       } else if (user?.isTenant == true) {
         _navigateToScreen(const TenantDashboardScreen());

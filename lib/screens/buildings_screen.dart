@@ -71,22 +71,37 @@ class _BuildingsScreenState extends State<BuildingsScreen> {
       backgroundColor: AppTheme.getBackgroundColor(context),
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: AppTheme.getSurfaceColor(context),
+        backgroundColor: AppTheme.getBackgroundColor(context),
         foregroundColor: AppTheme.getTextPrimaryColor(context),
-        title: const Text(
-          'My Buildings',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 24,
-            // color: Colors.,
-          ),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'BUILDINGS',
+              style: TextStyle(
+                fontWeight: FontWeight.w900,
+                fontSize: 24,
+                letterSpacing: -0.5,
+              ),
+            ),
+            Text(
+              '${buildings.length} registered properties',
+              style: TextStyle(
+                fontSize: 14,
+                color: AppTheme.getTextSecondaryColor(context),
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+          ],
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.search, 
-            // color: Colors.black87
-            ),
-            onPressed: () {},
+            icon: const Icon(Icons.notifications_outlined),
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Notifications coming soon!')),
+              );
+            },
           ),
         ],
       ),
@@ -146,136 +161,78 @@ class _BuildingsScreenState extends State<BuildingsScreen> {
                         ],
                       ),
                     )
-                  : RefreshIndicator(
-                      onRefresh: loadBuildings,
-                      child: ListView.builder(
-                        padding: EdgeInsets.all(isMobile ? 16 : 24),
-                        itemCount: buildings.length,
-                        itemBuilder: (context, index) {
-                          final building = buildings[index];
-                          return Card(
-                            margin: EdgeInsets.only(bottom: isMobile ? 16 : 20),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            elevation: 2,
-                            child: InkWell(
-                              onTap: () {
-                                // Navigate to building detail screen
-                                Navigator.push(
-                                  context,
-                                  CustomPageRoute(
-                                    child: BuildingDetailScreen(building: building),
-                                    transition: CustomPageTransition.transform,
+                  : Column(
+                      children: [
+                        // Search and Filter Bar
+                        Padding(
+                          padding: EdgeInsets.all(isMobile ? 16 : 24),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.getSurfaceColor(context),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: AppTheme.getTextSecondaryColor(context).withOpacity(0.2),
+                                    ),
                                   ),
-                                );
-                              },
-                              borderRadius: BorderRadius.circular(16),
-                              child: Padding(
-                                padding: EdgeInsets.all(isMobile ? 16 : 20),
-                                child: Row(
-                                  children: [
-                                    // Building Image or Icon
-                                    Container(
-                                      width: isMobile ? 60 : 70,
-                                      height: isMobile ? 60 : 70,
-                                      decoration: BoxDecoration(
-                                        color: AppTheme.primaryColor.withOpacity(0.1),
-                                        borderRadius: BorderRadius.circular(12),
+                                  child: TextField(
+                                    decoration: InputDecoration(
+                                      hintText: 'Lookup building...',
+                                      hintStyle: TextStyle(
+                                        color: AppTheme.getTextSecondaryColor(context).withOpacity(0.5),
                                       ),
-                                      child: building.image != null && File(building.image!).existsSync()
-                                          ? ClipRRect(
-                                              borderRadius: BorderRadius.circular(12),
-                                              child: Image.file(
-                                                File(building.image!),
-                                                fit: BoxFit.cover,
-                                              ),
-                                            )
-                                          : Icon(
-                                              Icons.business,
-                                              size: isMobile ? 32 : 36,
-                                              color: AppTheme.primaryColor,
-                                            ),
-                                    ),
-                                    SizedBox(width: isMobile ? 16 : 20),
-                                    // Building Details
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            building.name,
-                                            style: TextStyle(
-                                              fontSize: isMobile ? 18 : 20,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 4),
-                                          Row(
-                                            children: [
-                                              Icon(
-                                                Icons.location_on,
-                                                size: 14,
-                                                color: Colors.grey[600],
-                                              ),
-                                              const SizedBox(width: 4),
-                                              Expanded(
-                                                child: Text(
-                                                  building.address,
-                                                  style: TextStyle(
-                                                    fontSize: isMobile ? 13 : 14,
-                                                    color: Colors.grey[600],
-                                                  ),
-                                                  maxLines: 1,
-                                                  overflow: TextOverflow.ellipsis,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                          const SizedBox(height: 8),
-                                          SingleChildScrollView(
-                                            scrollDirection: Axis.horizontal,
-                                            child: Row(
-                                              children: [
-                                                _buildInfoChip(
-                                                  Icons.layers,
-                                                  '${building.totalFloors} Floors',
-                                                  isMobile,
-                                                ),
-                                                const SizedBox(width: 8),
-                                                _buildInfoChip(
-                                                  Icons.door_front_door,
-                                                  '${building.totalRooms} Rooms',
-                                                  isMobile,
-                                                ),
-                                                const SizedBox(width: 8),
-                                                _buildInfoChip(
-                                                  building.propertyType == 'pg' 
-                                                      ? Icons.hotel 
-                                                      : building.propertyType == 'rented'
-                                                          ? Icons.home
-                                                          : Icons.business,
-                                                  building.propertyTypeDisplayName,
-                                                  isMobile,
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ],
+                                      prefixIcon: Icon(
+                                        Icons.search,
+                                        color: AppTheme.getTextSecondaryColor(context),
+                                      ),
+                                      border: InputBorder.none,
+                                      contentPadding: const EdgeInsets.symmetric(
+                                        horizontal: 16,
+                                        vertical: 14,
                                       ),
                                     ),
-                                    Icon(
-                                      Icons.arrow_forward_ios,
-                                      size: 16,
-                                      color: Colors.grey[400],
-                                    ),
-                                  ],
+                                  ),
                                 ),
                               ),
+                              const SizedBox(width: 12),
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: AppTheme.getSurfaceColor(context),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: AppTheme.getTextSecondaryColor(context).withOpacity(0.2),
+                                  ),
+                                ),
+                                child: IconButton(
+                                  icon: Icon(
+                                    Icons.filter_list,
+                                    color: AppTheme.getTextPrimaryColor(context),
+                                  ),
+                                  onPressed: () {},
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        // Buildings List
+                        Expanded(
+                          child: RefreshIndicator(
+                            onRefresh: loadBuildings,
+                            child: ListView.builder(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: isMobile ? 16 : 24,
+                              ),
+                              itemCount: buildings.length,
+                              itemBuilder: (context, index) {
+                                final building = buildings[index];
+                                return _buildBuildingCard(building, isMobile);
+                              },
                             ),
-                          );
-                        },
-                      ),
+                          ),
+                        ),
+                      ],
                     ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
@@ -295,6 +252,132 @@ class _BuildingsScreenState extends State<BuildingsScreen> {
         label: const Text(
           'Add Building',
           style: TextStyle(color: Colors.white),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBuildingCard(Building building, bool isMobile) {
+    return Container(
+      margin: EdgeInsets.only(bottom: isMobile ? 16 : 20),
+      decoration: BoxDecoration(
+        color: AppTheme.getCardColor(context),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: AppTheme.getTextSecondaryColor(context).withOpacity(0.1),
+        ),
+      ),
+      child: InkWell(
+        onTap: () {
+          Navigator.push(
+            context,
+            CustomPageRoute(
+              child: BuildingDetailScreen(building: building),
+              transition: CustomPageTransition.transform,
+            ),
+          );
+        },
+        borderRadius: BorderRadius.circular(20),
+        child: Padding(
+          padding: EdgeInsets.all(isMobile ? 16 : 20),
+          child: Row(
+            children: [
+              // Building Image
+              Container(
+                width: isMobile ? 80 : 90,
+                height: isMobile ? 80 : 90,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Colors.blueGrey.shade800
+                      : Colors.blueGrey.shade100,
+                ),
+                child: building.image != null && File(building.image!).existsSync()
+                    ? ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: Image.file(
+                          File(building.image!),
+                          fit: BoxFit.cover,
+                        ),
+                      )
+                    : Icon(
+                        Icons.apartment,
+                        size: isMobile ? 36 : 40,
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? Colors.blueGrey.shade400
+                            : Colors.blueGrey,
+                      ),
+              ),
+              SizedBox(width: isMobile ? 14 : 16),
+              // Building Info
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            building.name,
+                            style: TextStyle(
+                              fontSize: isMobile ? 17 : 19,
+                              fontWeight: FontWeight.w900,
+                              color: AppTheme.getTextPrimaryColor(context),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      building.address.toUpperCase(),
+                      style: TextStyle(
+                        fontSize: isMobile ? 11 : 12,
+                        color: AppTheme.getTextSecondaryColor(context),
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.5,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '${building.totalRooms} rooms • ${building.totalFloors} floors',
+                      style: TextStyle(
+                        fontSize: isMobile ? 12 : 13,
+                        color: AppTheme.getTextSecondaryColor(context),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.green.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            building.propertyTypeDisplayName,
+                            style: TextStyle(
+                              fontSize: isMobile ? 10 : 11,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.green.shade700,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
