@@ -33,6 +33,47 @@ class Payment {
     this.notes,
   });
 
+  // Factory constructor with default values for easier creation
+  factory Payment.create({
+    required String id,
+    required String tenantId,
+    String? tenantName,
+    String? roomNumber,
+    required double amount,
+    required DateTime dueDate,
+    DateTime? paidDate,
+    String status = 'pending',
+    String type = 'rent',
+    String? paymentMethod,
+    String? transactionId,
+    String? month,
+    int? year,
+    double lateFee = 0,
+    String? notes,
+  }) {
+    final now = DateTime.now();
+    final monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'];
+    
+    return Payment(
+      id: id,
+      tenantId: tenantId,
+      tenantName: tenantName ?? 'Unknown Tenant',
+      roomNumber: roomNumber ?? 'Unknown Room',
+      amount: amount,
+      dueDate: dueDate,
+      paidDate: paidDate,
+      status: status,
+      type: type,
+      paymentMethod: paymentMethod,
+      transactionId: transactionId,
+      month: month ?? monthNames[now.month - 1],
+      year: year ?? now.year,
+      lateFee: lateFee,
+      notes: notes,
+    );
+  }
+
   factory Payment.fromJson(Map<String, dynamic> json) {
     return Payment(
       id: json['id'].toString(),

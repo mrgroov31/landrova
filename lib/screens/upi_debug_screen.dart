@@ -74,7 +74,18 @@ class _UpiDebugScreenState extends State<UpiDebugScreen> {
       
       // Test 4: Run device-specific debug
       _addLog('🔄 Test 5: Running device-specific UPI debug...');
-      await PaymentService.debugUpiOnDevice();
+      // Check UPI URL support directly
+      final testUpiUrl = 'upi://pay?pa=test@test&pn=Test&tr=TEST&am=1&cu=INR&tn=Test';
+      try {
+        final canLaunch = await canLaunchUrl(Uri.parse(testUpiUrl));
+        if (canLaunch) {
+          _addLog('✅ Device can handle UPI URLs');
+        } else {
+          _addLog('❌ Device cannot handle UPI URLs');
+        }
+      } catch (e) {
+        _addLog('❌ UPI URL test failed: $e');
+      }
       _addLog('✅ Test 5: Device debug completed');
       
       if (installedApps.isEmpty) {
@@ -113,7 +124,9 @@ class _UpiDebugScreenState extends State<UpiDebugScreen> {
       _addLog('⚠️ This will try to open a UPI app directly');
       _addLog('⚠️ DO NOT complete the ₹1 test payment if it opens');
       
-      final success = await PaymentService.forceTestUpiLaunch();
+      // Create a test UPI URL and try to launch it
+      final testUpiUrl = 'upi://pay?pa=test@paytm&pn=Test%20Payment&tr=TEST123&am=1.0&cu=INR&tn=Test%20Payment%20-%20Do%20Not%20Complete';
+      final success = await PaymentService.launchUpiPayment(testUpiUrl);
       
       if (success) {
         _addLog('✅ SUCCESS! UPI app opened successfully');

@@ -341,12 +341,18 @@ class _PaymentDetailScreenState extends State<PaymentDetailScreen> {
     });
 
     try {
-      final success = await PaymentService.markPaymentAsPaid(
+      final transactionId = 'MANUAL_${DateTime.now().millisecondsSinceEpoch}';
+      final success = await PaymentService.updatePaymentStatus(
         paymentId: widget.payment.id,
-        tenantId: widget.payment.tenantId,
-        amount: widget.payment.amount,
-        paymentMethod: 'manual',
-        transactionId: 'MANUAL_${DateTime.now().millisecondsSinceEpoch}',
+        transactionId: transactionId,
+        status: 'paid',
+        upiTransactionId: transactionId,
+        paidAmount: widget.payment.amount,
+        additionalData: {
+          'tenantName': widget.payment.tenantName,
+          'roomNumber': widget.payment.roomNumber,
+          'paymentType': widget.payment.type,
+        },
       );
 
       if (mounted) {

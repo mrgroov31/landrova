@@ -7,6 +7,8 @@ import '../services/api_service.dart';
 import '../services/optimized_api_service.dart';
 import '../services/hive_api_service.dart';
 import '../services/complaint_service.dart';
+import '../services/payment_service.dart';
+import '../services/notification_service.dart';
 import '../widgets/modern_stat_card.dart';
 import '../widgets/modern_stat_mini_card.dart';
 import '../widgets/revenue_chart_card.dart';
@@ -35,12 +37,13 @@ import 'unified_login_screen.dart';
 import 'add_room_screen.dart';
 import 'invite_tenant_screen.dart';
 import 'room_detail_screen.dart';
+import 'notification_center_screen.dart';
 import '../services/auth_service.dart';
 import '../constants/app_assets.dart';
 import '../utils/custom_page_route.dart';
 import '../models/building.dart';
 import '../utils/payment_test_helper.dart';
-import '../screens/payment_test_screen.dart';
+import '../screens/payment_integration_test_screen.dart';
 import 'package:intl/intl.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -57,6 +60,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   List<Room> rooms = [];
   List<Complaint> complaints = [];
   List<Payment> payments = [];
+  Map<String, dynamic> paymentSummary = {};
   bool isLoading = true;
   String? currentBuildingId;
   PageController? _roomsPageController;
@@ -89,7 +93,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
       }
     });
     
+    // Initialize services
+    _initializeServices();
     loadDashboardData();
+  }
+
+  Future<void> _initializeServices() async {
+    await PaymentService.initialize();
+    await NotificationService.initialize();
   }
 
   @override
@@ -143,6 +154,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
         }
         isLoading = false;
       });
+      
+      // Generate sample notifications for demo
+      await _generateSampleNotifications();
       
       // Preload service providers in background for faster access later
       HiveApiService.getServiceProviders();
@@ -218,7 +232,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       final results = await Future.wait([
         ApiService.fetchRoomsByOwnerId(ownerId),
         ApiService.fetchTenants(),
-        ApiService.fetchPayments(),
+        PaymentService.getOwnerPayments(ownerId: ownerId), // Use real payment API
         ApiService.fetchComplaintsByOwnerId(ownerId), // Use new API method
       ]);
 
@@ -226,7 +240,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
       var allRooms = ApiService.parseRooms(results[0]);
       debugPrint('📊 [Dashboard] Parsed ${allRooms.length} rooms from API');
       var allTenants = ApiService.parseTenants(results[1]);
-      var allPayments = ApiService.parsePayments(results[2]);
+      
+      // Parse real payment data from PaymentService
+      final paymentData = results[2] as Map<String, dynamic>;
+      var allPayments = <Payment>[];
+      if (paymentData['payments'] != null) {
+        final paymentsJson = paymentData['payments'] as List;
+        allPayments = paymentsJson.map((p) => Payment.fromJson(p)).toList();
+        debugPrint('📊 [Dashboard] Loaded ${allPayments.length} real payments from API');
+      } else {
+        debugPrint('📊 [Dashboard] No payments found in API response - this is normal for new owners');
+      }
       
       // Log payment data for testing
       PaymentTestHelper.logPaymentData(allPayments);
@@ -276,104 +300,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
     
     // Log revenue calculations for testing (after data is loaded)
     if (!isLoading) {
-      // Add demo payments if no payments exist (for testing)
-      if (payments.isEmpty) {
-        debugPrint('📊 [Dashboard] No payments found, adding demo payments for testing...');
-        setState(() {
-          payments = _generateDemoPaymentsForOwner();
-        });
-        debugPrint('📊 [Dashboard] Generated ${payments.length} demo payments');
-      }
-      
       final totalRevenue = getTotalRevenue();
       final pendingRevenue = getPendingRevenue();
       final monthlyRevenue = getMonthlyRevenue();
       
       PaymentTestHelper.logRevenueCalculation(totalRevenue, pendingRevenue, monthlyRevenue);
     }
-  }
-
-  // Generate demo payments for owner dashboard testing
-  List<Payment> _generateDemoPaymentsForOwner() {
-    final now = DateTime.now();
-    final monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
-        'July', 'August', 'September', 'October', 'November', 'December'];
-    
-    return [
-      Payment(
-        id: 'owner_demo_1',
-        tenantId: '1',
-        tenantName: 'Rajesh Kumar',
-        roomNumber: '101',
-        amount: 15000,
-        dueDate: DateTime(now.year, now.month, 1),
-        paidDate: DateTime(now.year, now.month, 2),
-        status: 'paid',
-        type: 'rent',
-        paymentMethod: 'upi',
-        transactionId: 'UPI123456789',
-        month: monthNames[now.month - 1],
-        year: now.year,
-        lateFee: 0,
-        notes: 'Monthly rent - paid on time',
-      ),
-      Payment(
-        id: 'owner_demo_2',
-        tenantId: '2',
-        tenantName: 'Priya Sharma',
-        roomNumber: '102',
-        amount: 12000,
-        dueDate: DateTime(now.year, now.month, 1),
-        status: 'pending',
-        type: 'rent',
-        month: monthNames[now.month - 1],
-        year: now.year,
-        lateFee: 0,
-        notes: 'Monthly rent - pending payment',
-      ),
-      Payment(
-        id: 'owner_demo_3',
-        tenantId: '3',
-        tenantName: 'Amit Patel',
-        roomNumber: '201',
-        amount: 18000,
-        dueDate: DateTime(now.year, now.month - 1, 1),
-        status: 'overdue',
-        type: 'rent',
-        month: monthNames[(now.month - 2 + 12) % 12],
-        year: now.month == 1 ? now.year - 1 : now.year,
-        lateFee: 500,
-        notes: 'Monthly rent - overdue with late fee',
-      ),
-      Payment(
-        id: 'owner_demo_4',
-        tenantId: '4',
-        tenantName: 'Sneha Reddy',
-        roomNumber: '202',
-        amount: 14000,
-        dueDate: DateTime(now.year, now.month, 1),
-        status: 'pending',
-        type: 'rent',
-        month: monthNames[now.month - 1],
-        year: now.year,
-        lateFee: 0,
-        notes: 'Monthly rent - pending payment',
-      ),
-      Payment(
-        id: 'owner_demo_5',
-        tenantId: '1',
-        tenantName: 'Rajesh Kumar',
-        roomNumber: '101',
-        amount: 2000,
-        dueDate: DateTime(now.year, now.month, 10),
-        status: 'pending',
-        type: 'maintenance',
-        month: monthNames[now.month - 1],
-        year: now.year,
-        lateFee: 0,
-        notes: 'Monthly maintenance fee',
-      ),
-    ];
   }
 
   int getTotalRooms() => rooms.isEmpty ? 0 : rooms.length;
@@ -587,6 +519,66 @@ class _DashboardScreenState extends State<DashboardScreen> {
         // Action Buttons
         Row(
           children: [
+            // Notification Bell with Badge
+            ValueListenableBuilder<int>(
+              valueListenable: NotificationService.unreadCountNotifier,
+              builder: (context, unreadCount, child) {
+                return Stack(
+                  children: [
+                    Container(
+                      width: isMobile ? 44 : 48,
+                      height: isMobile ? 44 : 48,
+                      decoration: BoxDecoration(
+                        color: AppTheme.getSurfaceColor(context),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppTheme.getTextPrimaryColor(context).withOpacity(0.1)),
+                      ),
+                      child: IconButton(
+                        icon: Icon(
+                          Icons.notifications_outlined,
+                          color: AppTheme.getTextPrimaryColor(context),
+                          size: 20,
+                        ),
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => const NotificationCenterScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    if (unreadCount > 0)
+                      Positioned(
+                        right: 6,
+                        top: 6,
+                        child: Container(
+                          padding: const EdgeInsets.all(2),
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          constraints: const BoxConstraints(
+                            minWidth: 16,
+                            minHeight: 16,
+                          ),
+                          child: Text(
+                            unreadCount > 99 ? '99+' : unreadCount.toString(),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                  ],
+                );
+              },
+            ),
+            
+            SizedBox(width: isMobile ? 8 : 12),
             _buildHeaderButton(Icons.notifications_outlined, () {}),
             SizedBox(width: isMobile ? 8 : 12),
             _buildHeaderButton(Icons.settings_outlined, () {
@@ -1315,7 +1307,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 Navigator.push(
                   context,
                   CustomPageRoute(
-                    child: const PaymentTestScreen(),
+                    child: const PaymentIntegrationTestScreen(),
                     transition: CustomPageTransition.transform,
                   ),
                 );
@@ -3000,6 +2992,45 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
       ),
     );
+  }
+
+  /// Generate sample notifications for demo purposes
+  Future<void> _generateSampleNotifications() async {
+    try {
+      // Only generate if no notifications exist
+      if (NotificationService.notifications.isEmpty) {
+        // Sample payment received notification
+        await NotificationService.notifyPaymentReceived(
+          tenantName: 'John Doe',
+          roomNumber: '101',
+          amount: 15000,
+          paymentType: 'rent',
+          transactionId: 'TXN123456789',
+        );
+
+        // Sample payment overdue notification
+        await NotificationService.notifyPaymentOverdue(
+          tenantName: 'Jane Smith',
+          roomNumber: '102',
+          amount: 12000,
+          paymentType: 'rent',
+          daysPastDue: 5,
+        );
+
+        // Sample payment pending notification
+        await NotificationService.notifyPaymentPending(
+          tenantName: 'Mike Johnson',
+          roomNumber: '103',
+          amount: 18000,
+          paymentType: 'rent',
+          dueDate: DateTime.now().add(const Duration(days: 3)),
+        );
+
+        debugPrint('✅ [DASHBOARD] Sample notifications generated');
+      }
+    } catch (e) {
+      debugPrint('❌ [DASHBOARD] Failed to generate sample notifications: $e');
+    }
   }
 }
 

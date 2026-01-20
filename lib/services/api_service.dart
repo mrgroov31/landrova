@@ -10,6 +10,8 @@ import '../models/complaint.dart';
 import '../models/payment.dart';
 import '../models/building.dart';
 import '../models/service_provider.dart';
+import '../config/api_config.dart';
+import 'enhanced_api_service.dart';
 import 'dart:developer';
 
 class ApiService {
@@ -42,7 +44,7 @@ class ApiService {
   // Fetch rooms by owner ID
   static Future<Map<String, dynamic>> fetchRoomsByOwnerId(String ownerId) async {
     try {
-      final url = Uri.parse('https://www.leranothrive.com/api/owners/$ownerId/rooms');
+      final url = Uri.parse('${ApiConfig.baseUrl}/owners/$ownerId/rooms');
       
       debugPrint('🏠 [API] Fetching rooms for ownerId: $ownerId');
       debugPrint('🌐 [API] URL: $url');
@@ -167,7 +169,7 @@ class ApiService {
   // Fetch buildings by owner ID
   static Future<Map<String, dynamic>> fetchBuildingsByOwnerId(String ownerId) async {
     try {
-      final url = Uri.parse('https://www.leranothrive.com/api/buildings?ownerId=$ownerId');
+      final url = Uri.parse('${ApiConfig.baseUrl}/buildings?ownerId=$ownerId');
       
       debugPrint('🏢 [API] Fetching buildings for ownerId: $ownerId');
       debugPrint('🌐 [API] URL: $url');
@@ -257,7 +259,7 @@ class ApiService {
     required List<Map<String, dynamic>> buildings,
   }) async {
     try {
-      final url = Uri.parse('https://www.leranothrive.com/api/buildings/bulk');
+      final url = Uri.parse('${ApiConfig.baseUrl}/buildings/bulk');
       
       final payload = {
         'ownerId': ownerId,
@@ -304,7 +306,7 @@ class ApiService {
     required List<Map<String, dynamic>> rooms,
   }) async {
     try {
-      final url = Uri.parse('https://www.leranothrive.com/api/rooms/bulk');
+      final url = Uri.parse('${ApiConfig.baseUrl}/rooms/bulk');
       
       final payload = {
         'buildingId': buildingId,
@@ -481,7 +483,7 @@ class ApiService {
   // Fetch tenants by owner ID
   static Future<Map<String, dynamic>> fetchTenantsByOwnerId(String ownerId) async {
     try {
-      final url = Uri.parse('https://www.leranothrive.com/api/owners/$ownerId/tenants');
+      final url = Uri.parse('${ApiConfig.baseUrl}/owners/$ownerId/tenants');
       
       debugPrint('👥 [API] Fetching tenants for ownerId: $ownerId');
       debugPrint('🌐 [API] URL: $url');
@@ -583,7 +585,7 @@ class ApiService {
     String? roomNumber, // Add room number parameter
   }) async {
     try {
-      final url = Uri.parse('https://www.leranothrive.com/api/tenants');
+      final url = Uri.parse('${ApiConfig.baseUrl}/tenants');
       
       final payload = {
         'roomId': roomId,
@@ -686,7 +688,7 @@ class ApiService {
     bool urgentContact = false,
   }) async {
     try {
-      final url = Uri.parse('https://www.leranothrive.com/api/complaints'); // Added www subdomain
+      final url = Uri.parse('${ApiConfig.baseUrl}/complaints');
       
       final payload = {
         'title': title,
@@ -767,7 +769,7 @@ class ApiService {
   // Fetch complaints by owner ID
   static Future<Map<String, dynamic>> fetchComplaintsByOwnerId(String ownerId) async {
     try {
-      final url = Uri.parse('https://www.leranothrive.com/api/complaints?ownerId=$ownerId'); // Added www subdomain
+      final url = Uri.parse('${ApiConfig.baseUrl}/complaints?ownerId=$ownerId');
       
       debugPrint('📝 [API] Fetching complaints for ownerId: $ownerId');
       debugPrint('🌐 [API] URL: $url');
@@ -888,7 +890,7 @@ class ApiService {
       if (emergencyAvailable != null) queryParams['emergencyAvailable'] = emergencyAvailable.toString();
       if (verified != null) queryParams['verified'] = verified.toString();
 
-      final uri = Uri.https('www.leranothrive.com', '/api/service-providers', queryParams);
+      final uri = Uri.parse("${ApiConfig.baseUrl}/service-providers").replace(queryParameters: queryParams);
       
       debugPrint('🔧 [API] Fetching service providers');
       debugPrint('🌐 [API] URL: $uri');
@@ -943,7 +945,7 @@ class ApiService {
     List<Map<String, dynamic>>? references,
   }) async {
     try {
-      final url = Uri.parse('https://www.leranothrive.com/api/service-providers');
+      final url = Uri.parse('${ApiConfig.baseUrl}/service-providers');
       
       final payload = {
         'name': name,
@@ -1039,7 +1041,7 @@ class ApiService {
     Map<String, dynamic>? bankDetails,
   }) async {
     try {
-      final url = Uri.parse('https://www.leranothrive.com/api/service-providers/$id');
+      final url = Uri.parse('${ApiConfig.baseUrl}/service-providers/$id');
       
       final payload = <String, dynamic>{};
       
@@ -1129,7 +1131,7 @@ class ApiService {
     String? customerNotes,
   }) async {
     try {
-      final url = Uri.parse('https://www.leranothrive.com/api/service-providers/$serviceProviderId/book');
+      final url = Uri.parse('${ApiConfig.baseUrl}/service-providers/$serviceProviderId/book');
       
       final payload = {
         'serviceProviderId': serviceProviderId,
@@ -1211,7 +1213,7 @@ class ApiService {
     String? searchQuery,
   }) async {
     try {
-      final url = Uri.parse('https://www.leranothrive.com/api/service-providers/search');
+      final url = Uri.parse('${ApiConfig.baseUrl}/service-providers/search');
       
       final payload = {
         'filters': filters,
@@ -1276,7 +1278,7 @@ class ApiService {
     int limit = 5,
   }) async {
     try {
-      final uri = Uri.https('leranothrive.com', '/api/service-providers/$serviceProviderId/reviews', {
+      final uri = Uri.parse("${ApiConfig.baseUrl}/service-providers/$serviceProviderId/reviews").replace(queryParameters: {
         'page': page.toString(),
         'limit': limit.toString(),
       });
@@ -1383,7 +1385,7 @@ class ApiService {
   // Record payment transaction
   static Future<Map<String, dynamic>> recordPayment(Map<String, dynamic> paymentData) async {
     try {
-      final url = Uri.parse('https://www.leranothrive.com/api/payments');
+      final url = Uri.parse('${ApiConfig.baseUrl}/payments');
       
       debugPrint('💳 [API] Recording payment transaction');
       debugPrint('🌐 [API] URL: $url');
@@ -1428,7 +1430,7 @@ class ApiService {
   static Future<Map<String, dynamic>> updatePaymentStatus(Map<String, dynamic> statusData) async {
     try {
       final paymentId = statusData['paymentId'];
-      final url = Uri.parse('https://www.leranothrive.com/api/payments/$paymentId/status');
+      final url = Uri.parse('${ApiConfig.baseUrl}/payments/$paymentId/status');
       
       debugPrint('🔄 [API] Updating payment status');
       debugPrint('🌐 [API] URL: $url');
@@ -1473,7 +1475,7 @@ class ApiService {
   // Get payment history for tenant
   static Future<Map<String, dynamic>> fetchPaymentHistory(String tenantId) async {
     try {
-      final url = Uri.parse('https://www.leranothrive.com/api/payments/history?tenantId=$tenantId');
+      final url = Uri.parse('${ApiConfig.baseUrl}/payments/history?tenantId=$tenantId');
       
       debugPrint('📋 [API] Fetching payment history for tenant: $tenantId');
       debugPrint('🌐 [API] URL: $url');
@@ -1514,7 +1516,7 @@ class ApiService {
   // Get owner UPI details
   static Future<Map<String, dynamic>> fetchOwnerUpiDetails(String ownerId) async {
     try {
-      final url = Uri.parse('https://www.leranothrive.com/api/owners/$ownerId/upi');
+      final url = Uri.parse('${ApiConfig.baseUrl}/owners/$ownerId/upi');
       
       debugPrint('🔍 [API] Fetching owner UPI details: $ownerId');
       debugPrint('🌐 [API] URL: $url');
@@ -1553,69 +1555,148 @@ class ApiService {
     }
   }
 
-  // Save owner UPI details
+  // Save owner UPI details to backend
   static Future<Map<String, dynamic>> saveOwnerUpiDetails(dynamic upiDetails) async {
     try {
-      debugPrint('💳 [API] Saving owner UPI details...');
+      debugPrint('💳 [API] Saving owner UPI details to backend...');
       debugPrint('💳 [API] UPI ID: ${upiDetails.upiId}');
       debugPrint('💳 [API] Owner Name: ${upiDetails.ownerName}');
       debugPrint('💳 [API] Bank Name: ${upiDetails.bankName}');
       
-      // Save to SharedPreferences for persistence
-      final prefs = await SharedPreferences.getInstance();
-      final upiData = {
-        'id': upiDetails.id,
-        'ownerId': upiDetails.ownerId,
+      final uri = Uri.parse('${ApiConfig.baseUrl}/owners/${upiDetails.ownerId}/upi-details');
+      
+      final payload = {
         'upiId': upiDetails.upiId,
         'ownerName': upiDetails.ownerName,
         'bankName': upiDetails.bankName,
         'accountNumber': upiDetails.accountNumber,
-        'isVerified': upiDetails.isVerified,
         'isActive': upiDetails.isActive,
-        'createdAt': upiDetails.createdAt.toIso8601String(),
-        'updatedAt': upiDetails.updatedAt.toIso8601String(),
       };
       
-      final key = 'owner_upi_${upiDetails.ownerId}';
-      await prefs.setString(key, json.encode(upiData));
+      debugPrint('🌐 [API] POST $uri');
+      debugPrint('📤 [API] Payload: ${json.encode(payload)}');
       
-      debugPrint('✅ [API] UPI details saved to local storage with key: $key');
+      final response = await http.post(
+        uri,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          // Add authorization header when implementing auth
+          // 'Authorization': 'Bearer ${AuthService.getToken()}',
+        },
+        body: json.encode(payload),
+      );
       
-      // Simulate API call delay
-      await Future.delayed(const Duration(seconds: 1));
+      debugPrint('📥 [API] Response Status: ${response.statusCode}');
+      debugPrint('📥 [API] Response Body: ${response.body}');
       
-      return {
-        'success': true,
-        'message': 'UPI details saved successfully',
-        'data': {
-          'id': upiDetails.id,
-          'isVerified': false, // Backend would verify this
-        }
-      };
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final responseData = json.decode(response.body);
+        
+        // Also save to local storage as cache
+        final prefs = await SharedPreferences.getInstance();
+        final key = 'owner_upi_${upiDetails.ownerId}';
+        await prefs.setString(key, json.encode(responseData['data']));
+        
+        debugPrint('✅ [API] UPI details saved to backend and cached locally');
+        
+        return responseData;
+      } else {
+        throw Exception('Backend error: ${response.statusCode} - ${response.body}');
+      }
     } catch (e) {
-      debugPrint('❌ [API] Failed to save UPI details: $e');
-      return {
-        'success': false,
-        'error': e.toString(),
-      };
+      debugPrint('❌ [API] Failed to save UPI details to backend: $e');
+      
+      // Fallback: Save to local storage if backend fails
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        final upiData = {
+          'id': upiDetails.id,
+          'ownerId': upiDetails.ownerId,
+          'upiId': upiDetails.upiId,
+          'ownerName': upiDetails.ownerName,
+          'bankName': upiDetails.bankName,
+          'accountNumber': upiDetails.accountNumber,
+          'isVerified': false,
+          'isActive': upiDetails.isActive,
+          'createdAt': upiDetails.createdAt.toIso8601String(),
+          'updatedAt': upiDetails.updatedAt.toIso8601String(),
+        };
+        
+        final key = 'owner_upi_${upiDetails.ownerId}';
+        await prefs.setString(key, json.encode(upiData));
+        
+        debugPrint('⚠️ [API] Saved to local storage as fallback');
+        
+        return {
+          'success': true,
+          'message': 'UPI details saved locally (backend unavailable)',
+          'data': upiData,
+        };
+      } catch (localError) {
+        debugPrint('❌ [API] Local storage fallback also failed: $localError');
+        return {
+          'success': false,
+          'error': 'Failed to save UPI details: $e',
+        };
+      }
     }
   }
 
-  // Get owner UPI details
+  // Get owner UPI details from backend
   static Future<Map<String, dynamic>> getOwnerUpiDetails(String ownerId) async {
     try {
       debugPrint('🔍 [API] Getting owner UPI details for: $ownerId');
       
-      // Try to get saved UPI details from SharedPreferences first
+      final uri = Uri.parse('${ApiConfig.baseUrl}/owners/$ownerId/upi-details');
+      
+      debugPrint('🌐 [API] GET $uri');
+      
+      final response = await http.get(
+        uri,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          // Add authorization header when implementing auth
+          // 'Authorization': 'Bearer ${AuthService.getToken()}',
+        },
+      );
+      
+      debugPrint('📥 [API] Response Status: ${response.statusCode}');
+      debugPrint('📥 [API] Response Body: ${response.body}');
+      
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        
+        if (responseData['success'] == true && responseData['data'] != null) {
+          debugPrint('✅ [API] Found UPI details on backend');
+          debugPrint('✅ [API] UPI ID: ${responseData['data']['upiId']}');
+          debugPrint('✅ [API] Owner Name: ${responseData['data']['ownerName']}');
+          
+          // Cache to local storage for offline access
+          final prefs = await SharedPreferences.getInstance();
+          final key = 'owner_upi_$ownerId';
+          await prefs.setString(key, json.encode(responseData['data']));
+          
+          return responseData;
+        }
+      } else if (response.statusCode == 404) {
+        debugPrint('⚠️ [API] No UPI details found on backend for owner: $ownerId');
+      } else {
+        debugPrint('❌ [API] Backend error: ${response.statusCode}');
+      }
+      
+      // Fallback: Try local storage
+      debugPrint('🔍 [API] Trying local storage as fallback...');
       final prefs = await SharedPreferences.getInstance();
       final key = 'owner_upi_$ownerId';
       final savedData = prefs.getString(key);
       
       if (savedData != null) {
-        debugPrint('✅ [API] Found saved UPI details in local storage');
+        debugPrint('✅ [API] Found cached UPI details in local storage');
         final upiData = json.decode(savedData);
-        debugPrint('✅ [API] Loaded UPI ID: ${upiData['upiId']}');
-        debugPrint('✅ [API] Loaded Owner Name: ${upiData['ownerName']}');
+        debugPrint('✅ [API] Cached UPI ID: ${upiData['upiId']}');
+        debugPrint('✅ [API] Cached Owner Name: ${upiData['ownerName']}');
         
         return {
           'success': true,
@@ -1623,12 +1704,10 @@ class ApiService {
         };
       }
       
-      debugPrint('⚠️ [API] No saved UPI details found, returning demo data');
+      debugPrint('⚠️ [API] No UPI details found anywhere, returning demo data');
       debugPrint('💡 [API] Owner should set up their UPI details in Settings');
       
-      // Fallback to demo data if no saved data found
-      await Future.delayed(const Duration(milliseconds: 500));
-      
+      // Final fallback: Demo data
       return {
         'success': true,
         'data': {
@@ -1645,7 +1724,26 @@ class ApiService {
         }
       };
     } catch (e) {
-      debugPrint('❌ [API] Failed to get UPI details: $e');
+      debugPrint('❌ [API] Exception while getting UPI details: $e');
+      
+      // Emergency fallback: Try local storage
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        final key = 'owner_upi_$ownerId';
+        final savedData = prefs.getString(key);
+        
+        if (savedData != null) {
+          debugPrint('✅ [API] Using cached data due to network error');
+          final upiData = json.decode(savedData);
+          return {
+            'success': true,
+            'data': upiData,
+          };
+        }
+      } catch (cacheError) {
+        debugPrint('❌ [API] Cache access also failed: $cacheError');
+      }
+      
       return {
         'success': false,
         'error': e.toString(),

@@ -144,27 +144,40 @@ class PaymentIntegrationTest {
       );
       
       // Test UPI payment initiation
-      final transaction = await PaymentService.initiateUpiPayment(
+      final result = await PaymentService.createAndInitiatePayment(
         tenantId: testPayment.tenantId,
         tenantName: testPayment.tenantName,
         ownerId: 'test_owner_456',
         ownerName: 'Test Owner',
         ownerUpiId: 'testowner@paytm',
-        amount: testPayment.amount,
+        roomId: 'room_101',
         roomNumber: testPayment.roomNumber,
         paymentType: testPayment.type,
+        amount: testPayment.amount,
         month: testPayment.month,
         year: testPayment.year,
         description: 'Test UPI payment',
+        dueDate: testPayment.dueDate,
+        lateFee: testPayment.lateFee,
       );
       
-      debugPrint('✅ [TEST 4] UPI payment initiated: ${transaction.id}');
-      debugPrint('   Status: ${transaction.status}');
-      debugPrint('   Amount: ₹${transaction.amount}');
+      debugPrint('✅ [TEST 4] UPI payment initiated: ${result['paymentId']}');
+      debugPrint('   Transaction ID: ${result['transactionId']}');
+      debugPrint('   UPI URL: ${result['upiUrl']}');
       
       // Test payment completion simulation
-      final completedTransaction = await PaymentService.simulatePaymentCompletion(transaction.id);
-      debugPrint('✅ [TEST 4] Payment completion simulated: ${completedTransaction.status}');
+      await PaymentService.simulatePaymentCompletion(
+        paymentId: result['paymentId'],
+        transactionId: result['transactionId'],
+        amount: testPayment.amount,
+        success: true,
+        additionalData: {
+          'tenantName': testPayment.tenantName,
+          'roomNumber': testPayment.roomNumber,
+          'paymentType': testPayment.type,
+        },
+      );
+      
       
     } catch (e) {
       debugPrint('❌ [TEST 4] UPI payment flow failed: $e');
@@ -181,12 +194,17 @@ class PaymentIntegrationTest {
     
     try {
       // Test marking payment as paid
-      final success = await PaymentService.markPaymentAsPaid(
+      final success = await PaymentService.updatePaymentStatus(
         paymentId: 'test_payment_002',
-        tenantId: 'test_tenant_123',
-        amount: 12000,
-        paymentMethod: 'upi',
         transactionId: 'TEST_TXN_${DateTime.now().millisecondsSinceEpoch}',
+        status: 'paid',
+        upiTransactionId: 'UPI_TEST_${DateTime.now().millisecondsSinceEpoch}',
+        paidAmount: 12000,
+        additionalData: {
+          'tenantName': 'Test Tenant',
+          'roomNumber': '102',
+          'paymentType': 'rent',
+        },
       );
       
       if (success) {
@@ -350,12 +368,16 @@ class PaymentIntegrationTest {
       final upiApps = PaymentService.getAvailableUpiApps();
       debugPrint('✅ [TENANT PAYMENT] Available UPI apps: ${upiApps.length}');
       
-      // Test owner UPI details
-      final ownerUpiDetails = await PaymentService.getOwnerUpiDetails('test_owner_456');
-      if (ownerUpiDetails != null) {
-        debugPrint('✅ [TENANT PAYMENT] Owner UPI details loaded: ${ownerUpiDetails['upiId']}');
-      } else {
-        debugPrint('⚠️ [TENANT PAYMENT] Owner UPI details not found (expected in test environment)');
+      // Test owner UPI details (using ApiService instead)
+      try {
+        final ownerUpiDetails = await ApiService.getOwnerUpiDetails('test_owner_456');
+        if (ownerUpiDetails['success'] == true && ownerUpiDetails['data'] != null) {
+          debugPrint('✅ [TENANT PAYMENT] Owner UPI details loaded: ${ownerUpiDetails['data']['upiId']}');
+        } else {
+          debugPrint('⚠️ [TENANT PAYMENT] Owner UPI details not found (expected in test environment)');
+        }
+      } catch (e) {
+        debugPrint('⚠️ [TENANT PAYMENT] Owner UPI details error: $e (expected in test environment)');
       }
       
     } catch (e) {

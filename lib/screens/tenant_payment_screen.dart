@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:own_house/services/api_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/payment.dart';
 import '../models/payment_transaction.dart';
 import '../services/payment_service.dart';
 import '../services/auth_service.dart';
+import '../services/notification_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/responsive.dart';
 import '../utils/payment_test_helper.dart';
 import 'upi_debug_screen.dart';
+import 'notification_center_screen.dart';
 import 'package:intl/intl.dart';
 
 class TenantPaymentScreen extends StatefulWidget {
@@ -90,6 +93,226 @@ class _TenantPaymentScreenState extends State<TenantPaymentScreen> with TickerPr
     }
   }
 
+  /// Complete payment flow implementation
+  Future<void> _processPayment(Payment payment) async {
+    if (_isProcessingPayment) return;
+
+    setState(() {
+      _isProcessingPayment = true;
+      _processingPaymentId = payment.id;
+    });
+
+    try {
+      final user = AuthService.currentUser;
+      if (user == null) {
+        throw Exception('User not authenticated');
+      }
+
+      final ownerId = AuthService.getOwnerId();
+      
+      // Fetch real owner UPI details
+      debugPrint('🔍 [PAYMENT] Fetching owner UPI details for: $ownerId');
+      final ownerUpiResponse = await ApiService.getOwnerUpiDetails(ownerId);
+      
+      String ownerUpiId = 'owner@paytm'; // Fallback
+      String ownerName = 'Property Owner'; // Fallback
+      
+      if (ownerUpiResponse['success'] == true && ownerUpiResponse['data'] != null) {
+        final upiData = ownerUpiResponse['data'];
+        ownerUpiId = upiData['upiId'] ?? 'owner@paytm';
+        ownerName = upiData['ownerName'] ?? 'Property Owner';
+        debugPrint('✅ [PAYMENT] Using real owner UPI ID: $ownerUpiId');
+        debugPrint('✅ [PAYMENT] Using real owner name: $ownerName');
+      } else {
+        debugPrint('⚠️ [PAYMENT] Could not fetch owner UPI details, using fallback');
+        debugPrint('💡 [PAYMENT] Owner should set up UPI details in Settings');
+      }
+
+      // Step 1 & 2: Create and initiate payment
+      final result = await PaymentService.createAndInitiatePayment(
+        tenantId: user.additionalData?['tenantId'] as String? ?? user.id,
+        tenantName: payment.tenantName,
+        ownerId: ownerId,
+        ownerName: ownerName, // Real owner name from API
+        ownerUpiId: ownerUpiId, // Real UPI ID from API
+        roomId: payment.id, // Using payment ID as room ID for now
+        roomNumber: payment.roomNumber,
+        paymentType: payment.type,
+        amount: payment.amount,
+        month: payment.month,
+        year: payment.year,
+        description: 'Payment for ${payment.type} - ${payment.month} ${payment.year}',
+        dueDate: payment.dueDate,
+        lateFee: payment.lateFee,
+      );
+
+      if (!result['success']) {
+        throw Exception('Failed to initiate payment');
+      }
+
+      final upiUrl = result['upiUrl'] as String;
+      final paymentId = result['paymentId'] as String;
+      final transactionId = result['transactionId'] as String;
+
+      // Log UPI URL details for verification
+      debugPrint('🔗 [PAYMENT] Generated UPI URL: $upiUrl');
+      if (upiUrl.contains('pa=')) {
+        final paMatch = RegExp(r'pa=([^&]+)').firstMatch(upiUrl);
+        if (paMatch != null) {
+          debugPrint('💳 [PAYMENT] UPI ID in URL: ${paMatch.group(1)}');
+        }
+      }
+      if (upiUrl.contains('pn=')) {
+        final pnMatch = RegExp(r'pn=([^&]+)').firstMatch(upiUrl);
+        if (pnMatch != null) {
+          debugPrint('👤 [PAYMENT] Payee Name in URL: ${Uri.decodeComponent(pnMatch.group(1) ?? '')}');
+        }
+      }
+
+      // Step 3: Launch UPI app
+      final launched = await PaymentService.launchUpiPayment(upiUrl);
+      
+      if (!launched) {
+        throw Exception('Failed to launch UPI app. Please ensure you have a UPI app installed.');
+      }
+
+      // Show payment processing dialog
+      if (mounted) {
+        _showPaymentProcessingDialog(
+          paymentId: paymentId,
+          transactionId: transactionId,
+          amount: payment.amount + payment.lateFee,
+          payment: payment,
+        );
+      }
+
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Payment failed: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      setState(() {
+        _isProcessingPayment = false;
+        _processingPaymentId = null;
+      });
+    }
+  }
+
+  /// Show payment processing dialog with options
+  void _showPaymentProcessingDialog({
+    required String paymentId,
+    required String transactionId,
+    required double amount,
+    required Payment payment,
+  }) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: const Text('Payment Processing'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const CircularProgressIndicator(),
+            const SizedBox(height: 16),
+            Text('Processing payment of ₹${amount.toStringAsFixed(0)}'),
+            const SizedBox(height: 8),
+            const Text(
+              'Please complete the payment in your UPI app and return here.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 14),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              _handlePaymentResult(
+                paymentId: paymentId,
+                transactionId: transactionId,
+                amount: amount,
+                success: false,
+                payment: payment,
+              );
+            },
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              _handlePaymentResult(
+                paymentId: paymentId,
+                transactionId: transactionId,
+                amount: amount,
+                success: true,
+                payment: payment,
+              );
+            },
+            child: const Text('Payment Done'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Handle payment result (Step 5)
+  Future<void> _handlePaymentResult({
+    required String paymentId,
+    required String transactionId,
+    required double amount,
+    required bool success,
+    required Payment payment,
+  }) async {
+    try {
+      final status = success ? 'paid' : 'failed';
+      
+      final updated = await PaymentService.updatePaymentStatus(
+        paymentId: paymentId,
+        transactionId: transactionId,
+        status: status,
+        upiTransactionId: success ? 'UPI${DateTime.now().millisecondsSinceEpoch}' : null,
+        paidAmount: success ? amount : null,
+        errorMessage: success ? null : 'Payment cancelled by user',
+        additionalData: {
+          'tenantName': AuthService.currentUser?.name ?? 'Tenant',
+          'roomNumber': payment.roomNumber,
+          'paymentType': payment.type,
+        },
+      );
+
+      if (updated) {
+        // Refresh payment data
+        await _loadPaymentData();
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(success 
+                  ? 'Payment completed successfully!' 
+                  : 'Payment was cancelled'),
+              backgroundColor: success ? Colors.green : Colors.orange,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to update payment status: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isMobile = Responsive.isMobile(context);
@@ -102,17 +325,60 @@ class _TenantPaymentScreenState extends State<TenantPaymentScreen> with TickerPr
         foregroundColor: AppTheme.getTextPrimaryColor(context),
         elevation: 0,
         actions: [
-          // Debug button for testing UPI on physical device
+          // Notification bell with badge
+          ValueListenableBuilder<int>(
+            valueListenable: NotificationService.unreadCountNotifier,
+            builder: (context, unreadCount, child) {
+              return Stack(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.notifications),
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => const NotificationCenterScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  if (unreadCount > 0)
+                    Positioned(
+                      right: 8,
+                      top: 8,
+                      child: Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        constraints: const BoxConstraints(
+                          minWidth: 16,
+                          minHeight: 16,
+                        ),
+                        child: Text(
+                          unreadCount > 99 ? '99+' : unreadCount.toString(),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                ],
+              );
+            },
+          ),
           IconButton(
+            icon: const Icon(Icons.bug_report),
             onPressed: () {
-              Navigator.push(
-                context,
+              Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (context) => const UpiDebugScreen(),
                 ),
               );
             },
-            icon: const Icon(Icons.bug_report),
             tooltip: 'UPI Debug',
           ),
         ],
@@ -122,9 +388,9 @@ class _TenantPaymentScreenState extends State<TenantPaymentScreen> with TickerPr
           unselectedLabelColor: AppTheme.getTextSecondaryColor(context),
           indicatorColor: AppTheme.primaryColor,
           tabs: const [
-            Tab(text: 'Pending', icon: Icon(Icons.pending_actions)),
-            Tab(text: 'History', icon: Icon(Icons.history)),
-            Tab(text: 'Statistics', icon: Icon(Icons.analytics)),
+            Tab(text: 'Pending'),
+            Tab(text: 'History'),
+            Tab(text: 'Statistics'),
           ],
         ),
       ),
@@ -148,9 +414,9 @@ class _TenantPaymentScreenState extends State<TenantPaymentScreen> with TickerPr
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              Icons.check_circle_outline,
+              Icons.payment,
               size: 64,
-              color: Colors.green.withOpacity(0.5),
+              color: AppTheme.getTextSecondaryColor(context),
             ),
             const SizedBox(height: 16),
             Text(
@@ -179,89 +445,146 @@ class _TenantPaymentScreenState extends State<TenantPaymentScreen> with TickerPr
         padding: EdgeInsets.all(isMobile ? 16 : 24),
         itemCount: _pendingPayments.length,
         itemBuilder: (context, index) {
-          return _buildPendingPaymentCard(_pendingPayments[index], isMobile);
+          final payment = _pendingPayments[index];
+          return _buildPendingPaymentCard(payment, isMobile);
         },
       ),
     );
   }
 
   Widget _buildPendingPaymentCard(Payment payment, bool isMobile) {
-    final isOverdue = payment.status == 'overdue';
-    final dueDate = payment.dueDate;
-    final daysOverdue = isOverdue ? DateTime.now().difference(dueDate).inDays : 0;
-
-    return Container(
-      margin: EdgeInsets.only(bottom: isMobile ? 12 : 16),
-      decoration: BoxDecoration(
-        color: AppTheme.getCardColor(context),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isOverdue 
-              ? Colors.red.withOpacity(0.3)
-              : AppTheme.getTextSecondaryColor(context).withOpacity(0.2),
-          width: isOverdue ? 2 : 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: isOverdue 
-                ? Colors.red.withOpacity(0.1)
-                : Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+    final isOverdue = payment.dueDate.isBefore(DateTime.now());
+    final isProcessing = _processingPaymentId == payment.id;
+    final totalAmount = payment.amount + payment.lateFee;
+    
+    return Card(
+      margin: const EdgeInsets.only(bottom: 16),
+      color: AppTheme.getSurfaceColor(context),
       child: Padding(
-        padding: EdgeInsets.all(isMobile ? 16 : 20),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '${payment.type} Payment',
-                        style: TextStyle(
-                          fontSize: isMobile ? 16 : 18,
+                        '${payment.type.toUpperCase()} - ${payment.month} ${payment.year}',
+                        style: const TextStyle(
                           fontWeight: FontWeight.bold,
-                          color: AppTheme.getTextPrimaryColor(context),
+                          fontSize: 16,
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Room ${payment.roomNumber} • ${payment.month} ${payment.year}',
+                        'Room ${payment.roomNumber}',
                         style: TextStyle(
-                          fontSize: isMobile ? 13 : 14,
                           color: AppTheme.getTextSecondaryColor(context),
+                          fontSize: 14,
                         ),
                       ),
                     ],
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: isOverdue 
-                        ? Colors.red.withOpacity(0.1)
-                        : Colors.orange.withOpacity(0.1),
+                    color: isOverdue ? Colors.red.withOpacity(0.1) : Colors.orange.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: isOverdue ? Colors.red : Colors.orange,
-                      width: 1,
-                    ),
                   ),
                   child: Text(
                     isOverdue ? 'OVERDUE' : 'PENDING',
                     style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
                       color: isOverdue ? Colors.red : Colors.orange,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
                     ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            
+            // Amount details
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Amount:',
+                  style: TextStyle(
+                    color: AppTheme.getTextSecondaryColor(context),
+                  ),
+                ),
+                Text(
+                  '₹${payment.amount.toStringAsFixed(0)}',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w500,
+                    fontSize: 16,
+                  ),
+                ),
+              ],
+            ),
+            
+            if (payment.lateFee > 0) ...[
+              const SizedBox(height: 4),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Late Fee:',
+                    style: TextStyle(
+                      color: Colors.red,
+                    ),
+                  ),
+                  Text(
+                    '₹${payment.lateFee.toStringAsFixed(0)}',
+                    style: const TextStyle(
+                      color: Colors.red,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+              const Divider(),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Total:',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                  Text(
+                    '₹${totalAmount.toStringAsFixed(0)}',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+            
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Due Date:',
+                  style: TextStyle(
+                    color: AppTheme.getTextSecondaryColor(context),
+                  ),
+                ),
+                Text(
+                  DateFormat('MMM dd, yyyy').format(payment.dueDate),
+                  style: TextStyle(
+                    color: isOverdue ? Colors.red : AppTheme.getTextPrimaryColor(context),
+                    fontWeight: isOverdue ? FontWeight.w500 : FontWeight.normal,
                   ),
                 ),
               ],
@@ -269,100 +592,35 @@ class _TenantPaymentScreenState extends State<TenantPaymentScreen> with TickerPr
             
             const SizedBox(height: 16),
             
-            // Amount and Due Date
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Amount',
-                      style: TextStyle(
-                        fontSize: isMobile ? 12 : 13,
-                        color: AppTheme.getTextSecondaryColor(context),
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '₹${payment.amount.toStringAsFixed(0)}',
-                      style: TextStyle(
-                        fontSize: isMobile ? 24 : 28,
-                        fontWeight: FontWeight.bold,
-                        color: AppTheme.getTextPrimaryColor(context),
-                      ),
-                    ),
-                  ],
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      'Due Date',
-                      style: TextStyle(
-                        fontSize: isMobile ? 12 : 13,
-                        color: AppTheme.getTextSecondaryColor(context),
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      DateFormat('MMM dd, yyyy').format(dueDate),
-                      style: TextStyle(
-                        fontSize: isMobile ? 14 : 16,
-                        fontWeight: FontWeight.w600,
-                        color: isOverdue ? Colors.red : AppTheme.getTextPrimaryColor(context),
-                      ),
-                    ),
-                    if (isOverdue) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        '$daysOverdue ${daysOverdue == 1 ? 'day' : 'days'} overdue',
-                        style: TextStyle(
-                          fontSize: isMobile ? 11 : 12,
-                          color: Colors.red,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ],
-            ),
-            
-            const SizedBox(height: 20),
-            
-            // Payment Button
+            // Pay button
             SizedBox(
               width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: _isProcessingPayment 
-                    ? null 
-                    : () => _showPaymentOptions(payment),
+              child: ElevatedButton(
+                onPressed: isProcessing ? null : () => _processPayment(payment),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: isOverdue ? Colors.red : AppTheme.primaryColor,
+                  backgroundColor: AppTheme.primaryColor,
                   foregroundColor: Colors.white,
-                  padding: EdgeInsets.symmetric(vertical: isMobile ? 12 : 16),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(8),
                   ),
                 ),
-                icon: _isProcessingPayment
+                child: isProcessing
                     ? const SizedBox(
-                        width: 20,
                         height: 20,
+                        width: 20,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
                           valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                         ),
                       )
-                    : const Icon(Icons.payment),
-                label: Text(
-                  _isProcessingPayment ? 'Processing...' : 'Pay Now',
-                  style: TextStyle(
-                    fontSize: isMobile ? 16 : 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                    : Text(
+                        'Pay ₹${totalAmount.toStringAsFixed(0)}',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
               ),
             ),
           ],
@@ -380,7 +638,7 @@ class _TenantPaymentScreenState extends State<TenantPaymentScreen> with TickerPr
             Icon(
               Icons.history,
               size: 64,
-              color: AppTheme.getTextSecondaryColor(context).withOpacity(0.5),
+              color: AppTheme.getTextSecondaryColor(context),
             ),
             const SizedBox(height: 16),
             Text(
@@ -392,7 +650,7 @@ class _TenantPaymentScreenState extends State<TenantPaymentScreen> with TickerPr
             ),
             const SizedBox(height: 8),
             Text(
-              'Your payment transactions will appear here',
+              'Your payment history will appear here',
               style: TextStyle(
                 fontSize: 14,
                 color: AppTheme.getTextSecondaryColor(context),
@@ -409,119 +667,107 @@ class _TenantPaymentScreenState extends State<TenantPaymentScreen> with TickerPr
         padding: EdgeInsets.all(isMobile ? 16 : 24),
         itemCount: _paymentHistory.length,
         itemBuilder: (context, index) {
-          return _buildPaymentHistoryCard(_paymentHistory[index], isMobile);
+          final transaction = _paymentHistory[index];
+          return _buildPaymentHistoryCard(transaction);
         },
       ),
     );
   }
 
-  Widget _buildPaymentHistoryCard(PaymentTransaction transaction, bool isMobile) {
-    final statusColor = transaction.isSuccessful 
-        ? Colors.green 
-        : transaction.isFailed 
-            ? Colors.red 
-            : Colors.orange;
-
-    return Container(
-      margin: EdgeInsets.only(bottom: isMobile ? 12 : 16),
-      decoration: BoxDecoration(
-        color: AppTheme.getCardColor(context),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: AppTheme.getTextSecondaryColor(context).withOpacity(0.2),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+  Widget _buildPaymentHistoryCard(PaymentTransaction transaction) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      color: AppTheme.getSurfaceColor(context),
       child: Padding(
-        padding: EdgeInsets.all(isMobile ? 16 : 20),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        transaction.paymentTypeDisplayName,
-                        style: TextStyle(
-                          fontSize: isMobile ? 16 : 18,
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.getTextPrimaryColor(context),
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Room ${transaction.roomNumber} • ${transaction.month} ${transaction.year}',
-                        style: TextStyle(
-                          fontSize: isMobile ? 13 : 14,
-                          color: AppTheme.getTextSecondaryColor(context),
-                        ),
-                      ),
-                    ],
+                  child: Text(
+                    transaction.paymentTypeDisplayName,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: statusColor.withOpacity(0.1),
+                    color: transaction.isSuccessful 
+                        ? Colors.green.withOpacity(0.1)
+                        : Colors.red.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: statusColor, width: 1),
                   ),
                   child: Text(
-                    transaction.statusDisplayName.toUpperCase(),
+                    transaction.statusDisplayName,
                     style: TextStyle(
-                      fontSize: 10,
+                      color: transaction.isSuccessful ? Colors.green : Colors.red,
                       fontWeight: FontWeight.bold,
-                      color: statusColor,
+                      fontSize: 12,
                     ),
                   ),
                 ),
               ],
             ),
-            
-            const SizedBox(height: 16),
-            
-            // Amount and Date
+            const SizedBox(height: 8),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  transaction.formattedAmount,
+                  'Amount:',
                   style: TextStyle(
-                    fontSize: isMobile ? 20 : 24,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.getTextPrimaryColor(context),
+                    color: AppTheme.getTextSecondaryColor(context),
                   ),
                 ),
                 Text(
-                  DateFormat('MMM dd, yyyy').format(transaction.createdAt),
-                  style: TextStyle(
-                    fontSize: isMobile ? 13 : 14,
-                    color: AppTheme.getTextSecondaryColor(context),
+                  transaction.formattedAmount,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w500,
+                    fontSize: 16,
                   ),
                 ),
               ],
             ),
-            
-            if (transaction.upiTransactionId != null) ...[
-              const SizedBox(height: 12),
-              Text(
-                'Transaction ID: ${transaction.upiTransactionId}',
-                style: TextStyle(
-                  fontSize: isMobile ? 11 : 12,
-                  color: AppTheme.getTextSecondaryColor(context),
-                  fontFamily: 'monospace',
+            const SizedBox(height: 4),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Date:',
+                  style: TextStyle(
+                    color: AppTheme.getTextSecondaryColor(context),
+                  ),
                 ),
+                Text(
+                  DateFormat('MMM dd, yyyy • HH:mm').format(
+                    transaction.completedAt ?? transaction.createdAt,
+                  ),
+                ),
+              ],
+            ),
+            if (transaction.upiTransactionId != null) ...[
+              const SizedBox(height: 4),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Transaction ID:',
+                    style: TextStyle(
+                      color: AppTheme.getTextSecondaryColor(context),
+                    ),
+                  ),
+                  Text(
+                    transaction.upiTransactionId!,
+                    style: const TextStyle(
+                      fontFamily: 'monospace',
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
               ),
             ],
           ],
@@ -531,512 +777,94 @@ class _TenantPaymentScreenState extends State<TenantPaymentScreen> with TickerPr
   }
 
   Widget _buildStatisticsTab(bool isMobile) {
+    if (_paymentStats.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     return SingleChildScrollView(
       padding: EdgeInsets.all(isMobile ? 16 : 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Summary Cards
+          const Text(
+            'Payment Statistics',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 16),
+          
+          // Statistics cards
           GridView.count(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             crossAxisCount: isMobile ? 2 : 4,
-            childAspectRatio: 1.2,
-            mainAxisSpacing: 16,
             crossAxisSpacing: 16,
+            mainAxisSpacing: 16,
+            childAspectRatio: 1.2,
             children: [
               _buildStatCard(
+                'Total Payments',
+                (_paymentStats['totalPayments'] ?? 0).toString(),
+                Icons.payment,
+                Colors.blue,
+              ),
+              _buildStatCard(
                 'Total Paid',
-                '₹${(_paymentStats['totalPaid'] ?? 0.0).toStringAsFixed(0)}',
+                '₹${(_paymentStats['totalPaid'] ?? 0).toStringAsFixed(0)}',
                 Icons.check_circle,
                 Colors.green,
-                isMobile,
               ),
               _buildStatCard(
-                'Pending',
-                '₹${(_paymentStats['totalPending'] ?? 0.0).toStringAsFixed(0)}',
-                Icons.pending,
+                'On Time',
+                (_paymentStats['onTimePayments'] ?? 0).toString(),
+                Icons.schedule,
                 Colors.orange,
-                isMobile,
-              ),
-              _buildStatCard(
-                'Overdue',
-                '${_paymentStats['overdueCount'] ?? 0}',
-                Icons.warning,
-                Colors.red,
-                isMobile,
               ),
               _buildStatCard(
                 'Success Rate',
-                '${(_paymentStats['successRate'] ?? 0.0).toStringAsFixed(1)}%',
+                '${(_paymentStats['paymentRate'] ?? 0).toStringAsFixed(1)}%',
                 Icons.trending_up,
-                Colors.blue,
-                isMobile,
+                Colors.purple,
               ),
             ],
           ),
-          
-          const SizedBox(height: 32),
-          
-          // Payment Methods Section
-          Text(
-            'Available Payment Methods',
-            style: TextStyle(
-              fontSize: isMobile ? 18 : 20,
-              fontWeight: FontWeight.bold,
-              color: AppTheme.getTextPrimaryColor(context),
-            ),
-          ),
-          
-          const SizedBox(height: 16),
-          
-          if (_availableUpiApps.isEmpty)
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: AppTheme.getCardColor(context),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: AppTheme.getTextSecondaryColor(context).withOpacity(0.2),
-                ),
-              ),
-              child: Column(
-                children: [
-                  Icon(
-                    Icons.payment,
-                    size: 48,
-                    color: AppTheme.getTextSecondaryColor(context).withOpacity(0.5),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'No UPI apps found',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: AppTheme.getTextSecondaryColor(context),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Please install a UPI app like PhonePe, Google Pay, or Paytm',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: AppTheme.getTextSecondaryColor(context),
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
-            )
-          else
-            ...(_availableUpiApps.map((app) => _buildUpiAppCard(app, isMobile))),
         ],
       ),
     );
   }
 
-  Widget _buildStatCard(String title, String value, IconData icon, Color color, bool isMobile) {
-    return Container(
-      padding: EdgeInsets.all(isMobile ? 16 : 20),
-      decoration: BoxDecoration(
-        color: AppTheme.getCardColor(context),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: color.withOpacity(0.2),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: color, size: isMobile ? 24 : 28),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: isMobile ? 18 : 20,
-              fontWeight: FontWeight.bold,
-              color: AppTheme.getTextPrimaryColor(context),
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: isMobile ? 12 : 14,
-              color: AppTheme.getTextSecondaryColor(context),
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildUpiAppCard(UpiApp app, bool isMobile) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: EdgeInsets.all(isMobile ? 16 : 20),
-      decoration: BoxDecoration(
-        color: AppTheme.getCardColor(context),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: AppTheme.getTextSecondaryColor(context).withOpacity(0.2),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: AppTheme.primaryColor.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(
-              Icons.payment,
-              color: AppTheme.primaryColor,
-              size: 24,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  app.name,
-                  style: TextStyle(
-                    fontSize: isMobile ? 16 : 18,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.getTextPrimaryColor(context),
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'UPI Payment App',
-                  style: TextStyle(
-                    fontSize: isMobile ? 13 : 14,
-                    color: AppTheme.getTextSecondaryColor(context),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Icon(
-            Icons.check_circle,
-            color: Colors.green,
-            size: 24,
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showPaymentOptions(Payment payment) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (context) => _buildPaymentOptionsSheet(payment),
-    );
-  }
-
-  Widget _buildPaymentOptionsSheet(Payment payment) {
-    final isMobile = Responsive.isMobile(context);
-    
-    return Container(
-      decoration: BoxDecoration(
-        color: AppTheme.getCardColor(context),
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      padding: EdgeInsets.all(isMobile ? 20 : 24),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Handle
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppTheme.getTextSecondaryColor(context),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
-          
-          const SizedBox(height: 20),
-          
-          // Title
-          Text(
-            'Choose Payment Method',
-            style: TextStyle(
-              fontSize: isMobile ? 20 : 24,
-              fontWeight: FontWeight.bold,
-              color: AppTheme.getTextPrimaryColor(context),
-            ),
-          ),
-          
-          const SizedBox(height: 8),
-          
-          Text(
-            'Pay ₹${payment.amount.toStringAsFixed(0)} for ${payment.type} - Room ${payment.roomNumber}',
-            style: TextStyle(
-              fontSize: isMobile ? 14 : 16,
-              color: AppTheme.getTextSecondaryColor(context),
-            ),
-          ),
-          
-          const SizedBox(height: 24),
-          
-          // UPI Apps
-          if (_availableUpiApps.isNotEmpty) ...[
+  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
+    return Card(
+      color: AppTheme.getSurfaceColor(context),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: color, size: 32),
+            const SizedBox(height: 8),
             Text(
-              'UPI Apps',
+              value,
               style: TextStyle(
-                fontSize: isMobile ? 16 : 18,
-                fontWeight: FontWeight.w600,
-                color: AppTheme.getTextPrimaryColor(context),
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: color,
               ),
             ),
-            
-            const SizedBox(height: 16),
-            
-            ...(_availableUpiApps.map((app) => _buildUpiAppOption(app, payment, isMobile))),
-            
-            const SizedBox(height: 16),
-          ],
-          
-          // Demo Payment Option
-          ListTile(
-            leading: Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: Colors.green.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Icon(Icons.check_circle, color: Colors.green, size: 24),
-            ),
-            title: Text(
-              'Mark as Paid (Demo)',
+            const SizedBox(height: 4),
+            Text(
+              title,
               style: TextStyle(
-                fontSize: isMobile ? 16 : 18,
-                fontWeight: FontWeight.w600,
-                color: AppTheme.getTextPrimaryColor(context),
-              ),
-            ),
-            subtitle: Text(
-              'For testing purposes only',
-              style: TextStyle(
-                fontSize: isMobile ? 13 : 14,
+                fontSize: 12,
                 color: AppTheme.getTextSecondaryColor(context),
               ),
+              textAlign: TextAlign.center,
             ),
-            onTap: () => _processTestPayment(payment),
-          ),
-          
-          const SizedBox(height: 20),
-        ],
+          ],
+        ),
       ),
     );
-  }
-
-  Widget _buildUpiAppOption(UpiApp app, Payment payment, bool isMobile) {
-    final isProcessingThisPayment = _processingPaymentId == payment.id;
-    
-    return ListTile(
-      leading: Container(
-        width: 48,
-        height: 48,
-        decoration: BoxDecoration(
-          color: AppTheme.primaryColor.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: isProcessingThisPayment 
-            ? const SizedBox(
-                width: 24,
-                height: 24,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              )
-            : Icon(Icons.payment, color: AppTheme.primaryColor, size: 24),
-      ),
-      title: Text(
-        app.name,
-        style: TextStyle(
-          fontSize: isMobile ? 16 : 18,
-          fontWeight: FontWeight.w600,
-          color: AppTheme.getTextPrimaryColor(context),
-        ),
-      ),
-      subtitle: Text(
-        isProcessingThisPayment ? 'Processing payment...' : 'Pay via ${app.name}',
-        style: TextStyle(
-          fontSize: isMobile ? 13 : 14,
-          color: AppTheme.getTextSecondaryColor(context),
-        ),
-      ),
-      onTap: isProcessingThisPayment ? null : () => _processUpiPayment(payment, app),
-    );
-  }
-
-  Future<void> _processUpiPayment(Payment payment, UpiApp app) async {
-    Navigator.pop(context); // Close bottom sheet
-    
-    setState(() {
-      _isProcessingPayment = true;
-      _processingPaymentId = payment.id;
-    });
-
-    try {
-      final user = AuthService.currentUser;
-      if (user == null) throw Exception('User not logged in');
-
-      final tenantId = user.additionalData?['tenantId'] as String? ?? user.id;
-      
-      // Get owner UPI details (mock for now)
-      final ownerUpiDetails = await PaymentService.getOwnerUpiDetails('owner123');
-      if (ownerUpiDetails == null) {
-        throw Exception('Owner UPI details not found');
-      }
-
-      final transaction = await PaymentService.initiateUpiPayment(
-        tenantId: tenantId,
-        tenantName: user.name,
-        ownerId: 'owner123', // This should come from payment data
-        ownerName: ownerUpiDetails['name'] ?? 'Property Owner',
-        ownerUpiId: ownerUpiDetails['upiId'] ?? 'owner@paytm',
-        amount: payment.amount,
-        roomNumber: payment.roomNumber,
-        paymentType: payment.type,
-        month: payment.month,
-        year: payment.year,
-        paymentId: payment.id, // Pass the payment ID for backend API
-        preferredApp: app,
-      );
-
-      if (mounted) {
-        if (transaction.isSuccessful) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Payment completed successfully!'),
-              backgroundColor: Colors.green,
-            ),
-          );
-          _loadPaymentData(); // Refresh data
-        } else if (transaction.isFailed) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Payment failed: ${transaction.errorMessage ?? 'Unknown error'}'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Payment launched successfully! Complete it in your UPI app.'),
-              backgroundColor: Colors.green,
-            ),
-          );
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Payment failed: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isProcessingPayment = false;
-          _processingPaymentId = null;
-        });
-      }
-    }
-  }
-
-  Future<void> _processTestPayment(Payment payment) async {
-    Navigator.pop(context); // Close bottom sheet
-    
-    setState(() {
-      _isProcessingPayment = true;
-      _processingPaymentId = payment.id;
-    });
-
-    try {
-      final user = AuthService.currentUser;
-      if (user == null) throw Exception('User not logged in');
-
-      final tenantId = user.additionalData?['tenantId'] as String? ?? user.id;
-      
-      final success = await PaymentService.markPaymentAsPaid(
-        paymentId: payment.id,
-        tenantId: tenantId,
-        amount: payment.amount,
-        paymentMethod: 'demo',
-        transactionId: 'DEMO_${DateTime.now().millisecondsSinceEpoch}',
-        upiTransactionId: 'UPI_DEMO_${DateTime.now().millisecondsSinceEpoch}',
-      );
-
-      if (mounted) {
-        if (success) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Payment marked as paid successfully!'),
-              backgroundColor: Colors.green,
-            ),
-          );
-          _loadPaymentData(); // Refresh data
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Failed to mark payment as paid'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isProcessingPayment = false;
-          _processingPaymentId = null;
-        });
-      }
-    }
   }
 }

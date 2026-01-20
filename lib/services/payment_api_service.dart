@@ -5,9 +5,46 @@ import '../models/payment.dart';
 import '../models/payment_transaction.dart';
 
 /// Service for handling all payment-related API calls to the backend
+/// Implements the complete payment flow from the backend documentation
 class PaymentApiService {
   static const String baseUrl = 'https://www.leranothrive.com/api';
   
+  /// Enhanced logging helper for API responses
+  static void _logApiResponse(String method, String endpoint, http.Response response, [Map<String, dynamic>? payload]) {
+    debugPrint('');
+    debugPrint('🔥 ===== PAYMENT API RESPONSE LOG =====');
+    debugPrint('📍 Method: $method');
+    debugPrint('🌐 Endpoint: $endpoint');
+    debugPrint('📤 Request Payload: ${payload != null ? json.encode(payload) : 'None'}');
+    debugPrint('📥 Response Status: ${response.statusCode}');
+    debugPrint('📥 Response Headers: ${response.headers}');
+    debugPrint('📥 Response Body: ${response.body}');
+    
+    // Try to parse and pretty print JSON response
+    try {
+      final jsonResponse = json.decode(response.body);
+      debugPrint('📋 Parsed JSON Response:');
+      debugPrint(const JsonEncoder.withIndent('  ').convert(jsonResponse));
+    } catch (e) {
+      debugPrint('⚠️ Response is not valid JSON: $e');
+    }
+    
+    debugPrint('🔥 ===== END API RESPONSE LOG =====');
+    debugPrint('');
+  }
+
+  /// Enhanced error logging helper
+  static void _logApiError(String method, String endpoint, dynamic error, [Map<String, dynamic>? payload]) {
+    debugPrint('');
+    debugPrint('💥 ===== PAYMENT API ERROR LOG =====');
+    debugPrint('📍 Method: $method');
+    debugPrint('🌐 Endpoint: $endpoint');
+    debugPrint('📤 Request Payload: ${payload != null ? json.encode(payload) : 'None'}');
+    debugPrint('❌ Error: $error');
+    debugPrint('💥 ===== END API ERROR LOG =====');
+    debugPrint('');
+  }
+
   // Headers for API requests
   static Map<String, String> get _headers => {
     'Content-Type': 'application/json',
@@ -15,6 +52,170 @@ class PaymentApiService {
     // Add authorization header when implementing auth
     // 'Authorization': 'Bearer ${AuthService.getToken()}',
   };
+
+  /// Create a payment record (Step 1 of payment flow)
+  static Future<Map<String, dynamic>> createPayment({
+    required String tenantId,
+    required String type,
+    required double amount,
+    required String month,
+    required int year,
+    required String description,
+    required String dueDate,
+    double lateFee = 0,
+  }) async {
+    const method = 'POST';
+    const endpoint = '/payments';
+    final uri = Uri.parse('$baseUrl$endpoint');
+    
+    final payload = {
+      'tenantId': tenantId,
+      'type': type,
+      'amount': amount,
+      'month': month,
+      'year': year,
+      'description': description,
+      'dueDate': dueDate,
+      'lateFee': lateFee,
+    };
+    
+    try {
+      debugPrint('💳 [PAYMENT API] Creating payment record');
+      
+      final response = await http.post(uri, headers: _headers, body: json.encode(payload));
+      
+      // Enhanced logging
+      _logApiResponse(method, endpoint, response, payload);
+      
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final decodedResponse = json.decode(response.body);
+        debugPrint('✅ [PAYMENT API] Payment record created successfully');
+        return decodedResponse;
+      } else {
+        debugPrint('❌ [PAYMENT API] Failed to create payment: ${response.statusCode}');
+        throw Exception('Failed to create payment: ${response.statusCode} - ${response.body}');
+      }
+    } catch (e) {
+      _logApiError(method, endpoint, e, payload);
+      throw Exception('Error creating payment: $e');
+    }
+  }
+
+  /// Initiate payment (Step 2 of payment flow) - Generate UPI URL
+  static Future<Map<String, dynamic>> initiatePayment({
+    required String paymentId,
+    required String tenantId,
+    required String ownerId,
+    required double amount,
+    required String transactionId,
+    Map<String, dynamic>? clientMetadata,
+    required String tenantName,
+    required String ownerName,
+    required String ownerUpiId,
+    required String roomId,
+    required String roomNumber,
+    required String paymentType,
+    required int year,
+    required String paymentMethod,
+    required String month,
+  }) async {
+    try {
+      final uri = Uri.parse('$baseUrl/payments/initiate');
+      
+      final payload = {
+        'paymentId': paymentId,
+        'tenantId': tenantId,
+        'tenantName': tenantName,
+        'ownerId': ownerId,
+        'ownerName': ownerName,
+        'ownerUpiId': ownerUpiId,
+        'amount': amount,
+        'roomId': roomId,
+        'roomNumber': roomNumber,
+        'paymentType': paymentType,
+        'month': month,
+        'year': year,
+        'paymentMethod': paymentMethod,
+        'transactionId': transactionId,
+        'clientMetadata': clientMetadata ?? {
+          'deviceId': 'flutter_device',
+          'appVersion': '1.0.0',
+          'platform': 'flutter',
+        },
+      };
+      
+      debugPrint('🚀 [PAYMENT API] Initiating payment');
+      debugPrint('🌐 [PAYMENT API] URL: $uri');
+      debugPrint('📤 [PAYMENT API] Payload: ${json.encode(payload)}');
+      
+      final response = await http.post(uri, headers: _headers, body: json.encode(payload));
+      
+      debugPrint('📥 [PAYMENT API] Response Status: ${response.statusCode}');
+      debugPrint('📥 [PAYMENT API] Response Body: ${response.body}');
+      
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final decodedResponse = json.decode(response.body);
+        debugPrint('✅ [PAYMENT API] Payment initiated successfully');
+        debugPrint('🔗 [PAYMENT API] UPI URL: ${decodedResponse['data']?['upiUrl']}');
+        return decodedResponse;
+      } else {
+        debugPrint('❌ [PAYMENT API] Failed to initiate payment: ${response.statusCode}');
+        throw Exception('Failed to initiate payment: ${response.statusCode} - ${response.body}');
+      }
+    } catch (e) {
+      debugPrint('💥 [PAYMENT API] Exception while initiating payment: $e');
+      throw Exception('Error initiating payment: $e');
+    }
+  }
+
+  /// Update payment status (Step 5 of payment flow)
+  static Future<Map<String, dynamic>> updatePaymentStatus({
+    required String paymentId,
+    required String status,
+    required String transactionId,
+    String? upiTransactionId,
+    double? paidAmount,
+    String? paidDate,
+    String? paymentMethod,
+    String? notes,
+    Map<String, dynamic>? receipt,
+  }) async {
+    try {
+      final uri = Uri.parse('$baseUrl/payments/$paymentId/status');
+      
+      final payload = {
+        'status': status,
+        'transactionId': transactionId,
+        if (upiTransactionId != null) 'upiTransactionId': upiTransactionId,
+        if (paidAmount != null) 'paidAmount': paidAmount,
+        if (paidDate != null) 'paidDate': paidDate,
+        if (paymentMethod != null) 'paymentMethod': paymentMethod,
+        if (notes != null) 'notes': notes,
+        if (receipt != null) 'receipt': receipt,
+      };
+      
+      debugPrint('🔄 [PAYMENT API] Updating payment status');
+      debugPrint('🌐 [PAYMENT API] URL: $uri');
+      debugPrint('📤 [PAYMENT API] Payload: ${json.encode(payload)}');
+      
+      final response = await http.put(uri, headers: _headers, body: json.encode(payload));
+      
+      debugPrint('📥 [PAYMENT API] Response Status: ${response.statusCode}');
+      debugPrint('📥 [PAYMENT API] Response Body: ${response.body}');
+      
+      if (response.statusCode == 200) {
+        final decodedResponse = json.decode(response.body);
+        debugPrint('✅ [PAYMENT API] Payment status updated successfully');
+        return decodedResponse;
+      } else {
+        debugPrint('❌ [PAYMENT API] Failed to update payment status: ${response.statusCode}');
+        throw Exception('Failed to update payment status: ${response.statusCode} - ${response.body}');
+      }
+    } catch (e) {
+      debugPrint('💥 [PAYMENT API] Exception while updating payment status: $e');
+      throw Exception('Error updating payment status: $e');
+    }
+  }
 
   /// Get pending payments for a tenant
   static Future<Map<String, dynamic>> getPendingPayments({
@@ -42,7 +243,6 @@ class PaymentApiService {
       
       debugPrint('📋 [PAYMENT API] Fetching pending payments');
       debugPrint('🌐 [PAYMENT API] URL: $uri');
-      debugPrint('📤 [PAYMENT API] Method: GET');
       
       final response = await http.get(uri, headers: _headers);
       
@@ -103,16 +303,11 @@ class PaymentApiService {
       final response = await http.get(uri, headers: _headers);
       
       debugPrint('📥 [PAYMENT API] Response Status: ${response.statusCode}');
+      debugPrint('📥 [PAYMENT API] Response Body: ${response.body}');
       
       if (response.statusCode == 200) {
         final decodedResponse = json.decode(response.body);
         debugPrint('✅ [PAYMENT API] Successfully fetched payment history');
-        
-        if (decodedResponse['data'] != null && decodedResponse['data']['payments'] != null) {
-          final payments = decodedResponse['data']['payments'] as List;
-          debugPrint('📊 [PAYMENT API] Found ${payments.length} payment history records');
-        }
-        
         return decodedResponse;
       } else {
         debugPrint('❌ [PAYMENT API] Failed to fetch payment history: ${response.statusCode}');
@@ -124,7 +319,7 @@ class PaymentApiService {
     }
   }
 
-  /// Get payment statistics for a tenant
+  /// Get payment statistics
   static Future<Map<String, dynamic>> getPaymentStatistics({
     required String tenantId,
     String? ownerId,
@@ -152,17 +347,11 @@ class PaymentApiService {
       final response = await http.get(uri, headers: _headers);
       
       debugPrint('📥 [PAYMENT API] Response Status: ${response.statusCode}');
+      debugPrint('📥 [PAYMENT API] Response Body: ${response.body}');
       
       if (response.statusCode == 200) {
         final decodedResponse = json.decode(response.body);
         debugPrint('✅ [PAYMENT API] Successfully fetched payment statistics');
-        
-        if (decodedResponse['data'] != null) {
-          final data = decodedResponse['data'];
-          debugPrint('📊 [PAYMENT API] Total payments: ${data['totalPayments']}');
-          debugPrint('📊 [PAYMENT API] Payment rate: ${data['paymentRate']}%');
-        }
-        
         return decodedResponse;
       } else {
         debugPrint('❌ [PAYMENT API] Failed to fetch payment statistics: ${response.statusCode}');
@@ -174,149 +363,7 @@ class PaymentApiService {
     }
   }
 
-  /// Initiate a payment transaction
-  static Future<Map<String, dynamic>> initiatePayment({
-    required String paymentId,
-    required String tenantId,
-    required String tenantName,
-    required String ownerId,
-    required String ownerName,
-    required String ownerUpiId,
-    required String roomId,
-    required String roomNumber,
-    required double amount,
-    required String paymentType,
-    required String month,
-    required int year,
-    String? description,
-    required String paymentMethod,
-    required String transactionId,
-    Map<String, dynamic>? clientMetadata,
-  }) async {
-    try {
-      final payload = {
-        'paymentId': paymentId,
-        'tenantId': tenantId,
-        'tenantName': tenantName,
-        'ownerId': ownerId,
-        'ownerName': ownerName,
-        'ownerUpiId': ownerUpiId,
-        'roomId': roomId,
-        'roomNumber': roomNumber,
-        'amount': amount,
-        'paymentType': paymentType,
-        'month': month,
-        'year': year,
-        'description': description ?? '$paymentType payment for Room $roomNumber - $month $year',
-        'paymentMethod': paymentMethod,
-        'transactionId': transactionId,
-        'clientMetadata': clientMetadata ?? {
-          'deviceId': 'flutter_device',
-          'appVersion': '1.0.0',
-          'platform': 'android',
-        },
-      };
-      
-      final uri = Uri.parse('$baseUrl/payments/initiate');
-      
-      debugPrint('💳 [PAYMENT API] Initiating payment');
-      debugPrint('🌐 [PAYMENT API] URL: $uri');
-      debugPrint('📤 [PAYMENT API] Method: POST');
-      debugPrint('📤 [PAYMENT API] Payload: ${json.encode(payload)}');
-      
-      final response = await http.post(
-        uri,
-        headers: _headers,
-        body: json.encode(payload),
-      );
-      
-      debugPrint('📥 [PAYMENT API] Response Status: ${response.statusCode}');
-      debugPrint('📥 [PAYMENT API] Response Body: ${response.body}');
-      
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        final decodedResponse = json.decode(response.body);
-        debugPrint('✅ [PAYMENT API] Payment initiated successfully');
-        
-        if (decodedResponse['data'] != null) {
-          final data = decodedResponse['data'];
-          debugPrint('💳 [PAYMENT API] Transaction ID: ${data['transactionId']}');
-          debugPrint('💳 [PAYMENT API] Status: ${data['status']}');
-        }
-        
-        return decodedResponse;
-      } else {
-        debugPrint('❌ [PAYMENT API] Failed to initiate payment: ${response.statusCode}');
-        throw Exception('Failed to initiate payment: ${response.statusCode} - ${response.body}');
-      }
-    } catch (e) {
-      debugPrint('💥 [PAYMENT API] Exception while initiating payment: $e');
-      throw Exception('Error initiating payment: $e');
-    }
-  }
-
-  /// Update payment status
-  static Future<Map<String, dynamic>> updatePaymentStatus({
-    required String paymentId,
-    required String status,
-    required String transactionId,
-    String? upiTransactionId,
-    double? paidAmount,
-    String? paidDate,
-    required String paymentMethod,
-    String? notes,
-    Map<String, dynamic>? receipt,
-  }) async {
-    try {
-      final payload = <String, dynamic>{
-        'status': status,
-        'transactionId': transactionId,
-        'paymentMethod': paymentMethod,
-      };
-      
-      if (upiTransactionId != null) payload['upiTransactionId'] = upiTransactionId;
-      if (paidAmount != null) payload['paidAmount'] = paidAmount;
-      if (paidDate != null) payload['paidDate'] = paidDate;
-      if (notes != null) payload['notes'] = notes;
-      if (receipt != null) payload['receipt'] = receipt;
-      
-      final uri = Uri.parse('$baseUrl/payments/$paymentId/status');
-      
-      debugPrint('🔄 [PAYMENT API] Updating payment status');
-      debugPrint('🌐 [PAYMENT API] URL: $uri');
-      debugPrint('📤 [PAYMENT API] Method: PUT');
-      debugPrint('📤 [PAYMENT API] Payload: ${json.encode(payload)}');
-      
-      final response = await http.put(
-        uri,
-        headers: _headers,
-        body: json.encode(payload),
-      );
-      
-      debugPrint('📥 [PAYMENT API] Response Status: ${response.statusCode}');
-      debugPrint('📥 [PAYMENT API] Response Body: ${response.body}');
-      
-      if (response.statusCode == 200) {
-        final decodedResponse = json.decode(response.body);
-        debugPrint('✅ [PAYMENT API] Payment status updated successfully');
-        
-        if (decodedResponse['data'] != null) {
-          final data = decodedResponse['data'];
-          debugPrint('🔄 [PAYMENT API] Payment ID: ${data['paymentId']}');
-          debugPrint('🔄 [PAYMENT API] New Status: ${data['status']}');
-        }
-        
-        return decodedResponse;
-      } else {
-        debugPrint('❌ [PAYMENT API] Failed to update payment status: ${response.statusCode}');
-        throw Exception('Failed to update payment status: ${response.statusCode} - ${response.body}');
-      }
-    } catch (e) {
-      debugPrint('💥 [PAYMENT API] Exception while updating payment status: $e');
-      throw Exception('Error updating payment status: $e');
-    }
-  }
-
-  /// Get all payments for an owner (for owner dashboard)
+  /// Get owner payments (for owner dashboard)
   static Future<Map<String, dynamic>> getOwnerPayments({
     required String ownerId,
     String status = 'all',
@@ -350,25 +397,11 @@ class PaymentApiService {
       final response = await http.get(uri, headers: _headers);
       
       debugPrint('📥 [PAYMENT API] Response Status: ${response.statusCode}');
+      debugPrint('📥 [PAYMENT API] Response Body: ${response.body}');
       
       if (response.statusCode == 200) {
         final decodedResponse = json.decode(response.body);
         debugPrint('✅ [PAYMENT API] Successfully fetched owner payments');
-        
-        if (decodedResponse['data'] != null) {
-          final data = decodedResponse['data'];
-          if (data['payments'] != null) {
-            final payments = data['payments'] as List;
-            debugPrint('📊 [PAYMENT API] Found ${payments.length} payments for owner');
-          }
-          if (data['summary'] != null) {
-            final summary = data['summary'];
-            debugPrint('💰 [PAYMENT API] Total Revenue: ₹${summary['totalRevenue']}');
-            debugPrint('⏳ [PAYMENT API] Total Pending: ₹${summary['totalPending']}');
-            debugPrint('📈 [PAYMENT API] Collection Rate: ${summary['collectionRate']}%');
-          }
-        }
-        
         return decodedResponse;
       } else {
         debugPrint('❌ [PAYMENT API] Failed to fetch owner payments: ${response.statusCode}');
@@ -380,59 +413,16 @@ class PaymentApiService {
     }
   }
 
-  /// Parse payments from API response
-  static List<Payment> parsePayments(Map<String, dynamic> response) {
-    debugPrint('🔍 [PAYMENT API] Parsing payments from response');
-    
-    try {
-      if (response['success'] == true && response['data'] != null) {
-        final data = response['data'];
-        List<dynamic> paymentsData = [];
-        
-        if (data['payments'] != null) {
-          paymentsData = data['payments'] as List<dynamic>;
-          debugPrint('🔍 [PAYMENT API] Found ${paymentsData.length} payments to parse');
-        }
-        
-        final List<Payment> parsedPayments = [];
-        for (int i = 0; i < paymentsData.length; i++) {
-          try {
-            final paymentJson = paymentsData[i] as Map<String, dynamic>;
-            final payment = Payment.fromJson(paymentJson);
-            parsedPayments.add(payment);
-            debugPrint('✅ [PAYMENT API] Successfully parsed payment ${i + 1}: ${payment.id}');
-          } catch (e, stackTrace) {
-            debugPrint('❌ [PAYMENT API] Error parsing payment ${i + 1}: $e');
-            debugPrint('❌ [PAYMENT API] Stack trace: $stackTrace');
-            debugPrint('❌ [PAYMENT API] Payment data: ${paymentsData[i]}');
-          }
-        }
-        
-        debugPrint('✅ [PAYMENT API] Successfully parsed ${parsedPayments.length} out of ${paymentsData.length} payments');
-        return parsedPayments;
-      }
-    } catch (e, stackTrace) {
-      debugPrint('💥 [PAYMENT API] Fatal error parsing payments: $e');
-      debugPrint('💥 [PAYMENT API] Stack trace: $stackTrace');
-    }
-    
-    return [];
+  /// Generate transaction ID
+  static String generateTransactionId() {
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    final random = (DateTime.now().microsecond % 9999) + 1000;
+    return 'TXN${timestamp}_$random';
   }
 
-  /// Parse payment statistics from API response
-  static Map<String, dynamic> parsePaymentStatistics(Map<String, dynamic> response) {
-    debugPrint('🔍 [PAYMENT API] Parsing payment statistics from response');
-    
-    try {
-      if (response['success'] == true && response['data'] != null) {
-        final data = response['data'];
-        debugPrint('✅ [PAYMENT API] Successfully parsed payment statistics');
-        return data;
-      }
-    } catch (e) {
-      debugPrint('💥 [PAYMENT API] Error parsing payment statistics: $e');
-    }
-    
-    return {};
+  /// Generate receipt number
+  static String generateReceiptNumber() {
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    return 'RCP_${timestamp.toString().substring(timestamp.toString().length - 6)}';
   }
 }

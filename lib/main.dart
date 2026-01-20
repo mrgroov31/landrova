@@ -8,6 +8,8 @@ import 'theme/app_theme.dart';
 import 'services/theme_service.dart';
 import 'services/preloader_service.dart';
 import 'services/hive_api_service.dart';
+import 'services/payment_service.dart';
+import 'services/notification_service.dart';
 import 'screens/tenant_onboarding_screen.dart';
 import 'screens/splash_screen.dart';
 import 'models/service_provider_adapter.dart';
@@ -60,6 +62,13 @@ void main() async {
   // Initialize performance optimizations
   await PreloaderService.initialize();
   debugPrint('✅ [MAIN] Preloader service initialized');
+  
+  // Initialize payment services
+  await PaymentService.initialize();
+  debugPrint('✅ [MAIN] Payment service initialized');
+  
+  await NotificationService.initialize();
+  debugPrint('✅ [MAIN] Notification service initialized');
   
   debugPrint('🎉 [MAIN] App initialization completed in ${appStopwatch.elapsedMilliseconds}ms');
   

@@ -56,6 +56,59 @@ class PaymentTransaction {
     this.errorMessage,
   });
 
+  // Factory constructor with default values for easier creation
+  factory PaymentTransaction.create({
+    required String id,
+    required String tenantId,
+    String? tenantName,
+    required String ownerId,
+    String? ownerName,
+    String? ownerUpiId,
+    required double amount,
+    String? roomNumber,
+    String paymentType = 'rent',
+    String? month,
+    int? year,
+    String? description,
+    PaymentStatus status = PaymentStatus.initiated,
+    DateTime? createdAt,
+    String? paymentHash,
+    DateTime? updatedAt,
+    DateTime? completedAt,
+    String? upiTransactionId,
+    String? upiResponseCode,
+    String? backendPaymentId,
+    String? errorMessage,
+  }) {
+    final now = DateTime.now();
+    final monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'];
+    
+    return PaymentTransaction(
+      id: id,
+      tenantId: tenantId,
+      tenantName: tenantName ?? 'Unknown Tenant',
+      ownerId: ownerId,
+      ownerName: ownerName ?? 'Unknown Owner',
+      ownerUpiId: ownerUpiId ?? 'unknown@upi',
+      amount: amount,
+      roomNumber: roomNumber ?? 'Unknown Room',
+      paymentType: paymentType,
+      month: month ?? monthNames[now.month - 1],
+      year: year ?? now.year,
+      description: description ?? 'Payment transaction',
+      status: status,
+      createdAt: createdAt ?? now,
+      paymentHash: paymentHash ?? 'hash_${now.millisecondsSinceEpoch}',
+      updatedAt: updatedAt,
+      completedAt: completedAt,
+      upiTransactionId: upiTransactionId,
+      upiResponseCode: upiResponseCode,
+      backendPaymentId: backendPaymentId,
+      errorMessage: errorMessage,
+    );
+  }
+
   PaymentTransaction copyWith({
     String? id,
     String? tenantId,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/payment.dart';
 import '../models/payment_transaction.dart';
 import '../services/api_service.dart';
+import '../services/auth_service.dart';
 import '../services/payment_service.dart';
 import '../utils/responsive.dart';
 import '../theme/app_theme.dart';
@@ -54,23 +55,26 @@ class _PaymentsScreenState extends State<PaymentsScreen> with TickerProviderStat
         error = null;
       });
       
-      final response = await ApiService.fetchPayments();
-      var loadedPayments = ApiService.parsePayments(response);
+      final ownerId = AuthService.getOwnerId();
       
-      // Filter by building if selected
-      if (widget.selectedBuildingId != null && widget.selectedBuildingId!.isNotEmpty) {
-        // Get rooms for this building
-        final roomsResponse = await ApiService.fetchRooms();
-        final allRooms = ApiService.parseRooms(roomsResponse);
-        final buildingRooms = allRooms.where((r) => r.buildingId == widget.selectedBuildingId).toList();
-        final roomNumbers = buildingRooms.map((r) => r.number).toSet();
-        
-        // Filter payments by room numbers
-        loadedPayments = loadedPayments.where((p) => roomNumbers.contains(p.roomNumber)).toList();
+      // Use real PaymentService API instead of mock data
+      final paymentData = await PaymentService.getOwnerPayments(
+        ownerId: ownerId,
+        buildingId: widget.selectedBuildingId,
+      );
+      
+      var loadedPayments = <Payment>[];
+      if (paymentData['payments'] != null) {
+        final paymentsJson = paymentData['payments'] as List;
+        loadedPayments = paymentsJson.map((p) => Payment.fromJson(p)).toList();
+        debugPrint('💳 [Payments Screen] Loaded ${loadedPayments.length} real payments from API');
+      } else {
+        debugPrint('💳 [Payments Screen] No payments found in API response');
       }
       
-      // Load recent transactions (mock for now)
+      // Load recent transactions using PaymentService
       final recentTransactions = <PaymentTransaction>[];
+      // Note: We could add a method to get recent transactions if needed
       
       setState(() {
         payments = loadedPayments;

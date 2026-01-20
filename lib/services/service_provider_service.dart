@@ -6,7 +6,7 @@ import 'api_service.dart';
 import 'optimized_api_service.dart';
 
 class ServiceProviderService {
-  static const String baseUrl = 'https://leranothrive.com/api';
+  static const String baseUrl = 'https://www.leranothrive.com/api';
 
   // Get all service providers with optional filters
   static Future<List<ServiceProvider>> getAllServiceProviders({
